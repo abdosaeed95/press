@@ -196,7 +196,7 @@ def add_invoice_items_to_po(po, invoice_item_names):
                 "site": invoice_item.site,
             },
         )
-    po.save()
+    po.save(ignore_permissions=True)
 
 
 def get_unaccounted_marketplace_invoice_items():

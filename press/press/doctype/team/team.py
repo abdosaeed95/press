@@ -79,13 +79,13 @@ class Team(Document):
     def disable_account(self):
         self.suspend_sites("Account disabled")
         self.enabled = False
-        self.save()
+        self.save(ignore_permissions=True)
         self.add_comment("Info", "disabled account")
 
     def enable_account(self):
         self.unsuspend_sites("Account enabled")
         self.enabled = True
-        self.save()
+        self.save(ignore_permissions=True)
         self.add_comment("Info", "enabled account")
 
     @classmethod
@@ -232,7 +232,7 @@ class Team(Document):
             for pm in payment_methods:
                 doc = frappe.get_doc("Stripe Payment Method", pm.name)
                 doc.is_default = 0
-                doc.save()
+                doc.save(ignore_permissions=True)
 
     def on_update(self):
         self.validate_payment_mode()
@@ -265,7 +265,7 @@ class Team(Document):
                 "reason": reason,
             }
         )
-        impersonation.save()
+        impersonation.save(ignore_permissions=True)
         frappe.local.login_manager.login_as(user)
 
     @frappe.whitelist()
@@ -297,7 +297,7 @@ class Team(Document):
                 return
             self.allocate_credit_amount(credit_amount, source="Free Credits")
             self.free_credits_allocated = 1
-            self.save()
+            self.save(ignore_permissions=True)
             self.reload()
 
     def create_referral_bonus(self, referrer_id):
@@ -331,7 +331,7 @@ class Team(Document):
             customer = stripe.Customer.create(
                 email=self.user, name=get_fullname(self.user))
             self.stripe_customer_id = customer.id
-            self.save()
+            self.save(ignore_permissions=True)
 
     def update_billing_details(self, billing_details):
         if self.billing_address:
@@ -355,12 +355,12 @@ class Team(Document):
                 "gstin": billing_details.gstin,
             }
         )
-        address_doc.save()
+        address_doc.save(ignore_permissions=True)
         address_doc.reload()
 
         self.billing_name = billing_details.billing_name or self.billing_name
         self.billing_address = address_doc.name
-        self.save()
+        self.save(ignore_permissions=True)
         self.reload()
 
         self.update_billing_details_on_stripe(address_doc)
@@ -373,7 +373,8 @@ class Team(Document):
         )
         for draft_invoice in draft_invoices:
             # Invoice.customer_name set by Invoice.validate()
-            frappe.get_doc("Invoice", draft_invoice).save()
+            frappe.get_doc("Invoice", draft_invoice).save(
+                ignore_permissions=True)
 
     def update_billing_details_on_frappeio(self):
         try:
@@ -511,7 +512,7 @@ class Team(Document):
         self.payment_mode = (
             "Prepaid Credits" if self.payment_mode != "Partner Credits" else self.payment_mode
         )
-        self.save()
+        self.save(ignore_permissions=True)
         return doc
 
     def get_available_credits(self):

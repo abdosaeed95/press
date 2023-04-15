@@ -65,4 +65,4 @@ class SitePlanChange(Document):
             "label": _("via Site Plan Change"),
         }
         subscription.enabled = 1
-        subscription.save()
+        subscription.save(ignore_permissions=True)

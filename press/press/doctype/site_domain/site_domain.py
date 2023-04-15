@@ -42,11 +42,11 @@ class SiteDomain(Document):
 
     def setup_redirect(self):
         self.redirect_to_primary = True
-        self.save()
+        self.save(ignore_permissions=True)
 
     def remove_redirect(self):
         self.redirect_to_primary = False
-        self.save()
+        self.save(ignore_permissions=True)
 
     def create_tls_certificate(self):
         certificate = frappe.get_doc(
@@ -58,7 +58,7 @@ class SiteDomain(Document):
             }
         ).insert(ignore_permissions=True)
         self.tls_certificate = certificate.name
-        self.save()
+        self.save(ignore_permissions=True)
 
     def process_tls_certificate_update(self):
         certificate_status = frappe.db.get_value(
@@ -68,7 +68,7 @@ class SiteDomain(Document):
             self.create_agent_request()
         elif certificate_status == "Failure":
             self.status = "Broken"
-            self.save()
+            self.save(ignore_permissions=True)
 
     def create_agent_request(self):
         server = frappe.db.get_value("Site", self.site, "server")
@@ -85,7 +85,7 @@ class SiteDomain(Document):
     def retry(self):
         self.status = "Pending"
         self.retry_count += 1
-        self.save()
+        self.save(ignore_permissions=True)
         if self.tls_certificate:
             certificate = frappe.get_doc(
                 "TLS Certificate", self.tls_certificate)

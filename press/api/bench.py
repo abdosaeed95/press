@@ -297,7 +297,7 @@ def remove_app(name, app):
     if app_doc_to_remove:
         release_group.remove(app_doc_to_remove)
 
-    release_group.save()
+    release_group.save(ignore_permissions=True)
 
 
 @frappe.whitelist()
@@ -607,7 +607,7 @@ def archive(name):
         "Release Group", new_name, "title", separator="."
     )
     group.enabled = 0
-    group.save()
+    group.save(ignore_permissions=True)
 
 
 @frappe.whitelist()

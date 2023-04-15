@@ -135,8 +135,8 @@ class TestSite(unittest.TestCase):
         )
         rename_job.status = "Success"
         rename_upstream_job.status = "Success"
-        rename_job.save()
-        rename_upstream_job.save()
+        rename_job.save(ignore_permissions=True)
+        rename_upstream_job.save(ignore_permissions=True)
 
         process_rename_site_job_update(rename_job)
 
@@ -181,7 +181,7 @@ class TestSite(unittest.TestCase):
         )
 
         site.subdomain = new_subdomain_name
-        site.save()
+        site.save(ignore_permissions=True)
 
         rename_jobs_count_after = frappe.db.count(
             "Agent Job", {"job_type": "Rename Site"})
@@ -210,8 +210,8 @@ class TestSite(unittest.TestCase):
         )
         rename_job.status = "Success"
         rename_upstream_job.status = "Success"
-        rename_job.save()
-        rename_upstream_job.save()
+        rename_job.save(ignore_permissions=True)
+        rename_upstream_job.save(ignore_permissions=True)
 
         process_rename_site_job_update(rename_job)
 
@@ -231,8 +231,8 @@ class TestSite(unittest.TestCase):
         )
         rename_job.status = "Success"
         rename_upstream_job.status = "Success"
-        rename_job.save()
-        rename_upstream_job.save()
+        rename_job.save(ignore_permissions=True)
+        rename_upstream_job.save(ignore_permissions=True)
 
         process_rename_site_job_update(rename_job)
 
@@ -258,8 +258,8 @@ class TestSite(unittest.TestCase):
         )
         rename_job.status = "Success"
         rename_upstream_job.status = "Success"
-        rename_job.save()
-        rename_upstream_job.save()
+        rename_job.save(ignore_permissions=True)
+        rename_upstream_job.save(ignore_permissions=True)
 
         process_rename_site_job_update(rename_job)
         site = frappe.get_doc("Site", new_name)
@@ -280,8 +280,8 @@ class TestSite(unittest.TestCase):
         )
         rename_job.status = "Success"
         rename_upstream_job.status = "Success"
-        rename_job.save()
-        rename_upstream_job.save()
+        rename_job.save(ignore_permissions=True)
+        rename_upstream_job.save(ignore_permissions=True)
 
         job_count_before = frappe.db.count("Agent Job")
         process_rename_site_job_update(rename_job)

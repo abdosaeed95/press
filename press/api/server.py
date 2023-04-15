@@ -134,7 +134,7 @@ def new(server):
     db_server = db_machine.create_database_server()
     db_server.plan = db_plan.name
     db_server.title = f"{server['title']} - Database"
-    db_server.save()
+    db_server.save(ignore_permissions=True)
     db_server.create_subscription(db_plan.name)
     db_server.run_press_job("Create Server")
 
@@ -162,7 +162,7 @@ def new(server):
     app_server.database_server = db_server.name
     app_server.proxy_server = proxy_server.name
     app_server.title = f"{server['title']} - Application"
-    app_server.save()
+    app_server.save(ignore_permissions=True)
     app_server.create_subscription(app_plan.name)
 
     job = app_server.run_press_job("Create Server")

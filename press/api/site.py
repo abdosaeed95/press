@@ -1013,7 +1013,7 @@ def restore(name, files, skip_failing_patches=False):
     site.remote_database_file = files["database"]
     site.remote_public_file = files["public"]
     site.remote_private_file = files["private"]
-    site.save()
+    site.save(ignore_permissions=True)
     site.reload()
     site.restore_site(skip_failing_patches=skip_failing_patches)
 
@@ -1340,7 +1340,7 @@ def enable_auto_update(name):
     site_doc = frappe.get_doc("Site", name)
     if not site_doc.auto_updates_scheduled:
         site_doc.auto_updates_scheduled = True
-        site_doc.save()
+        site_doc.save(ignore_permissions=True)
 
 
 @frappe.whitelist()
@@ -1349,7 +1349,7 @@ def disable_auto_update(name):
     site_doc = frappe.get_doc("Site", name)
     if site_doc.auto_updates_scheduled:
         site_doc.auto_updates_scheduled = False
-        site_doc.save()
+        site_doc.save(ignore_permissions=True)
 
 
 @frappe.whitelist()
@@ -1375,7 +1375,7 @@ def get_auto_update_info(name):
 def update_auto_update_info(name, info=dict()):
     site_doc = frappe.get_doc("Site", name, for_update=True)
     site_doc.update(info)
-    site_doc.save()
+    site_doc.save(ignore_permissions=True)
 
 
 @frappe.whitelist()

@@ -103,7 +103,7 @@ class TestPayoutOrder(FrappeTestCase):
             },
         )
 
-        self.test_invoice.save()
+        self.test_invoice.save(ignore_permissions=True)
         self.test_invoice.submit()
 
     def create_test_usd_invoice(self):
@@ -137,7 +137,7 @@ class TestPayoutOrder(FrappeTestCase):
             },
         )
 
-        self.test_invoice.save()
+        self.test_invoice.save(ignore_permissions=True)
         self.test_invoice.submit()
 
     def test_create_marketplace_monthly_payout_order(self):

@@ -37,7 +37,7 @@ class Deploy(Document):
                 bench=new,
                 enqueue_after_commit=True,
             )
-        self.save()
+        self.save(ignore_permissions=True)
 
 
 def create_deploy_candidate_differences(bench):

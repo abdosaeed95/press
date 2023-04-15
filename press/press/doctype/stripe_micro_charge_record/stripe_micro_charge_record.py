@@ -8,15 +8,16 @@ from press.utils.billing import get_stripe
 
 
 class StripeMicroChargeRecord(Document):
-	def after_insert(self):
-		# Auto-refund
-		self.refund()
+    def after_insert(self):
+        # Auto-refund
+        self.refund()
 
-	@frappe.whitelist()
-	def refund(self):
-		stripe = get_stripe()
-		refund = stripe.Refund.create(payment_intent=self.stripe_payment_intent_id)
+    @frappe.whitelist()
+    def refund(self):
+        stripe = get_stripe()
+        refund = stripe.Refund.create(
+            payment_intent=self.stripe_payment_intent_id)
 
-		if refund.status == "succeeded":
-			self.has_been_refunded = True
-			self.save()
+        if refund.status == "succeeded":
+            self.has_been_refunded = True
+            self.save(ignore_permissions=True)

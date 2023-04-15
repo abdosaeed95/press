@@ -64,7 +64,7 @@ class Invoice(Document):
 
         if self.payment_mode == "Partner Credits":
             self.payment_attempt_count += 1
-            self.save()
+            self.save(ignore_permissions=True)
             frappe.db.commit()
 
             self.cancel_applied_credits()
@@ -79,7 +79,7 @@ class Invoice(Document):
 
         if self.payment_mode == "Prepaid Credits" and self.amount_due > 0:
             self.payment_attempt_count += 1
-            self.save()
+            self.save(ignore_permissions=True)
             frappe.db.commit()
 
             frappe.throw(
@@ -105,13 +105,13 @@ class Invoice(Document):
                 if stripe_invoice_id:
                     self.stripe_invoice_id = stripe_invoice_id
                     self.status = "Invoice Created"
-                    self.save()
+                    self.save(ignore_permissions=True)
 
             frappe.db.commit()
 
             raise
 
-        self.save()
+        self.save(ignore_permissions=True)
 
         if self.status == "Paid":
             self.submit()
@@ -212,7 +212,7 @@ class Invoice(Document):
         )
         self.stripe_invoice_id = invoice["id"]
         self.status = "Invoice Created"
-        self.save()
+        self.save(ignore_permissions=True)
 
     def find_stripe_invoice(self):
         stripe = get_stripe()
@@ -351,7 +351,7 @@ class Invoice(Document):
         if usage_record.payout:
             self.payout += usage_record.payout
 
-        self.save()
+        self.save(ignore_permissions=True)
         usage_record.db_set("invoice", self.name)
 
     def remove_usage_record(self, usage_record):
@@ -373,7 +373,7 @@ class Invoice(Document):
             return
 
         invoice_item.quantity -= 1
-        self.save()
+        self.save(ignore_permissions=True)
         usage_record.db_set("invoice", None)
 
     def get_invoice_item_for_usage_record(self, usage_record):
@@ -447,7 +447,7 @@ class Invoice(Document):
                 },
             )
 
-        self.save()
+        self.save(ignore_permissions=True)
         self.reload()
 
     def set_total_and_discount(self):
@@ -514,7 +514,7 @@ class Invoice(Document):
                 self.frappe_partner_order = partner_order
                 self.amount_paid = self.amount_due
                 self.status = "Paid"
-                self.save()
+                self.save(ignore_permissions=True)
                 self.submit()
         else:
             self.add_comment(
@@ -561,7 +561,7 @@ class Invoice(Document):
                 {"invoice": self.name, "amount": allocated,
                  "currency": self.currency},
             )
-            doc.save()
+            doc.save(ignore_permissions=True)
             total_allocated += allocated
 
         balance_transaction = frappe.get_doc(
@@ -593,7 +593,7 @@ class Invoice(Document):
             self.applied_credits -= row.amount
 
         self.clear_credit_allocation_table()
-        self.save()
+        self.save(ignore_permissions=True)
 
     def clear_credit_allocation_table(self):
         self.set("credit_allocations", [])
@@ -656,7 +656,7 @@ class Invoice(Document):
                 if invoice:
                     self.frappe_invoice = invoice
                     self.fetch_invoice_pdf()
-                    self.save()
+                    self.save(ignore_permissions=True)
                     return invoice
             else:
                 from bs4 import BeautifulSoup
@@ -741,7 +741,7 @@ class Invoice(Document):
                         "currency": row.currency.upper(),
                     },
                 )
-            self.save()
+            self.save(ignore_permissions=True)
             return True
 
     def update_razorpay_transaction_details(self, payment):
@@ -773,7 +773,7 @@ class Invoice(Document):
                 },
             )
 
-        self.save()
+        self.save(ignore_permissions=True)
 
     @frappe.whitelist()
     def refund(self, reason):
@@ -794,7 +794,7 @@ class Invoice(Document):
 
         stripe.Refund.create(charge=charge)
         self.status = "Refunded"
-        self.save()
+        self.save(ignore_permissions=True)
         self.add_comment(text=f"Refund reason: {reason}")
 
     def consume_credits_and_mark_as_paid(self, reason=None):
@@ -846,7 +846,7 @@ class Invoice(Document):
         stripe = get_stripe()
         stripe_invoice = stripe.Invoice.retrieve(self.stripe_invoice_id)
         self.stripe_invoice_url = stripe_invoice.hosted_invoice_url
-        self.save()
+        self.save(ignore_permissions=True)
 
         # Also send back the updated payment link
         return self.stripe_invoice_url

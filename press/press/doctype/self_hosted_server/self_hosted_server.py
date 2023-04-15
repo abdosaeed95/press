@@ -98,13 +98,13 @@ class SelfHostedServer(Document):
             for k, v in sites.items():
                 self.append("sites", {"site_name": k,
                             "apps": ",".join(map(str, v))})
-            self.save()
+            self.save(ignore_permissions=True)
             self.append_site_configs(ansible_play.name)
             self.status = "Active"
         except Exception:
             self.status = "Broken"
             log_error("Append to Sites Failed", server=self.as_dict())
-        self.save()
+        self.save(ignore_permissions=True)
 
     def append_to_apps(self):
         """
@@ -139,7 +139,7 @@ class SelfHostedServer(Document):
         except Exception:
             self.status = "Broken"
             log_error("Appending Apps Error", server=self.as_dict())
-        self.save()
+        self.save(ignore_permissions=True)
 
     @frappe.whitelist()
     def create_new_rg(self):
@@ -210,14 +210,14 @@ class SelfHostedServer(Document):
                 release_group.append("servers", {"server": self.server})
         except Exception:
             self.status = "Broken"
-            self.save()
+            self.save(ignore_permissions=True)
             log_error("Creating RG failed", server=self.as_dict())
         release_group.team = self.team
         release_group.version = self.map_branch_to_version(max(branches))
         rg = release_group.insert(ignore_permissions=True)
         self.release_group = rg.name
         self.status = "Active"
-        self.save()
+        self.save(ignore_permissions=True)
 
     @frappe.whitelist()
     def create_db_server(self):
@@ -243,11 +243,11 @@ class SelfHostedServer(Document):
             self.database_setup = True
             self.database_server = _db.name
             self.status = "Active"
-            self.save()
+            self.save(ignore_permissions=True)
         except Exception:
             frappe.throw("Adding Server to Database Server Doctype failed")
             self.status = "Broken"
-            self.save()
+            self.save(ignore_permissions=True)
             log_error("Inserting a new DB server failed")
 
     def append_site_configs(self, play_name):
@@ -273,13 +273,13 @@ class SelfHostedServer(Document):
                         _site.site_config = str(site["config"]).replace(
                             "'", '"'
                         )  # JSON Breaks since dict uses only single quotes
-                    self.save()
+                    self.save(ignore_permissions=True)
             self.status = "Active"
         except Exception as e:
             self.status = "Broken"
             frappe.throw(
                 "Fetching sites configs from Existing Bench failed", exc=e)
-        self.save()
+        self.save(ignore_permissions=True)
 
     @frappe.whitelist()
     def create_server(self):
@@ -307,7 +307,7 @@ class SelfHostedServer(Document):
         except Exception as e:
             self.status = "Broken"
             frappe.throw("Server Creation Error", exc=e)
-        self.save()
+        self.save(ignore_permissions=True)
 
     @frappe.whitelist()
     def create_new_sites(self):
@@ -342,7 +342,7 @@ class SelfHostedServer(Document):
                 new_site.database_name = config["db_name"]
                 _new_site = new_site.insert(ignore_permissions=True)
                 _site.site = _new_site.name
-                self.save()
+                self.save(ignore_permissions=True)
                 self.reload()
         except Exception:
             log_error("New Site Creation Error", server=self.as_dict())
@@ -358,7 +358,7 @@ class SelfHostedServer(Document):
         Copy required folder of Existing Bench to new sites
         """
         self.status = "Pending"
-        self.save()
+        self.save(ignore_permissions=True)
         ex_sites = []
         nw_sites = []
         benches = []
@@ -386,4 +386,4 @@ class SelfHostedServer(Document):
         except Exception:
             self.status = "Broken"
             log_error("Self Hosted Restore error", server=self.name)
-        self.save()
+        self.save(ignore_permissions=True)

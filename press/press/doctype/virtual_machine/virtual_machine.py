@@ -87,7 +87,7 @@ class VirtualMachine(Document):
         self.aws_instance_id = response["Instances"][0]["InstanceId"]
         self.status = self.get_status_map(
         )[response["Instances"][0]["State"]["Name"]]
-        self.save()
+        self.save(ignore_permissions=True)
 
     def get_cloud_init(self):
         server = self.get_server()
@@ -172,7 +172,7 @@ class VirtualMachine(Document):
         volume.size += increment
         self.disk_size = volume.size
         self.client().modify_volume(VolumeId=volume.aws_volume_id, Size=volume.size)
-        self.save()
+        self.save(ignore_permissions=True)
 
     def get_volumes(self):
         response = self.client().describe_volumes(
@@ -193,7 +193,7 @@ class VirtualMachine(Document):
                     Iops=volume.iops,
                     Throughput=volume.throughput,
                 )
-                self.save()
+                self.save(ignore_permissions=True)
 
     @frappe.whitelist()
     def sync(self):
@@ -236,7 +236,7 @@ class VirtualMachine(Document):
             )["DisableApiTermination"]["Value"]
         else:
             self.status = "Terminated"
-        self.save()
+        self.save(ignore_permissions=True)
         self.update_servers()
 
     def update_servers(self):
@@ -336,7 +336,7 @@ class VirtualMachine(Document):
             InstanceType={"Value": machine_type},
         )
         self.machine_type = machine_type
-        self.save()
+        self.save(ignore_permissions=True)
 
     def client(self, client_type="ec2"):
         cluster = frappe.get_doc("Cluster", self.cluster)

@@ -19,7 +19,7 @@ class SSHCertificateAuthority(Document):
         self.generate_key_pair()
         self.extract_public_key()
         self.extract_key_fingerprint()
-        self.save()
+        self.save(ignore_permissions=True)
 
     def setup_directory(self):
         os.mkdir(self.directory)
@@ -148,7 +148,7 @@ class SSHCertificateAuthority(Document):
 
         self.docker_image_tag = cint(self.docker_image_tag) + 1
         self.docker_image = f"{self.docker_image_repository}:{self.docker_image_tag}"
-        self.save()
+        self.save(ignore_permissions=True)
         frappe.db.commit()
 
         self.run(f"docker build -t {self.docker_image} .",

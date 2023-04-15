@@ -47,7 +47,7 @@ class AnsibleCallback(CallbackBase):
                 server.root_public_key = result.ssh_public_key
             elif result.name == "frappe":
                 server.frappe_public_key = result.ssh_public_key
-            server.save()
+            server.save(ignore_permissions=True)
 
     def v2_runner_on_ok(self, result, *args, **kwargs):
         self.update_task("Success", result)
@@ -88,7 +88,7 @@ class AnsibleCallback(CallbackBase):
             play.status = status
             play.start = now()
 
-        play.save()
+        play.save(ignore_permissions=True)
         frappe.db.commit()
 
     @reconnect_on_failure()
@@ -115,7 +115,7 @@ class AnsibleCallback(CallbackBase):
             task.duration = task.end - task.start
         else:
             task.start = now()
-        task.save()
+        task.save(ignore_permissions=True)
         frappe.db.commit()
 
     def parse_result(self, result):
@@ -128,7 +128,7 @@ class AnsibleCallback(CallbackBase):
         task_name = self.tasks[role][task]
         task = frappe.get_doc("Ansible Task", task_name)
         task.job_id = job_id
-        task.save()
+        task.save(ignore_permissions=True)
         frappe.db.commit()
 
     @reconnect_on_failure()
@@ -140,7 +140,7 @@ class AnsibleCallback(CallbackBase):
         task = frappe.get_doc("Ansible Task", task_name)
         task.result = json.dumps(result, indent=4)
         task.duration = now() - task.start
-        task.save()
+        task.save(ignore_permissions=True)
         frappe.db.commit()
 
 

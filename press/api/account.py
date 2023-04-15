@@ -224,7 +224,7 @@ def delete_team(team):
         return respond_as_web_page("expired")
 
     doc.status = "Deletion Verified"
-    doc.save()
+    doc.save(ignore_permissions=True)
     frappe.db.commit()
 
     return respond_as_web_page("confirmed")
@@ -261,7 +261,7 @@ def set_country(country):
     team = get_current_team()
     doc = frappe.get_doc("Team", team)
     doc.country = country
-    doc.save()
+    doc.save(ignore_permissions=True)
     doc.create_stripe_customer()
 
 
@@ -536,7 +536,7 @@ def update_emails(data):
 
     for row in team_doc.communication_emails:
         row.value = data[row.type]
-        row.save()
+        row.save(ignore_permissions=True)
 
 
 @frappe.whitelist()
