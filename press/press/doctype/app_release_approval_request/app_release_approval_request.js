@@ -6,14 +6,14 @@ frappe.ui.form.on('App Release Approval Request', {
 		if (['Open', 'Rejected'].includes(frm.doc.status)) {
 			frm.add_custom_button('Approve Request', () => {
 				frm.set_value('status', 'Approved');
-				frm.save();
+				frm.save((ignore_permissions = True));
 			});
 		}
 
 		if (!frm.doc.result && frm.doc.screening_status === 'Not Started') {
 			let btn = frm.add_custom_button('Screen Release', () => {
 				frm.call('start_screening');
-				frappe.msgprint('Started Screening')
+				frappe.msgprint('Started Screening');
 			});
 		}
 

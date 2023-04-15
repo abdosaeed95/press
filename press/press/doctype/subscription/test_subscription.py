@@ -119,7 +119,7 @@ class TestSubscription(unittest.TestCase):
         two_days_after = frappe.utils.add_days(None, 2)
         site = create_test_site()
         site.trial_end_date = two_days_after
-        site.save()
+        site.save(ignore_permissions=True)
 
         plan = frappe.get_doc(
             doctype="Plan",

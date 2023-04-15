@@ -176,7 +176,7 @@ class Site(Document):
         agent.rename_site(self, new_name)
         self.rename_upstream(new_name)
         self.status = "Pending"
-        self.save()
+        self.save(ignore_permissions=True)
 
         try:
             # remove old dns record from route53 after rename
@@ -228,7 +228,7 @@ class Site(Document):
             agent = Agent(self.server)
             agent.install_app_site(self, app)
             self.status = "Pending"
-            self.save()
+            self.save(ignore_permissions=True)
 
             marketplace_app_hook(app=app, site=self.name, op="install")
 
@@ -239,7 +239,7 @@ class Site(Document):
         agent = Agent(self.server)
         agent.uninstall_app_site(self, app_doc.app)
         self.status = "Pending"
-        self.save()
+        self.save(ignore_permissions=True)
 
         marketplace_app_hook(app=app, site=self.name, op="uninstall")
 
@@ -342,7 +342,7 @@ class Site(Document):
         agent = Agent(self.server)
         agent.reinstall_site(self)
         self.status = "Pending"
-        self.save()
+        self.save(ignore_permissions=True)
 
     @frappe.whitelist()
     def migrate(self, skip_failing_patches=False):
@@ -360,7 +360,7 @@ class Site(Document):
         agent.migrate_site(
             self, skip_failing_patches=skip_failing_patches, activate=activate)
         self.status = "Pending"
-        self.save()
+        self.save(ignore_permissions=True)
 
     @frappe.whitelist()
     def last_migrate_failed(self):
@@ -398,7 +398,7 @@ class Site(Document):
         agent = Agent(self.server)
         agent.restore_site_tables(self)
         self.status = "Pending"
-        self.save()
+        self.save(ignore_permissions=True)
 
     @frappe.whitelist()
     def clear_site_cache(self):
@@ -418,7 +418,7 @@ class Site(Document):
         agent = Agent(self.server)
         agent.restore_site(self, skip_failing_patches=skip_failing_patches)
         self.status = "Pending"
-        self.save()
+        self.save(ignore_permissions=True)
 
     @frappe.whitelist()
     def backup(self, with_files=False, offsite=False):
@@ -436,7 +436,7 @@ class Site(Document):
         log_site_activity(self.name, "Update")
         self.status_before_update = self.status
         self.status = "Pending"
-        self.save()
+        self.save(ignore_permissions=True)
         frappe.get_doc(
             {
                 "doctype": "Site Update",
@@ -451,7 +451,7 @@ class Site(Document):
         log_site_activity(self.name, "Update")
         self.status_before_update = self.status
         self.status = "Pending"
-        self.save()
+        self.save(ignore_permissions=True)
         return frappe.get_doc(
             {
                 "doctype": "Site Update",
@@ -466,7 +466,7 @@ class Site(Document):
         log_site_activity(self.name, "Update")
         self.status_before_update = self.status
         self.status = "Pending"
-        self.save()
+        self.save(ignore_permissions=True)
         agent = Agent(self.server)
         agent.move_site_to_bench(self, bench, deactivate, skip_failing_patches)
 
@@ -480,14 +480,14 @@ class Site(Document):
                 self.status = status_map.get(response.status_code, "Active")
             except Exception:
                 log_error("Site Status Fetch Error", site=self.name)
-        self.save()
+        self.save(ignore_permissions=True)
 
     @frappe.whitelist()
     def update_without_backup(self):
         log_site_activity(self.name, "Update without Backup")
         self.status_before_update = self.status
         self.status = "Pending"
-        self.save()
+        self.save(ignore_permissions=True)
         frappe.get_doc(
             {
                 "doctype": "Site Update",
@@ -583,7 +583,7 @@ class Site(Document):
     def set_host_name(self, domain: str):
         """Set host_name/primary domain of site."""
         self.host_name = domain
-        self.save()
+        self.save(ignore_permissions=True)
 
     def _get_redirected_domains(self) -> List[str]:
         """Get list of redirected site domains for site."""
@@ -633,7 +633,7 @@ class Site(Document):
         log_site_activity(self.name, "Archive", reason)
         agent = Agent(self.server)
         self.status = "Pending"
-        self.save()
+        self.save(ignore_permissions=True)
         agent.archive_site(self, site_name, force)
 
         server = frappe.get_all(
@@ -844,7 +844,7 @@ class Site(Document):
         to_save |= self._sync_database_name(fetched_config)
 
         if to_save:
-            self.save()
+            self.save(ignore_permissions=True)
 
     def sync_analytics(self, analytics=None):
         if not analytics:
@@ -862,7 +862,7 @@ class Site(Document):
         if value:
             setup_complete = cint(value["setup_complete"])
             self.setup_wizard_complete = setup_complete
-            self.save()
+            self.save(ignore_permissions=True)
             return setup_complete
 
     def _set_configuration(self, config):
@@ -891,7 +891,7 @@ class Site(Document):
                 value = d.value
             self.append("configuration", {
                         "key": d.key, "value": value, "type": d.type})
-        self.save()
+        self.save(ignore_permissions=True)
 
     def _update_configuration(self, config, save=True):
         """Updates site.configuration, runs site.save which updates site.config
@@ -909,7 +909,7 @@ class Site(Document):
                             "key": key, "value": convert(value)})
 
         if save:
-            self.save()
+            self.save(ignore_permissions=True)
 
     @frappe.whitelist()
     def update_site_config(self, config=None):
@@ -946,7 +946,7 @@ class Site(Document):
             subscription = self.subscription
             if subscription:
                 subscription.team = self.team
-                subscription.save()
+                subscription.save(ignore_permissions=True)
 
     def enable_subscription(self):
         subscription = self.subscription
@@ -1030,7 +1030,7 @@ class Site(Document):
         if self.trial_end_date:
             self.reload()
             self.trial_end_date = ""
-            self.save()
+            self.save(ignore_permissions=True)
 
     def unsuspend_if_applicable(self):
         try:

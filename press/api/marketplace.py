@@ -122,7 +122,7 @@ def become_publisher():
     """Turn on marketplace developer mode for current team"""
     current_team = get_current_team(get_doc=True)
     current_team.is_developer = True
-    current_team.save()
+    current_team.save(ignore_permissions=True)
 
 
 @frappe.whitelist()
@@ -529,7 +529,7 @@ def add_app(source: str, app: str):
             for version in version_difference:
                 marketplace_app.append(
                     "sources", {"source": source, "version": version})
-                marketplace_app.save()
+                marketplace_app.save(ignore_permissions=True)
         else:
             frappe.throw(
                 "A marketplace app already exists with the given versions!")
@@ -698,7 +698,7 @@ def update_publisher_profile(profile_data=dict()):
             "Marketplace Publisher Profile", publisher_profile_name, for_update=True
         )
         profile_doc.update(profile_data)
-        profile_doc.save()
+        profile_doc.save(ignore_permissions=True)
     else:
         profile_doc = frappe.get_doc(
             {"doctype": "Marketplace Publisher Profile"})
@@ -1038,7 +1038,7 @@ def use_partner_credits(name, app, site, plan, amount, credits):
                 },
             )
 
-            invoice.save()
+            invoice.save(ignore_permissions=True)
             invoice.finalize_invoice()
             invoice.reload()
 
@@ -1182,7 +1182,7 @@ def start_review(name):
     # TODO: Start security check and auto deploy process here
     app = frappe.get_doc("Marketplace App", name)
     app.status = "In Review"
-    app.save()
+    app.save(ignore_permissions=True)
 
 
 @protected("Marketplace App")
@@ -1231,4 +1231,4 @@ def add_reply(name, message):
 def fetch_readme(name):
     app: MarketplaceApp = frappe.get_doc("Marketplace App", name)
     app.long_description = app.fetch_readme()
-    app.save()
+    app.save(ignore_permissions=True)

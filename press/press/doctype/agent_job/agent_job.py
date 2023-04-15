@@ -40,10 +40,10 @@ class AgentJob(Document):
                 "job"
             ]
             self.status = "Pending"
-            self.save()
+            self.save(ignore_permissions=True)
         except Exception:
             self.status = "Failure"
-            self.save()
+            self.save(ignore_permissions=True)
             process_job_updates(self.name)
             frappe.db.set_value(
                 "Agent Job", self.name, "status", "Undelivered", for_update=False

@@ -8,15 +8,16 @@ from coverage import Coverage
 
 
 def run_tests():
-	coverage = Coverage(
-		source=[str(Path(__file__).parent.parent)], omit=["*/tests/*"], branch=True
-	)
-	coverage.start()
-	unittest.main(module=None, argv=["", "discover", "-s", "backbone"], exit=False)
-	coverage.stop()
-	coverage.save()
-	coverage.html_report()
+    coverage = Coverage(
+        source=[str(Path(__file__).parent.parent)], omit=["*/tests/*"], branch=True
+    )
+    coverage.start()
+    unittest.main(module=None, argv=[
+                  "", "discover", "-s", "backbone"], exit=False)
+    coverage.stop()
+    coverage.save(ignore_permissions=True)
+    coverage.html_report()
 
 
 if __name__ == "__main__":
-	unittest.main()
+    unittest.main()

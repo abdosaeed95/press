@@ -33,7 +33,7 @@ class PressJob(Document):
     def execute(self):
         self.status = "Running"
         self.start = frappe.utils.now_datetime()
-        self.save()
+        self.save(ignore_permissions=True)
         self.next()
 
     def fail(self, arguments=None):
@@ -46,13 +46,13 @@ class PressJob(Document):
                                 "status", "Skipped")
         self.end = frappe.utils.now_datetime()
         self.duration = self.end - self.start
-        self.save()
+        self.save(ignore_permissions=True)
 
     def succeed(self):
         self.status = "Success"
         self.end = frappe.utils.now_datetime()
         self.duration = self.end - self.start
-        self.save()
+        self.save(ignore_permissions=True)
 
     @frappe.whitelist()
     def next(self, arguments=None):
@@ -61,7 +61,7 @@ class PressJob(Document):
             old_arguments.update(arguments)
             self.arguments = json.dumps(old_arguments, indent=2)
         self.status = "Running"
-        self.save()
+        self.save(ignore_permissions=True)
         next_step = self.next_step
 
         if not next_step:

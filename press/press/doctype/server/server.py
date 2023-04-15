@@ -127,14 +127,14 @@ class BaseServer(Document):
             ansible.run()
             self.reload()
             self.is_server_prepared = True
-            self.save()
+            self.save(ignore_permissions=True)
         except Exception:
             log_error("Server Preparation Exception", server=self.as_dict())
 
     @frappe.whitelist()
     def setup_server(self):
         self.status = "Installing"
-        self.save()
+        self.save(ignore_permissions=True)
         frappe.enqueue_doc(
             self.doctype, self.name, "_setup_server", queue="long", timeout=2400
         )
@@ -142,7 +142,7 @@ class BaseServer(Document):
     @frappe.whitelist()
     def install_nginx(self):
         self.status = "Installing"
-        self.save()
+        self.save(ignore_permissions=True)
         frappe.enqueue_doc(
             self.doctype, self.name, "_install_nginx", queue="long", timeout=1200
         )
@@ -159,7 +159,7 @@ class BaseServer(Document):
         except Exception:
             self.status = "Broken"
             log_error("NGINX Install Exception", server=self.as_dict())
-        self.save()
+        self.save(ignore_permissions=True)
 
     @frappe.whitelist()
     def install_filebeat(self):
@@ -313,7 +313,7 @@ class BaseServer(Document):
     @frappe.whitelist()
     def rename_server(self):
         self.status = "Installing"
-        self.save()
+        self.save(ignore_permissions=True)
         frappe.enqueue_doc(
             self.doctype, self.name, "_rename_server", queue="long", timeout=2400
         )
@@ -333,7 +333,7 @@ class BaseServer(Document):
         ):
             frappe.throw(_("Cannot archive server with benches"))
         self.status = "Pending"
-        self.save()
+        self.save(ignore_permissions=True)
         frappe.enqueue_doc(self.doctype, self.name, "_archive", queue="long")
         self.disable_subscription()
 
@@ -375,7 +375,7 @@ class BaseServer(Document):
         self.can_change_plan(ignore_card_setup)
         plan = frappe.get_doc("Plan", plan)
         self.ram = plan.memory
-        self.save()
+        self.save(ignore_permissions=True)
         self.reload()
         frappe.get_doc(
             {
@@ -474,7 +474,7 @@ class Server(BaseServer):
             for bench in benches:
                 bench = frappe.get_doc("Bench", bench)
                 bench.database_server = self.database_server
-                bench.save()
+                bench.save(ignore_permissions=True)
 
     @frappe.whitelist()
     def add_upstream_to_proxy(self):
@@ -519,7 +519,7 @@ class Server(BaseServer):
         except Exception:
             self.status = "Broken"
             log_error("Server Setup Exception", server=self.as_dict())
-        self.save()
+        self.save(ignore_permissions=True)
 
     @frappe.whitelist()
     def whitelist_ipaddress(self):
@@ -547,12 +547,12 @@ class Server(BaseServer):
         except Exception:
             self.status = "Broken"
             log_error("Proxy IP Whitelist Exception", server=self.as_dict())
-        self.save()
+        self.save(ignore_permissions=True)
 
     @frappe.whitelist()
     def setup_fail2ban(self):
         self.status = "Installing"
-        self.save()
+        self.save(ignore_permissions=True)
         frappe.enqueue_doc(
             self.doctype, self.name, "_setup_fail2ban", queue="long", timeout=1200
         )
@@ -572,12 +572,12 @@ class Server(BaseServer):
         except Exception:
             self.status = "Broken"
             log_error("Fail2ban Setup Exception", server=self.as_dict())
-        self.save()
+        self.save(ignore_permissions=True)
 
     @frappe.whitelist()
     def setup_replication(self):
         self.status = "Installing"
-        self.save()
+        self.save(ignore_permissions=True)
         frappe.enqueue_doc(
             self.doctype, self.name, "_setup_replication", queue="long", timeout=1200
         )
@@ -589,7 +589,7 @@ class Server(BaseServer):
             primary._setup_primary(self.name)
             if primary.status == "Active":
                 self.is_replication_setup = True
-                self.save()
+                self.save(ignore_permissions=True)
 
     def _setup_primary(self, secondary):
         secondary_private_ip = frappe.db.get_value(
@@ -609,7 +609,7 @@ class Server(BaseServer):
         except Exception:
             self.status = "Broken"
             log_error("Primary Server Setup Exception", server=self.as_dict())
-        self.save()
+        self.save(ignore_permissions=True)
 
     def _setup_secondary(self):
         primary_public_key = frappe.db.get_value(
@@ -631,7 +631,7 @@ class Server(BaseServer):
             self.status = "Broken"
             log_error("Secondary Server Setup Exception",
                       server=self.as_dict())
-        self.save()
+        self.save(ignore_permissions=True)
 
     def _install_exporters(self):
         monitoring_password = frappe.get_doc("Cluster", self.cluster).get_password(
@@ -738,7 +738,7 @@ class Server(BaseServer):
         except Exception:
             self.status = "Broken"
             log_error("Server Rename Exception", server=self.as_dict())
-        self.save()
+        self.save(ignore_permissions=True)
 
     @frappe.whitelist()
     def auto_scale_workers(self):
@@ -788,7 +788,7 @@ class Server(BaseServer):
                 background_workers = 1
             bench.gunicorn_workers = gunicorn_workers
             bench.background_workers = background_workers
-            bench.save()
+            bench.save(ignore_permissions=True)
 
     def _auto_scale_workers_old(self):
         benches = frappe.get_all(
@@ -827,7 +827,7 @@ class Server(BaseServer):
                     background_workers,
                     gunicorn_workers,
                 )
-                bench.save()
+                bench.save(ignore_permissions=True)
 
 
 def scale_workers():

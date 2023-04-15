@@ -345,7 +345,7 @@ class ReleaseGroup(Document):
 
     def add_app(self, source):
         self.append("apps", {"source": source.name, "app": source.app})
-        self.save()
+        self.save(ignore_permissions=True)
 
     def change_app_branch(self, app: str, to_branch: str) -> None:
         current_app_source = self.get_app_source(app)
@@ -375,7 +375,7 @@ class ReleaseGroup(Document):
             required_app_source.github_installation_id = (
                 current_app_source.github_installation_id
             )
-            required_app_source.save()
+            required_app_source.save(ignore_permissions=True)
 
         self.set_app_source(app, required_app_source.name)
 
@@ -396,9 +396,9 @@ class ReleaseGroup(Document):
         for app in self.apps:
             if app.app == target_app:
                 app.source = source
-                app.save()
+                app.save(ignore_permissions=True)
                 break
-        self.save()
+        self.save(ignore_permissions=True)
 
     def get_marketplace_app_sources(self) -> List[str]:
         all_marketplace_sources = frappe.get_all(
@@ -439,7 +439,7 @@ class ReleaseGroup(Document):
     @frappe.whitelist()
     def add_server(self, server: str, deploy=False):
         self.append("servers", {"server": server, "default": False})
-        self.save()
+        self.save(ignore_permissions=True)
         if deploy:
             self.get_last_successful_candidate()._create_deploy(
                 [server], staging=False)

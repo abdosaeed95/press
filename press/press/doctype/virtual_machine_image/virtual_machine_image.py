@@ -56,7 +56,7 @@ class VirtualMachineImage(Document):
                 self.aws_snapshot_id = volume["Ebs"]["SnapshotId"]
         else:
             self.status = "Unavailable"
-        self.save()
+        self.save(ignore_permissions=True)
 
     @frappe.whitelist()
     def copy_image(self, cluster):

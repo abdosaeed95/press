@@ -65,7 +65,7 @@ class MarketplaceAppSubscription(Document):
             self.plan = frappe.db.get_value(
                 "Marketplace App Plan", self.marketplace_app_plan, "plan"
             )
-            self.save()
+            self.save(ignore_permissions=True)
 
     def after_insert(self):
         # TODO: Check if this key already exists
@@ -170,7 +170,7 @@ class MarketplaceAppSubscription(Document):
             frappe.throw("Subscription is already active.")
 
         self.status = "Active"
-        self.save()
+        self.save(ignore_permissions=True)
 
     def disable(self):
         if self.status == "Disabled":

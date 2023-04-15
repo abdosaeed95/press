@@ -325,7 +325,7 @@ class TestInvoice(unittest.TestCase):
         ).insert(ignore_permissions=True)
 
         invoice.append("items", {"quantity": 1, "rate": 1000, "amount": 1000})
-        invoice.save()
+        invoice.save(ignore_permissions=True)
 
         # Before discount
         self.assertEqual(invoice.total, 1000)
@@ -335,7 +335,7 @@ class TestInvoice(unittest.TestCase):
             "discounts", {
                 "percent": 10, "discount_type": "Flat On Total", "based_on": "Percent"}
         )
-        invoice.save()
+        invoice.save(ignore_permissions=True)
 
         # After discount
         invoice.reload()
@@ -356,7 +356,7 @@ class TestInvoice(unittest.TestCase):
         ).insert(ignore_permissions=True)
 
         invoice.append("items", {"quantity": 1, "rate": 1000, "amount": 1000})
-        invoice.save()
+        invoice.save(ignore_permissions=True)
 
         # Apply 10% discount
         invoice.append(
@@ -370,7 +370,7 @@ class TestInvoice(unittest.TestCase):
                 "percent": 10, "discount_type": "Flat On Total", "based_on": "Percent"}
         )
 
-        invoice.save()
+        invoice.save(ignore_permissions=True)
 
         # After discount
         invoice.reload()
@@ -388,7 +388,7 @@ class TestInvoice(unittest.TestCase):
             "discounts", {
                 "percent": 30, "discount_type": "Flat On Total", "based_on": "Percent"}
         )
-        team.save()
+        team.save(ignore_permissions=True)
 
         invoice = frappe.get_doc(
             doctype="Invoice",
@@ -399,7 +399,7 @@ class TestInvoice(unittest.TestCase):
 
         # Add line items
         invoice.append("items", {"quantity": 1, "rate": 1000, "amount": 1000})
-        invoice.save()
+        invoice.save(ignore_permissions=True)
         invoice.reload()
 
         # After discount
@@ -417,7 +417,7 @@ class TestInvoice(unittest.TestCase):
             "discounts", {
                 "percent": 30, "discount_type": "Flat On Total", "based_on": "Percent"}
         )
-        team.save()
+        team.save(ignore_permissions=True)
 
         invoice = frappe.get_doc(
             doctype="Invoice",
@@ -436,7 +436,7 @@ class TestInvoice(unittest.TestCase):
                           "discount_type": "Flat On Total", "based_on": "Amount"}
         )
 
-        invoice.save()
+        invoice.save(ignore_permissions=True)
         invoice.reload()
 
         # After discount

@@ -24,22 +24,22 @@ class Subscription(Document):
 
         if self.enabled and doc.plan != self.plan:
             doc.plan = self.plan
-            doc.save()
+            doc.save(ignore_permissions=True)
         if not self.enabled and doc.plan:
             doc.plan = ""
-            doc.save()
+            doc.save(ignore_permissions=True)
 
     def enable(self):
         try:
             self.enabled = True
-            self.save()
+            self.save(ignore_permissions=True)
         except Exception:
             frappe.log_error(title="Enable Subscription Error")
 
     def disable(self):
         try:
             self.enabled = False
-            self.save()
+            self.save(ignore_permissions=True)
         except Exception:
             frappe.log_error(title="Disable Subscription Error")
 

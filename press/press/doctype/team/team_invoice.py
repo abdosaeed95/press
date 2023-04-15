@@ -62,7 +62,7 @@ class TeamInvoice:
         if usage_row and usage_row.days_active > 0:
             usage_row.days_active = usage_row.days_active - 1
 
-        invoice.save()
+        invoice.save(ignore_permissions=True)
         ledger_entry.db_set("invoice", "")
 
     def update_ledger_entry_in_invoice(self, ledger_entry, invoice):
@@ -82,7 +82,7 @@ class TeamInvoice:
         else:
             usage_row.days_active = (usage_row.days_active or 0) + 1
 
-        invoice.save()
+        invoice.save(ignore_permissions=True)
         ledger_entry.db_set("invoice", invoice.name)
 
     def get_draft_invoice(self):

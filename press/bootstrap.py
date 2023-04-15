@@ -76,7 +76,7 @@ def setup_certbot(settings):
     settings.eff_registration_email = ADMIN_EMAIL
     settings.webroot_directory = WEBROOT_DIRECTORY
     settings.certbot_directory = CERTBOT_DIRECTORY
-    settings.save()
+    settings.save(ignore_permissions=True)
     settings.reload()
 
 
@@ -104,7 +104,7 @@ def setup_root_domain(settings):
 
     settings.domain = domain.name
     settings.cluster = domain.default_cluster
-    settings.save()
+    settings.save(ignore_permissions=True)
     settings.reload()
 
 
@@ -112,7 +112,7 @@ def setup_stripe(settings):
     settings.stripe_publishable_key = STRIPE_PUBLISHABLE_KEY
     settings.stripe_secret_key = STRIPE_SECRET_KEY
     settings.ngrok_auth_token = NGROK_AUTH_TOKEN
-    settings.save()
+    settings.save(ignore_permissions=True)
     settings.reload()
 
 
@@ -134,7 +134,7 @@ def setup_registry(settings):
     settings.docker_registry_password = registry.get_password(
         "registry_password")
 
-    settings.save()
+    settings.save(ignore_permissions=True)
     settings.reload()
 
 
@@ -150,7 +150,7 @@ def setup_logging(settings):
 
     settings.log_server = log.name
 
-    settings.save()
+    settings.save(ignore_permissions=True)
     settings.reload()
 
 
@@ -172,7 +172,7 @@ def setup_monitoring(settings):
     settings.telegram_chat_id = TELEGRAM_CHAT_ID
     settings.telegram_bot_token = TELEGRAM_BOT_TOKEN
 
-    settings.save()
+    settings.save(ignore_permissions=True)
     settings.reload()
 
 
@@ -212,7 +212,7 @@ def setup_agent(settings):
     settings.agent_repository_owner = AGENT_REPOSITORY_OWNER
     settings.agent_github_access_token = GITHUB_ACCESS_TOKEN
     settings.github_access_token = GITHUB_ACCESS_TOKEN
-    settings.save()
+    settings.save(ignore_permissions=True)
     settings.reload()
 
 
@@ -286,7 +286,7 @@ def setup_teams():
                              "AdityaHase@1", "India", False)
 
     cloud.append("team_members", {"user": aditya.name})
-    cloud.save()
+    cloud.save(ignore_permissions=True)
 
 
 def setup_plans():

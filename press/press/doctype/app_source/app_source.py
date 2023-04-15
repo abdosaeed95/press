@@ -30,7 +30,7 @@ class AppSource(Document):
 
     def add_version(self, version):
         self.append("versions", {"version": version})
-        self.save()
+        self.save(ignore_permissions=True)
 
     def validate_source_signature(self):
         # Don't allow multiple sources with same signature
@@ -153,7 +153,7 @@ def create_app_source(
         }
     )
 
-    app_source.save()
+    app_source.save(ignore_permissions=True)
 
     return app_source
 

@@ -57,4 +57,4 @@ class PlanChange(Document):
             "label": _("via Plan Change"),
         }
         subscription.enabled = 1
-        subscription.save()
+        subscription.save(ignore_permissions=True)

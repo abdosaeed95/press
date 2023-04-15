@@ -61,7 +61,7 @@ class DeployCandidate(Document):
     def pre_build(self, method, **kwargs):
         self.status = "Pending"
         self.add_build_steps()
-        self.save()
+        self.save(ignore_permissions=True)
         user, session_data, team, = (
             frappe.session.user,
             frappe.session.data,
@@ -134,7 +134,7 @@ class DeployCandidate(Document):
         finally:
             self.build_end = now()
             self.build_duration = self.build_end - self.build_start
-            self.save()
+            self.save(ignore_permissions=True)
             frappe.db.commit()
 
     def add_build_steps(self):
@@ -185,7 +185,7 @@ class DeployCandidate(Document):
                 "step": "Docker Image",
             },
         )
-        self.save()
+        self.save(ignore_permissions=True)
 
     def _prepare_build_directory(self):
         build_directory = frappe.get_value(
@@ -461,7 +461,7 @@ class DeployCandidate(Document):
                 traceback.print_exc()
 
         self.build_output = "".join(lines)
-        self.save()
+        self.save(ignore_permissions=True)
         frappe.db.commit()
 
     def run(self, command, environment=None, directory=None):
@@ -486,7 +486,7 @@ class DeployCandidate(Document):
         step.status = "Running"
         start_time = now()
         # publish progress
-        self.save()
+        self.save(ignore_permissions=True)
         frappe.db.commit()
 
         try:
@@ -542,11 +542,11 @@ class DeployCandidate(Document):
                 (end_time - start_time).total_seconds(), 1)
             step.status = "Success"
 
-            self.save()
+            self.save(ignore_permissions=True)
             frappe.db.commit()
         except Exception:
             step.status = "Failure"
-            self.save()
+            self.save(ignore_permissions=True)
             frappe.db.commit()
             raise
 

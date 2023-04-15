@@ -10,50 +10,50 @@ from press.utils import log_error
 
 
 class SecurityUpdateCheck(Document):
-	def after_insert(self):
-		self.start()
+    def after_insert(self):
+        self.start()
 
-	@frappe.whitelist()
-	def start(self):
-		self.status = "Pending"
-		self.save()
-		frappe.db.commit()
-		frappe.enqueue_doc(self.doctype, self.name, "_start", queue="short")
+    @frappe.whitelist()
+    def start(self):
+        self.status = "Pending"
+        self.save(ignore_permissions=True)
+        frappe.db.commit()
+        frappe.enqueue_doc(self.doctype, self.name, "_start", queue="short")
 
-	def _start(self):
-		try:
-			ansible = Ansible(
-				playbook="security_update_check.yml",
-				server=frappe.get_doc(self.server_type, self.server),
-			)
-			self.reload()
-			self.play = ansible.play
-			self.status = "Running"
-			self.save()
-			frappe.db.commit()
-			play = ansible.run()
-			if play.status == "Success":
-				self.succeed()
-			else:
-				self.fail()
-		except Exception:
-			log_error("Security Update Check Exception", scan=self.as_dict())
-			self.fail()
-		self.save()
+    def _start(self):
+        try:
+            ansible = Ansible(
+                playbook="security_update_check.yml",
+                server=frappe.get_doc(self.server_type, self.server),
+            )
+            self.reload()
+            self.play = ansible.play
+            self.status = "Running"
+            self.save(ignore_permissions=True)
+            frappe.db.commit()
+            play = ansible.run()
+            if play.status == "Success":
+                self.succeed()
+            else:
+                self.fail()
+        except Exception:
+            log_error("Security Update Check Exception", scan=self.as_dict())
+            self.fail()
+        self.save(ignore_permissions=True)
 
-	def succeed(self):
-		self.status = "Success"
+    def succeed(self):
+        self.status = "Success"
 
-	def fail(self):
-		self.status = "Failure"
-		domain = frappe.get_value("Press Settings", "Press Settings", "domain")
-		message = f"""
+    def fail(self):
+        self.status = "Failure"
+        domain = frappe.get_value("Press Settings", "Press Settings", "domain")
+        message = f"""
 Security Update Check for *{self.server}* failed.
 
 [Security Update Check]({domain}{self.get_url()})
 """
-		chat_id = frappe.db.get_value(
-			"Press Settings", "Press Settings", "telegram_alert_chat_id"
-		)
-		telegram = Telegram(chat_id)
-		telegram.send(message)
+        chat_id = frappe.db.get_value(
+            "Press Settings", "Press Settings", "telegram_alert_chat_id"
+        )
+        telegram = Telegram(chat_id)
+        telegram.send(message)
