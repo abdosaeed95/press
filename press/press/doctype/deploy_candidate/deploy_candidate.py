@@ -651,7 +651,7 @@ class DeployCandidate(Document):
                 "benches": [{"server": server} for server in servers],
                 "staging": staging,
             }
-        ).insert()
+        ).insert(ignore_permissions=True)
         if staging:
             self.db_set("staged", True)
         return deploy
