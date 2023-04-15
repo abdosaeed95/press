@@ -346,7 +346,7 @@ class DeployCandidate(Document):
             as_dict=True,
         )
 
-        if "docker.io" in settings.docker_registry_url:
+        if "docker.io" in settings.docker_registry_namespace:
             namespace = settings.docker_registry_namespace
 
         elif settings.docker_registry_namespace:
@@ -481,6 +481,7 @@ class DeployCandidate(Document):
             raise subprocess.CalledProcessError(return_code, command)
 
     def _push_docker_image(self):
+
         step = find(self.build_steps, lambda x: x.stage_slug == "upload")
         step.status = "Running"
         start_time = now()
@@ -489,6 +490,7 @@ class DeployCandidate(Document):
         frappe.db.commit()
 
         try:
+
             settings = frappe.db.get_value(
                 "Press Settings",
                 None,
@@ -498,6 +500,7 @@ class DeployCandidate(Document):
             )
 
             client = docker.from_env()
+
             client.login(
                 registry=settings.docker_registry_url,
                 username=settings.docker_registry_username,
@@ -505,12 +508,15 @@ class DeployCandidate(Document):
             )
 
             step.output = ""
+
             output = []
+
             last_update = now()
 
             for line in client.images.push(
                     self.docker_image_repository, self.docker_image_tag, stream=True, decode=True
             ):
+
                 if "id" not in line.keys():
                     continue
 
@@ -518,11 +524,13 @@ class DeployCandidate(Document):
 
                 existing = find(output, lambda x: x["id"] == line["id"])
                 if existing:
+
                     existing["output"] = line_output
                 else:
                     output.append({"id": line["id"], "output": line_output})
 
                 if (now() - last_update).total_seconds() > 1:
+
                     step.output = "\n".join(ll["output"] for ll in output)
                     self.save(ignore_version=True)
                     frappe.db.commit()
