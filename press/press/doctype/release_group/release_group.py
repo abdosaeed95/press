@@ -19,6 +19,7 @@ DEFAULT_DEPENDENCIES = [
     {"dependency": "PYTHON_VERSION", "version": "3.7"},
     {"dependency": "WKHTMLTOPDF_VERSION", "version": "0.12.6"},
     {"dependency": "BENCH_VERSION", "version": "5.15.2"},
+
 ]
 
 
@@ -39,11 +40,12 @@ class ReleaseGroup(Document):
     def validate_title(self):
         if frappe.get_all(
                 "Release Group",
-			{"title": self.title, "team": self.team or "", "name": ("!=", self.name)},
+            {"title": self.title, "team": self.team or "",
+                "name": ("!=", self.name)},
                 limit=1,
         ):
-			frappe.throw(
-			    f"Release Group {self.title} already exists.", frappe.ValidationError)
+            frappe.throw(
+                f"Release Group {self.title} already exists.", frappe.ValidationError)
 
     def validate_frappe_app(self):
         if self.apps[0].app != "frappe":
@@ -54,8 +56,8 @@ class ReleaseGroup(Document):
         for app in self.apps:
             app_name = app.app
             if app_name in apps:
-				frappe.throw(f"App {app.app} can be added only once",
-				             frappe.ValidationError)
+                frappe.throw(f"App {app.app} can be added only once",
+                             frappe.ValidationError)
             apps.add(app_name)
 
     def validate_app_versions(self):
@@ -71,7 +73,8 @@ class ReleaseGroup(Document):
         if self.servers:
             servers = set(server.server for server in self.servers)
             if len(servers) != len(self.servers):
-				frappe.throw("Servers can be added only once", frappe.ValidationError)
+                frappe.throw("Servers can be added only once",
+                             frappe.ValidationError)
         elif self.is_new():
             server_for_new_bench = Server.get_prod_for_new_bench()
             if server_for_new_bench:
@@ -82,11 +85,13 @@ class ReleaseGroup(Document):
         # TODO: Move this to Frappe Version DocType
         dependencies = copy.deepcopy(DEFAULT_DEPENDENCIES)
         if self.version in ("Version 14", "Nightly"):
-			python = find(dependencies, lambda x: x["dependency"] == "PYTHON_VERSION")
+            python = find(
+                dependencies, lambda x: x["dependency"] == "PYTHON_VERSION")
             python["version"] = "3.10"
 
         if self.version == "Version 12":
-			node = find(dependencies, lambda x: x["dependency"] == "NODE_VERSION")
+            node = find(
+                dependencies, lambda x: x["dependency"] == "NODE_VERSION")
             node["version"] = "12.19.0"
 
         if not hasattr(self, "dependencies") or not self.dependencies:
