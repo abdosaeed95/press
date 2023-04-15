@@ -12,142 +12,147 @@ from press.press.doctype.site.test_site import create_test_site
 
 
 def create_test_subscription(
-	document_name: str, plan: str, team: str, document_type: str = "Site"
+        document_name: str, plan: str, team: str, document_type: str = "Site"
 ):
 
-	return frappe.get_doc(
-		{
-			"doctype": "Subscription",
-			"document_type": document_type,
-			"document_name": document_name,
-			"team": team,
-			"plan": plan,
-		}
-	).insert(ignore_if_duplicate=True)
+    return frappe.get_doc(
+        {
+            "doctype": "Subscription",
+            "document_type": document_type,
+            "document_name": document_name,
+            "team": team,
+            "plan": plan,
+        }
+    ).insert(ignore_if_duplicate=True)
 
 
 class TestSubscription(unittest.TestCase):
-	def test_subscription_daily(self):
-		email = "testuser@example.com"
-		team = frappe.get_doc(doctype="Team", name=email, country="India", enabled=1).insert()
-		todo = frappe.get_doc(doctype="ToDo", description="Test todo").insert()
-		plan = frappe.get_doc(
-			doctype="Plan",
-			name="Plan-10",
-			document_type="ToDo",
-			interval="Daily",
-			price_usd=30,
-			price_inr=30,
-		).insert()
+    def test_subscription_daily(self):
+        email = "testuser@example.com"
+        team = frappe.get_doc(doctype="Team", name=email, country="India", enabled=1).insert(
+            ignore_permissions=True)
+        todo = frappe.get_doc(doctype="ToDo", description="Test todo").insert(
+            ignore_permissions=True)
+        plan = frappe.get_doc(
+            doctype="Plan",
+            name="Plan-10",
+            document_type="ToDo",
+            interval="Daily",
+            price_usd=30,
+            price_inr=30,
+        ).insert(ignore_permissions=True)
 
-		subscription = frappe.get_doc(
-			doctype="Subscription",
-			team=team.name,
-			document_type="ToDo",
-			document_name=todo.name,
-			plan=plan.name,
-		).insert()
+        subscription = frappe.get_doc(
+            doctype="Subscription",
+            team=team.name,
+            document_type="ToDo",
+            document_name=todo.name,
+            plan=plan.name,
+        ).insert(ignore_permissions=True)
 
-		today = frappe.utils.getdate()
-		tomorrow = frappe.utils.add_days(today, 1)
-		desired_value = plan.get_price_per_day("INR") * 2
+        today = frappe.utils.getdate()
+        tomorrow = frappe.utils.add_days(today, 1)
+        desired_value = plan.get_price_per_day("INR") * 2
 
-		is_last_day_of_month = frappe.utils.data.get_last_day(today) == today
-		yesterday = frappe.utils.add_days(today, -1)
+        is_last_day_of_month = frappe.utils.data.get_last_day(today) == today
+        yesterday = frappe.utils.add_days(today, -1)
 
-		# Consider yesterday's and today's record instead of today and tomorrow
-		# Became flaky if it was last day of month because
-		# tomorrow went outside of this month's invoice's period
-		if is_last_day_of_month:
-			tomorrow = today
-			today = yesterday
+        # Consider yesterday's and today's record instead of today and tomorrow
+        # Became flaky if it was last day of month because
+        # tomorrow went outside of this month's invoice's period
+        if is_last_day_of_month:
+            tomorrow = today
+            today = yesterday
 
-		with patch.object(frappe.utils, "today", return_value=today):
-			subscription.create_usage_record()
-			# this should not create duplicate record
-			subscription.create_usage_record()
+        with patch.object(frappe.utils, "today", return_value=today):
+            subscription.create_usage_record()
+            # this should not create duplicate record
+            subscription.create_usage_record()
 
-		# time travel to tomorrow
-		with patch.object(frappe.utils, "today", return_value=tomorrow):
-			subscription.create_usage_record()
+        # time travel to tomorrow
+        with patch.object(frappe.utils, "today", return_value=tomorrow):
+            subscription.create_usage_record()
 
-		invoice = frappe.get_doc("Invoice", {"team": email, "status": "Draft"})
-		self.assertEqual(invoice.total, desired_value)
+        invoice = frappe.get_doc("Invoice", {"team": email, "status": "Draft"})
+        self.assertEqual(invoice.total, desired_value)
 
-	def test_subscription_for_non_chargeable_document(self):
-		email = "testuser@example.com"
-		team = frappe.get_doc(doctype="Team", name=email, country="India", enabled=1).insert()
-		todo = frappe.get_doc(doctype="ToDo", description="Test todo").insert()
-		plan = frappe.get_doc(
-			doctype="Plan",
-			name="Plan-10",
-			document_type="ToDo",
-			interval="Daily",
-			price_usd=30,
-			price_inr=30,
-		).insert()
+    def test_subscription_for_non_chargeable_document(self):
+        email = "testuser@example.com"
+        team = frappe.get_doc(doctype="Team", name=email, country="India", enabled=1).insert(
+            ignore_permissions=True)
+        todo = frappe.get_doc(doctype="ToDo", description="Test todo").insert(
+            ignore_permissions=True)
+        plan = frappe.get_doc(
+            doctype="Plan",
+            name="Plan-10",
+            document_type="ToDo",
+            interval="Daily",
+            price_usd=30,
+            price_inr=30,
+        ).insert(ignore_permissions=True)
 
-		subscription = frappe.get_doc(
-			doctype="Subscription",
-			team=team.name,
-			document_type="ToDo",
-			document_name=todo.name,
-			plan=plan.name,
-		).insert()
+        subscription = frappe.get_doc(
+            doctype="Subscription",
+            team=team.name,
+            document_type="ToDo",
+            document_name=todo.name,
+            plan=plan.name,
+        ).insert(ignore_permissions=True)
 
-		def method():
-			return False
+        def method():
+            return False
 
-		# subscription calls this method when checking if it should create a usage record
-		todo.can_charge_for_subscription = method
+        # subscription calls this method when checking if it should create a usage record
+        todo.can_charge_for_subscription = method
 
-		with patch.object(subscription, "get_subscribed_document", return_value=todo):
-			# shouldn't create a usage record
-			usage_record = subscription.create_usage_record()
-			self.assertTrue(usage_record is None)
+        with patch.object(subscription, "get_subscribed_document", return_value=todo):
+            # shouldn't create a usage record
+            usage_record = subscription.create_usage_record()
+            self.assertTrue(usage_record is None)
 
-	def test_site_in_trial(self):
-		email = "testuser@example.com"
-		team = frappe.get_doc(doctype="Team", name=email, country="India", enabled=1).insert()
-		team.create_upcoming_invoice()
+    def test_site_in_trial(self):
+        email = "testuser@example.com"
+        team = frappe.get_doc(doctype="Team", name=email, country="India", enabled=1).insert(
+            ignore_permissions=True)
+        team.create_upcoming_invoice()
 
-		two_days_after = frappe.utils.add_days(None, 2)
-		site = create_test_site()
-		site.trial_end_date = two_days_after
-		site.save()
+        two_days_after = frappe.utils.add_days(None, 2)
+        site = create_test_site()
+        site.trial_end_date = two_days_after
+        site.save()
 
-		plan = frappe.get_doc(
-			doctype="Plan",
-			name="Plan-10",
-			document_type="Site",
-			interval="Daily",
-			price_usd=30,
-			price_inr=30,
-			period=30,
-		).insert()
+        plan = frappe.get_doc(
+            doctype="Plan",
+            name="Plan-10",
+            document_type="Site",
+            interval="Daily",
+            price_usd=30,
+            price_inr=30,
+            period=30,
+        ).insert(ignore_permissions=True)
 
-		subscription = frappe.get_doc(
-			doctype="Subscription",
-			team=team.name,
-			document_type="Site",
-			document_name=site.name,
-			plan=plan.name,
-		).insert()
+        subscription = frappe.get_doc(
+            doctype="Subscription",
+            team=team.name,
+            document_type="Site",
+            document_name=site.name,
+            plan=plan.name,
+        ).insert(ignore_permissions=True)
 
-		today = frappe.utils.getdate()
-		tomorrow = frappe.utils.add_days(today, 1)
+        today = frappe.utils.getdate()
+        tomorrow = frappe.utils.add_days(today, 1)
 
-		with patch.object(frappe.utils, "today", return_value=today):
-			# shouldn't create a usage record as site is in trial
-			subscription.create_usage_record()
+        with patch.object(frappe.utils, "today", return_value=today):
+            # shouldn't create a usage record as site is in trial
+            subscription.create_usage_record()
 
-		# time travel to tomorrow
-		with patch.object(frappe.utils, "today", return_value=tomorrow):
-			# shouldn't create a usage record as site is in trial
-			subscription.create_usage_record()
+        # time travel to tomorrow
+        with patch.object(frappe.utils, "today", return_value=tomorrow):
+            # shouldn't create a usage record as site is in trial
+            subscription.create_usage_record()
 
-		invoice = frappe.get_doc("Invoice", {"team": email, "status": "Draft"})
-		self.assertEqual(invoice.total, 0)
+        invoice = frappe.get_doc("Invoice", {"team": email, "status": "Draft"})
+        self.assertEqual(invoice.total, 0)
 
-	def tearDown(self):
-		frappe.db.rollback()
+    def tearDown(self):
+        frappe.db.rollback()

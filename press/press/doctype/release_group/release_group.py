@@ -168,7 +168,7 @@ class ReleaseGroup(Document):
                 "apps": apps,
                 "dependencies": dependencies,
             }
-        ).insert()
+        ).insert(ignore_permissions=True)
 
         return candidate
 
@@ -482,7 +482,7 @@ def new_release_group(
             "team": team,
             "saas_app": saas_app,
         }
-    ).insert()
+    ).insert(ignore_permissions=True)
     return group
 
 

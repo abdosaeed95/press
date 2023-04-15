@@ -142,7 +142,7 @@ class AppRelease(Document):
                     "destination_release": self.name,
                 }
             )
-            difference.insert()
+            difference.insert(ignore_permissions=True)
 
     def auto_deploy(self):
         groups = frappe.get_all(
