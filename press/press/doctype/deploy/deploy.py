@@ -78,7 +78,7 @@ def create_deploy_candidate_differences(bench):
                         "source": source,
                         "destination": destination,
                     }
-                ).insert()
+                ).insert(ignore_permissions=True)
                 frappe.db.commit()
         except Exception:
             log_error(

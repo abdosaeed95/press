@@ -10,21 +10,21 @@ import frappe
 
 
 def create_test_deploy_candidate(group: ReleaseGroup):
-	"""
-	Create Test Deploy Candidate doc
-	"""
-	deploy_candidate = frappe.get_doc(
-		{
-			"doctype": "Deploy Candidate",
-			"team": group.team,
-			"group": group.name,
-			"apps": group.apps,
-			"dependencies": group.dependencies,
-		}
-	)
-	deploy_candidate.insert()
-	return deploy_candidate
+    """
+    Create Test Deploy Candidate doc
+    """
+    deploy_candidate = frappe.get_doc(
+        {
+            "doctype": "Deploy Candidate",
+            "team": group.team,
+            "group": group.name,
+            "apps": group.apps,
+            "dependencies": group.dependencies,
+        }
+    )
+    deploy_candidate.insert(ignore_permissions=True)
+    return deploy_candidate
 
 
 class TestDeployCandidate(unittest.TestCase):
-	pass
+    pass
