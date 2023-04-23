@@ -291,7 +291,7 @@ class SelfHostedServer(Document):
             server.hostname = self.hostname
             server.title = self.title
             server.is_self_hosted = True
-            server.domain = "self.frappe.dev"
+            server.domain = frappe.get_list("Root Domain")[0].name
             server.self_hosted_server_domain = self.domain
             server.team = self.team
             server.ip = self.ip
