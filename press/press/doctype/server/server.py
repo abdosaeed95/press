@@ -522,7 +522,6 @@ class BaseServer(Document, TagHelpers):
 			}
 		).insert()
 
-		certificate_name = frappe.db.get_value(
 
 		if self.is_self_hosted:
 			self_hosted = frappe.db.get_value(
