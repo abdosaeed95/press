@@ -850,11 +850,6 @@ class DeployCandidate(Document):
 		self.command += f" -t {docker_image_latest}"
     
 		self.command += " ."
-		result = self.run(
-			self.command,
-			environment,
-		)
-		self._parse_docker_build_result(result)
 
 
 	def _parse_docker_build_result(self, result):
