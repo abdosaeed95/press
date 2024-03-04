@@ -833,6 +833,7 @@ class DeployCandidate(Document):
 		if is_apple_silicon:
 			self.command = f"{self.command}x build --platform linux/amd64"
 		
+		settings = frappe.get_doc("Press Settings", "Press Settings")
 		if "docker.io" in settings.docker_registry_url:
 			namespace = settings.docker_registry_namespace
 			
