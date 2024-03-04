@@ -12,7 +12,6 @@ def create_dns_record(doc, record_name=None):
 	domain = frappe.get_doc("Root Domain", doc.domain)
 	is_standalone = frappe.get_value("Server", doc.server, "is_standalone")
 
-
 	if is_standalone:
 		_change_dns_record("UPSERT", domain, doc.server, record_name=record_name)
 	else:
