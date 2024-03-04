@@ -817,14 +817,6 @@ class DeployCandidate(Document):
 			environment.update({"DOCKER_HOST": f"ssh://root@{docker_remote_builder_ssh}"})
 
 
-		if "docker.io" in settings.docker_registry_url:
-			namespace = settings.docker_registry_namespace
-			
-		elif settings.docker_registry_namespace:
-			namespace = f"{settings.docker_registry_namespace}/{settings.domain}"
-		else:
-			namespace = f"{settings.domain}"
-
 		return environment
 
 
@@ -840,13 +832,30 @@ class DeployCandidate(Document):
 		)
 		if is_apple_silicon:
 			self.command = f"{self.command}x build --platform linux/amd64"
+		
+		if "docker.io" in settings.docker_registry_url:
+			namespace = settings.docker_registry_namespace
+			
+		elif settings.docker_registry_namespace:
+			namespace = f"{settings.docker_registry_namespace}/{settings.domain}"
+		else:
+			namespace = f"{settings.domain}"
+
+		self.docker_image_repository = (
+			f"{settings.docker_registry_url}/{namespace}/{self.group}"
+		)
+
+		self.docker_image_tag = self.name
+		self.docker_image = f"{self.docker_image_repository}:{self.docker_image_tag}"
+		docker_image_latest = f"{self.docker_image_repository}:latest"
 
 		if no_cache:
 			self.command += " --no-cache"
+		
 
 		self.command += f" -t {self.docker_image}"
 		
-		docker_image_latest = f"{self.docker_image_repository}:latest"
+		
 		self.command += f" -t {docker_image_latest}"
     
 		self.command += " ."
