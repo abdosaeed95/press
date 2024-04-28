@@ -70,7 +70,7 @@ website_route_rules = [
 ]
 
 website_redirects = [
-	{"source": "/dashboard/f-login", "target": get_frappe_io_auth_url() or "/"},
+	{"source": "/dashboard/f-login", "target": "/"},
 	{"source": "/f-login", "target": "/dashboard/f-login"},
 	{"source": "/signup", "target": "/erpnext/signup"},
 ]
