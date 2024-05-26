@@ -146,14 +146,17 @@ class AppRelease(Document):
 
 			self.run("git submodule sync")
 
-			# Get the commit hash for each submodule and update
+			# Initialize and update submodules to the commit recorded in the parent branch
+			self.run("git submodule update --init --recursive --jobs 4")
+
+			# Ensure each submodule is at the commit recorded in the parent repository
 			submodules = self.run("git submodule status").strip().split('\n')
 			for submodule in submodules:
 				submodule_commit, submodule_path = submodule.split()[:2]  # Unpack only the first two values
 				submodule_commit = submodule_commit.lstrip('-')  # Remove leading hyphen from the commit hash
-				self.run(f"git submodule update --init --recursive {submodule_path}")
 				
 				try:
+					# Ensure submodule is at the commit recorded in the parent repository
 					self.run(f"cd {submodule_path} && git checkout {submodule_commit}")
 				except subprocess.CalledProcessError as e:
 					log_error("App Release Command Exception", command=f"cd {submodule_path} && git checkout {submodule_commit}", output=e.output.decode())
