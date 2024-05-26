@@ -149,11 +149,12 @@ class AppRelease(Document):
 			# Get the commit hash for each submodule and update
 			submodules = self.run("git submodule status").strip().split('\n')
 			for submodule in submodules:
-				submodule_commit, submodule_path, _ = submodule.split()
+				submodule_commit, submodule_path = submodule.split()
 				self.run(f"git submodule update --init --recursive {submodule_path}")
 				self.run(f"cd {submodule_path} && git checkout {submodule_commit}")
 
 			self.run("git config --unset credential.helper")
+
 
 	def _get_repo_url(self, source: "AppSource") -> str:
 		if not source.github_installation_id:
