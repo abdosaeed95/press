@@ -152,8 +152,9 @@ class AppRelease(Document):
 			# Ensure each submodule is at the commit recorded in the parent repository
 			submodules = self.run("git submodule status").strip().split('\n')
 			for submodule in submodules:
-				submodule_commit, submodule_path = submodule.split()[:2]  # Unpack only the first two values
-				submodule_commit = submodule_commit.lstrip('-')  # Remove leading hyphen from the commit hash
+				parts = submodule.split()
+				submodule_commit = parts[0].lstrip('-')  # Get the commit hash and remove leading hyphen
+				submodule_path = parts[1]  # Get the submodule path
 				
 				try:
 					# Ensure submodule is at the commit recorded in the parent repository
@@ -164,8 +165,8 @@ class AppRelease(Document):
 					log_error("App Release Command Exception", command=f"cd {submodule_path} && git checkout {submodule_commit}", output=str(e))
 
 			self.run("git config --unset credential.helper")
-					
 
+	
 
 	def _get_repo_url(self, source: "AppSource") -> str:
 		if not source.github_installation_id:
