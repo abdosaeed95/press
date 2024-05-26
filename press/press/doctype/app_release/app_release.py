@@ -162,6 +162,7 @@ class AppRelease(Document):
 					if os.path.exists(submodule_path):
 						# Ensure submodule is at the commit recorded in the parent repository
 						self.output += self.run(f"cd {submodule_path} && git checkout {submodule_commit}")
+						self.output += "Submodule is now ready for use"
 					else:
 						pass
 				except Exception:
