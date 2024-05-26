@@ -156,19 +156,13 @@ class AppRelease(Document):
 			for submodule in submodules:
 				parts = submodule.split()
 				submodule_commit = parts[0].lstrip('-')  # Get the commit hash and remove leading hyphen
-				submodule_path = parts[1]  # Get the submodule path
-
-				self.output += str(submodule_path)
-				self.output += str(submodule_commit)
-				self.output += str(parts)
+				submodule_path = parts[1]  # Get the submodule path d
 				
-				try:
-					if os.path.exists(submodule_path):
+				try:			
 						# Ensure submodule is at the commit recorded in the parent repository
-						self.output += self.run(f"cd {submodule_path} && git checkout {submodule_commit}")
-						self.output += "Submodule is now ready for use"
-					else:
-						pass
+					self.output += self.run(f"cd {submodule_path} && git checkout {submodule_commit}")
+					self.output += "Submodule is now ready for use"
+					
 				except Exception:
 					pass
 
