@@ -151,21 +151,6 @@ class AppRelease(Document):
 			# Initialize and update submodules to the commit recorded in the parent branch
 			self.output += self.run("git submodule update --init --recursive --jobs 4")
 
-			# Ensure each submodule is at the commit recorded in the parent repository
-			submodules = self.run("git submodule status").strip().split('\n')
-			for submodule in submodules:
-				parts = submodule.split()
-				submodule_commit = parts[0].lstrip('-')  # Get the commit hash and remove leading hyphen
-				submodule_path = parts[1]  # Get the submodule path d
-				
-				try:			
-						# Ensure submodule is at the commit recorded in the parent repository
-					self.output += self.run(f"cd {submodule_path} && git checkout {submodule_commit}")
-					self.output += "Submodule is now ready for use"
-					
-				except Exception:
-					pass
-
 			self.run("git config --unset credential.helper")
 	
 
