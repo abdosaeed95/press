@@ -146,8 +146,8 @@ class AppRelease(Document):
 			
 			self.run("git submodule sync")
 			self.output += self.run("git submodule update --init --recursive")
-
-    self.run("git config --unset credential.helper")
+			
+			self.run("git config --unset credential.helper")
 
 	def _get_repo_url(self, source: "AppSource") -> str:
 		if not source.github_installation_id:
