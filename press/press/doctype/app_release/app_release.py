@@ -135,7 +135,10 @@ class AppRelease(Document):
 
 		if app.get("custom_contains_submodules"):
 			token = get_access_token(source.github_installation_id)
+			
 			self.run(f"git config url.\"https://x-access-token:{token}@github.com/\".insteadOf \"https://github.com/\"")
+			self.output += self.run("git submodule init")
+
 			self.output += self.run("git submodule update --init --recursive")
 
 	def _get_repo_url(self, source: "AppSource") -> str:
