@@ -136,17 +136,23 @@ class AppRelease(Document):
 		if app.get("custom_contains_submodules"):
 			token = get_access_token(source.github_installation_id)
 			authenticated_url = url.replace('https://', f'https://x-access-token:{token}@')
-			
+
 			# Update submodule URLs with the token
 			submodule_urls = self.run("git config --file .gitmodules --get-regexp url").strip().split('\n')
 			for line in submodule_urls:
 				submodule_path, submodule_url = line.split()
 				submodule_url_with_token = submodule_url.replace('https://', f'https://x-access-token:{token}@')
 				self.run(f"git config --file .gitmodules {submodule_path} {submodule_url_with_token}")
-			
+
 			self.run("git submodule sync")
-			self.output += self.run("git submodule update --init --recursive")
-			
+
+			# Get the commit hash for each submodule and update
+			submodules = self.run("git submodule status").strip().split('\n')
+			for submodule in submodules:
+				submodule_commit, submodule_path, _ = submodule.split()
+				self.run(f"git submodule update --init --recursive {submodule_path}")
+				self.run(f"cd {submodule_path} && git checkout {submodule_commit}")
+
 			self.run("git config --unset credential.helper")
 
 	def _get_repo_url(self, source: "AppSource") -> str:
