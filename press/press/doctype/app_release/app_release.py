@@ -149,11 +149,19 @@ class AppRelease(Document):
 			# Get the commit hash for each submodule and update
 			submodules = self.run("git submodule status").strip().split('\n')
 			for submodule in submodules:
-				submodule_commit, submodule_path = submodule.split()
+				submodule_commit, submodule_path = submodule.split()[:2]  # Unpack only the first two values
+				submodule_commit = submodule_commit.lstrip('-')  # Remove leading hyphen from the commit hash
 				self.run(f"git submodule update --init --recursive {submodule_path}")
-				self.run(f"cd {submodule_path} && git checkout {submodule_commit}")
+				
+				try:
+					self.run(f"cd {submodule_path} && git checkout {submodule_commit}")
+				except subprocess.CalledProcessError as e:
+					log_error("App Release Command Exception", command=f"cd {submodule_path} && git checkout {submodule_commit}", output=e.output.decode())
+				except FileNotFoundError as e:
+					log_error("App Release Command Exception", command=f"cd {submodule_path} && git checkout {submodule_commit}", output=str(e))
 
 			self.run("git config --unset credential.helper")
+					
 
 
 	def _get_repo_url(self, source: "AppSource") -> str:
