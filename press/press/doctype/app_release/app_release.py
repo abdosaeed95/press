@@ -157,6 +157,10 @@ class AppRelease(Document):
 				parts = submodule.split()
 				submodule_commit = parts[0].lstrip('-')  # Get the commit hash and remove leading hyphen
 				submodule_path = parts[1]  # Get the submodule path
+
+				self.output += str(submodule_path)
+				self.output += str(submodule_commit)
+				self.output += str(parts)
 				
 				try:
 					if os.path.exists(submodule_path):
