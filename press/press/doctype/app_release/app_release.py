@@ -133,6 +133,8 @@ class AppRelease(Document):
 
 		app = frappe.get_doc("App", source.app)
 
+		app = frappe.get_doc("App", source.app)
+
 		if app.get("custom_contains_submodules"):
 			token = get_access_token(source.github_installation_id)
 			authenticated_url = url.replace('https://', f'https://x-access-token:{token}@')
@@ -157,15 +159,15 @@ class AppRelease(Document):
 				submodule_path = parts[1]  # Get the submodule path
 				
 				try:
-					# Ensure submodule is at the commit recorded in the parent repository
-					self.run(f"cd {submodule_path} && git checkout {submodule_commit}")
-				except subprocess.CalledProcessError as e:
-					log_error("App Release Command Exception", command=f"cd {submodule_path} && git checkout {submodule_commit}", output=e.output.decode())
-				except FileNotFoundError as e:
-					log_error("App Release Command Exception", command=f"cd {submodule_path} && git checkout {submodule_commit}", output=str(e))
+					if os.path.exists(submodule_path):
+						# Ensure submodule is at the commit recorded in the parent repository
+						self.run(f"cd {submodule_path} && git checkout {submodule_commit}")
+					else:
+						pass
+				except Exception:
+					pass
 
 			self.run("git config --unset credential.helper")
-
 	
 
 	def _get_repo_url(self, source: "AppSource") -> str:
