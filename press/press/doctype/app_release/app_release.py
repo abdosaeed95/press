@@ -146,10 +146,10 @@ class AppRelease(Document):
 				submodule_url_with_token = submodule_url.replace('https://', f'https://x-access-token:{token}@')
 				self.run(f"git config --file .gitmodules {submodule_path} {submodule_url_with_token}")
 
-			self.run("git submodule sync")
+			self.output += self.run("git submodule sync")
 
 			# Initialize and update submodules to the commit recorded in the parent branch
-			self.run("git submodule update --init --recursive --jobs 4")
+			self.output += self.run("git submodule update --init --recursive --jobs 4")
 
 			# Ensure each submodule is at the commit recorded in the parent repository
 			submodules = self.run("git submodule status").strip().split('\n')
@@ -161,7 +161,7 @@ class AppRelease(Document):
 				try:
 					if os.path.exists(submodule_path):
 						# Ensure submodule is at the commit recorded in the parent repository
-						self.run(f"cd {submodule_path} && git checkout {submodule_commit}")
+						self.output += self.run(f"cd {submodule_path} && git checkout {submodule_commit}")
 					else:
 						pass
 				except Exception:
