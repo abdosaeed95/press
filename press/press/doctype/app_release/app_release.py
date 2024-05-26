@@ -131,6 +131,11 @@ class AppRelease(Document):
 		self.output += self.run(f"git checkout {self.hash}")
 		self.output += self.run(f"git reset --hard {self.hash}")
 
+		contains_submodules = frappe.get_value("App", source.app, "custom_contains_submodules")
+
+		if contains_submodules:
+			self.output += self.run("git submodule update --init --recursive")
+
 	def _get_repo_url(self, source: "AppSource") -> str:
 		if not source.github_installation_id:
 			return source.repository_url
