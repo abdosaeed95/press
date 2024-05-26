@@ -131,9 +131,11 @@ class AppRelease(Document):
 		self.output += self.run(f"git checkout {self.hash}")
 		self.output += self.run(f"git reset --hard {self.hash}")
 
-		contains_submodules = frappe.get_value("App", source.app, "custom_contains_submodules")
+		app = frappe.get_doc("App", source.app)
+		token = get_access_token(source.github_installation_id)
 
-		if contains_submodules:
+		if app.get("contains_submodules"):
+			self.run(f"git config --global url.\"https://x-access-token:{token}@github.com/\".insteadOf \"https://github.com/\"")
 			self.output += self.run("git submodule update --init --recursive")
 
 	def _get_repo_url(self, source: "AppSource") -> str:
