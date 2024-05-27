@@ -234,7 +234,7 @@ RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 \
   && bench setup requirements {{ app.app }} \
   && cd apps/{{ app.app }} \
   && git submodule update --init --recursive \
-  && cd /home/frappe/frappe-bench \
+  && cd /home/frappe/frappe-bench" \
   `#stage-apps-{{ app.app }}`
 {% endif %}
 {% endfor %}
