@@ -151,7 +151,7 @@ class AppRelease(Document):
 				self.output += self.run("git submodule update --init --recursive --jobs 4")
 	
 				self.run("git config --unset credential.helper")
-		except Exception:
+		except:
 			pass
 	
 
