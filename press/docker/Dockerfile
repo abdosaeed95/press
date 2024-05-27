@@ -213,7 +213,7 @@ COPY --chown=frappe:frappe redis /home/frappe/frappe-bench/redis
 COPY --chown=frappe:frappe .vimrc /home/frappe/.vimrc
 COPY --chown=frappe:frappe common_site_config.json /home/frappe/frappe-bench/sites/common_site_config.json
 
-# Install other apps
+
 {% for app in doc.apps %}
 {% if app.app != "frappe" %}
 
@@ -226,14 +226,7 @@ COPY --chown=frappe:frappe common_site_config.json /home/frappe/frappe-bench/sit
 #     {% endif %}
 #   `#stage-apps-{{ app.app }}`
 
-# {% endif %}
-# {% endfor %}
-
 #Add support for monorepo
-{% for app in doc.apps %}
-{% if app.app != "frappe" %}
-
-# Copy the app source code
 COPY --chown=frappe:frappe apps/{{ app.app }} /home/frappe/frappe-bench/apps/{{ app.app }}
 
 # Setup requirements and build the app
