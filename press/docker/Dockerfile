@@ -237,8 +237,6 @@ RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 \
   && cd /home/frappe/frappe-bench \
   && bench build --app {{ app.app }} --production" \
   `#stage-apps-{{ app.app }}`
-COPY apps/{{ app.app }}/{{ app.app }}/public /home/frappe/frappe-bench/sites/assets/{{ app.app }}
-COPY apps/{{ app.app }}/node_modules /home/frappe/frappe-bench/sites/assets/{{ app.app }}/node_modules
 {% endif %}
 {% endfor %}
 
