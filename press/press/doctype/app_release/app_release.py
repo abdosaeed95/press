@@ -134,7 +134,7 @@ class AppRelease(Document):
 		try:
 			app = frappe.get_doc("App", source.app)
 	
-			if app.get("custom_contains_submodules"):
+			if app.custom_contains_submodules == 1:
 				token = get_access_token(source.github_installation_id)
 				authenticated_url = url.replace('https://', f'https://x-access-token:{token}@')
 	
