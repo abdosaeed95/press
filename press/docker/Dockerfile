@@ -213,8 +213,6 @@ COPY --chown=frappe:frappe redis /home/frappe/frappe-bench/redis
 COPY --chown=frappe:frappe .vimrc /home/frappe/.vimrc
 COPY --chown=frappe:frappe common_site_config.json /home/frappe/frappe-bench/sites/common_site_config.json
 
-RUN cd /home/frappe/frappe-bench && bench build --app frappe --production --hard-link
-
 {% for app in doc.apps %}
 {% if app.app != "frappe" %}
 
