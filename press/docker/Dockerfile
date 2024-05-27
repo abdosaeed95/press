@@ -238,6 +238,7 @@ RUN --mount=type=bind,source=app_updates/{{ app.app }},target=/home/frappe/conte
   && git fetch --depth 1 app_update {{ app.pullable_hash }} \
   && git checkout {{ app.pullable_hash }} \
   && git remote remove app_update \
+  && git submodule update --init --recursive \
   `#stage-pull-{{ app.app }}`
 {% endif %}
 {% endfor %}
