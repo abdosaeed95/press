@@ -235,7 +235,6 @@ RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 \
   && cd apps/{{ app.app }} \
   && git submodule update --init --recursive \
   && cd /home/frappe/frappe-bench \
-  && bench build --app {{ app.app }} --production" \
   `#stage-apps-{{ app.app }}`
 {% endif %}
 {% endfor %}
@@ -253,7 +252,7 @@ RUN --mount=type=bind,source=app_updates/{{ app.app }},target=/home/frappe/conte
 {% endif %}
 {% endfor %}
 
-RUN cd /home/frappe/frappe-bench && bench build --hard-link
+RUN cd /home/frappe/frappe-bench && bench build --production --hard-link
 
 # Validate dependencies
 RUN ["/bin/bash", "-c", "if bench validate-dependencies --help 1> /dev/null 2> /dev/null; then bench validate-dependencies; else echo skipped; fi;"] `#stage-validate-dependencies`
