@@ -239,7 +239,7 @@ COPY --chown=frappe:frappe apps/{{ app.app }} /home/frappe/frappe-bench/apps/{{ 
 # Setup requirements and build the app
 RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 \
   bash -c "cd /home/frappe/frappe-bench \
-  && bench setup requirements --app {{ app.app }} \
+  && bench setup requirements \
   && cd apps/{{ app.app }} \
   && git submodule update --init --recursive \
   && cd /home/frappe/frappe-bench \
