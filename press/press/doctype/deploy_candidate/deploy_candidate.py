@@ -1344,7 +1344,7 @@ class DeployCandidate(Document):
 			self.upload_step_updater.process(output)
 
 		except Exception:
-			self..end("Failure")
+			self.end("Failure")
 			log_error("Push Docker Image Failed", doc=self)
 			raise
 		self.upload_step_updater.end("Success")
