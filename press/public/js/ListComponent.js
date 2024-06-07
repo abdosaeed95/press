@@ -77,6 +77,6 @@ function title_with_text_area_template(data) {
 			<div class="mt-3 p-2 card bg-light text-dark border-0 rounded-sm">
 				<span style="white-space: pre-line">${data.message || ''}</span>
 			</div>
-		</div>	
+		</div>
 	`;
 }

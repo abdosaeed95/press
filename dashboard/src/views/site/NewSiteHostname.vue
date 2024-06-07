@@ -78,7 +78,6 @@ export default {
 		},
 		validateSubdomain(subdomain) {
 			return validateSubdomain(subdomain);
-
 		}
 	}
 };

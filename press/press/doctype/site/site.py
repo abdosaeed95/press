@@ -279,8 +279,6 @@ class Site(Document, TagHelpers):
 		if len(self.subdomain) > 32:
 			frappe.throw("Subdomain too long. Use 32 or less characters")
 
-	
-
 	def set_site_admin_password(self):
 		# set site.admin_password if doesn't exist
 		if not self.admin_password:
@@ -529,15 +527,11 @@ class Site(Document, TagHelpers):
 		create_dns_record(self, record_name=self._get_site_name(self.subdomain))
 		self.create_agent_request()
 
-
 	@frappe.whitelist()
 	def create_dns_record(self):
 		"""Check if site needs dns records and creates one."""
-		
+
 		create_dns_record(self, record_name=self._get_site_name(self.subdomain))
-		
-
-
 
 		if self.backup_time:
 			self.backup_time = None  # because FF by default sets it to current time
@@ -991,7 +985,7 @@ class Site(Document, TagHelpers):
 
 		self.db_set("host_name", None)
 
-		#self.delete_offsite_backups()
+		# self.delete_offsite_backups()
 		# frappe.db.set_value(
 		# 	"Site Backup",
 		# 	{"site": self.name, "offsite": False},
@@ -1006,7 +1000,7 @@ class Site(Document, TagHelpers):
 		site_cleanup_after_archive(self.name)
 
 	def delete_offsite_backups(self):
-		
+
 		from press.press.doctype.remote_file.remote_file import delete_remote_backup_objects
 
 		log_site_activity(self.name, "Drop Offsite Backups")
@@ -1105,7 +1099,7 @@ class Site(Document, TagHelpers):
 	def login_as_admin(self, reason=None):
 		sid = self.login(reason=reason)
 		return f"https://{self.host_name or self.name}/desk?sid={sid}"
- 
+
 	@frappe.whitelist()
 	def login(self, reason=None):
 		log_site_activity(self.name, "Login as Administrator", reason=reason)

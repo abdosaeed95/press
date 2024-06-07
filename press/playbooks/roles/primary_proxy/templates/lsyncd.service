@@ -9,4 +9,4 @@ Group=frappe
 ExecStart=/usr/bin/lsyncd -nodaemon /home/frappe/lsyncd/lsyncd.conf.lua
 
 [Install]
-WantedBy=multi-user.target 
+WantedBy=multi-user.target

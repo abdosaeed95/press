@@ -11,7 +11,7 @@
       - apache2-utils
       - libpcre3-dev
     state: present
-    
+
 - name: Add SSL Proxy for TLS
   template:
     src: ssl.conf
