@@ -183,6 +183,7 @@ def validate_plan(server, plan):
 		frappe.db.get_value("Site Plan", plan, "price_usd") > 0
 		or frappe.db.get_value("Site Plan", plan, "dedicated_server_plan") == 1
 	):
+
 		return
 	if (
 		frappe.session.data.user_type == "System User"
@@ -1576,7 +1577,7 @@ def get_upload_link(file, parts=1):
 		aws_secret_access_key=get_decrypted_password(
 			"Press Settings", "Press Settings", "remote_secret_access_key"
 		),
-		region_name="ap-south-1",
+		region_name="eu-central-1",
 	)
 	try:
 		# The response contains the presigned URL and required fields
@@ -1621,7 +1622,7 @@ def multipart_exit(file, id, action, parts=None):
 			"remote_secret_access_key",
 			raise_exception=False,
 		),
-		region_name="ap-south-1",
+		region_name="eu-central-1",
 	)
 	if action == "abort":
 		response = s3_client.abort_multipart_upload(

@@ -32,7 +32,7 @@ def get_cluster_data(filters, cluster_name):
 	cluster = frappe.get_doc("Cluster", cluster_name)
 	client = boto3.client(
 		"pricing",
-		region_name="ap-south-1",
+		region_name="eu-central-1",
 		aws_access_key_id=cluster.aws_access_key_id,
 		aws_secret_access_key=cluster.get_password("aws_secret_access_key"),
 	)

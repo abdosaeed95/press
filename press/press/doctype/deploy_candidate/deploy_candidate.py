@@ -1285,6 +1285,7 @@ class DeployCandidate(Document):
 		environment.update(
 			{"DOCKER_BUILDKIT": "1", "BUILDKIT_PROGRESS": "plain", "PROGRESS_NO_TRUNC": "1"}
 		)
+
 		return environment
 
 	def _get_build_command(self, no_cache: bool):
@@ -1341,8 +1342,10 @@ class DeployCandidate(Document):
 				decode=True,
 			)
 			self.upload_step_updater.process(output)
+
 		except Exception:
-			self.upload_step_updater.end("Failure")
+			self.
+      .end("Failure")
 			log_error("Push Docker Image Failed", doc=self)
 			raise
 		self.upload_step_updater.end("Success")
