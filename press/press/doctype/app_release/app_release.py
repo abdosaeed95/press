@@ -33,6 +33,33 @@ AppReleasePair = TypedDict(
 
 
 class AppRelease(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		app: DF.Link
+		author: DF.Data | None
+		clone_directory: DF.Text | None
+		cloned: DF.Check
+		code_server_url: DF.Text | None
+		hash: DF.Data
+		invalid_release: DF.Check
+		invalidation_reason: DF.Code | None
+		message: DF.Code | None
+		output: DF.Code | None
+		public: DF.Check
+		source: DF.Link
+		status: DF.Literal["Draft", "Approved", "Awaiting Approval", "Rejected"]
+		team: DF.Link
+		timestamp: DF.Datetime | None
+	# end: auto-generated types
+
+	dashboard_fields = ["app", "source", "message", "hash", "author", "status"]
+
 	def validate(self):
 		if not self.clone_directory:
 			self.set_clone_directory()
@@ -46,14 +73,8 @@ class AppRelease(Document):
 			self.status = "Approved"
 
 	def after_insert(self):
-		self.publish_created()
 		self.create_release_differences()
 		self.auto_deploy()
-
-	def publish_created(self):
-		frappe.publish_realtime(
-			event="new_app_release_created", message={"source": self.source}
-		)
 
 	def get_source(self) -> AppSource:
 		"""Return the `App Source` associated with this `App Release`"""
@@ -68,23 +89,44 @@ class AppRelease(Document):
 		frappe.enqueue_doc(self.doctype, self.name, "_clone")
 
 	def _clone(self):
-		try:
-			if self.cloned:
-				return
-			self._set_prepared_clone_directory()
-			self._set_code_server_url()
-			self._clone_repo()
-			self.cloned = True
-			self.save(ignore_permissions=True)
-		except Exception:
-			log_error("App Release Clone Exception", release=self.name)
+		if self.cloned:
+			return
+
+		self._set_prepared_clone_directory()
+		self._set_code_server_url()
+		self._clone_repo()
+		self.cloned = True
+		self.validate_repo()
+		self.save(ignore_permissions=True)
+
+	def validate_repo(self):
+		if (
+			self.invalid_release
+			or not self.clone_directory
+			or not os.path.isdir(self.clone_directory)
+		):
+			return
+
+		if syntax_error := check_python_syntax(self.clone_directory):
+			self.set_invalid(syntax_error)
+		elif syntax_error := check_pyproject_syntax(self.clone_directory):
+			self.set_invalid(syntax_error)
+
+	def set_invalid(self, reason: str):
+		self.invalid_release = True
+		self.invalidation_reason = reason
 
 	def run(self, command):
 		try:
 			return run(command, self.clone_directory)
 		except Exception as e:
 			self.cleanup()
-			log_error("App Release Command Exception", command=command, output=e.output.decode())
+			log_error(
+				"App Release Command Exception",
+				command=command,
+				output=e.output.decode(),
+				doc=self,
+			)
 			raise e
 
 	def set_clone_directory(self):
@@ -119,54 +161,66 @@ class AppRelease(Document):
 			self.output += self.run(f"git fetch --depth 1 origin {self.hash}")
 		except subprocess.CalledProcessError as e:
 			stdout = e.stdout.decode("utf-8")
-			if "Repository not found." not in stdout:
+
+			if not (
+				"fatal: could not read Username for 'https://github.com'" in stdout
+				or "Repository not found." in stdout
+			):
 				raise e
 
-			frappe.throw(
-				f"Repository could not be fetched for {self.app}. "
-				"Please ensure repository access for Frappe Cloud: "
-				" https://frappecloud.com/docs/faq/custom_apps"
-			)
+			"""
+			Do not edit without updating deploy_notifications.py
+
+			If this is thrown, and the linked App Source has github_installation_id
+			set, manual attention might be required, because:
+			- Installation Id is set
+			- Installation Id is used to fetch token
+			- If token cannot be fetched, GitHub responds with an error
+			- If token is not received _get_repo_url throws
+			- Hence token was received, but app still cannot be cloned
+			"""
+			raise Exception("Repository could not be fetched", self.app)
 
 		self.output += self.run(f"git checkout {self.hash}")
 		self.output += self.run(f"git reset --hard {self.hash}")
 
 		try:
 			app = frappe.get_doc("App", source.app)
-	
+
 			if app.custom_contains_submodules == 1:
 				token = get_access_token(source.github_installation_id)
-				authenticated_url = url.replace('https://', f'https://x-access-token:{token}@')
-	
+				authenticated_url = url.replace("https://", f"https://x-access-token:{token}@")
+
 				# Update submodule URLs with the token
-				submodule_urls = self.run("git config --file .gitmodules --get-regexp url").strip().split('\n')
+				submodule_urls = (
+					self.run("git config --file .gitmodules --get-regexp url").strip().split("\n")
+				)
 				for line in submodule_urls:
 					submodule_path, submodule_url = line.split()
-					submodule_url_with_token = submodule_url.replace('https://', f'https://x-access-token:{token}@')
-					self.run(f"git config --file .gitmodules {submodule_path} {submodule_url_with_token}")
-	
+					submodule_url_with_token = submodule_url.replace(
+						"https://", f"https://x-access-token:{token}@"
+					)
+					self.run(
+						f"git config --file .gitmodules {submodule_path} {submodule_url_with_token}"
+					)
+
 				self.output += self.run("git submodule sync")
-	
+
 				# Initialize and update submodules to the commit recorded in the parent branch
 				self.output += self.run("git submodule update --init --recursive --jobs 4")
-	
+
 				self.run("git config --unset credential.helper")
 		except:
 			pass
-	
 
 	def _get_repo_url(self, source: "AppSource") -> str:
 		if not source.github_installation_id:
 			return source.repository_url
 
-		try:
-			token = get_access_token(source.github_installation_id)
-		except KeyError:
-			frappe.throw(
-				f"App installation token could not be fetched for {self.app}. "
-				"Please ensure repository access for Frappe Cloud: "
-				" https://frappecloud.com/docs/faq/custom_apps"
-			)
+		token = get_access_token(source.github_installation_id)
+		if token is None:
+			# Do not edit without updating deploy_notifications.py
+			raise Exception("App installation token could not be fetched", self.app)
 
 		return f"https://x-access-token:{token}@github.com/{source.repository_owner}/{source.repository}"
 
@@ -227,7 +281,7 @@ class AppRelease(Document):
 			apps = [app.as_dict() for app in group.apps if app.enable_auto_deploy]
 			candidate = group.create_deploy_candidate(apps)
 			if candidate:
-				candidate.deploy_to_production()
+				candidate.schedule_build_and_deploy()
 
 
 def cleanup_unused_releases():
@@ -273,7 +327,12 @@ def cleanup_unused_releases():
 				deleted += 1
 				frappe.db.commit()
 			except Exception:
-				log_error("App Release Cleanup Error", release=release)
+				log_error(
+					"App Release Cleanup Error",
+					release=release,
+					reference_doctype="App Release",
+					reference_name=release,
+				)
 				frappe.db.rollback()
 
 
@@ -415,3 +474,48 @@ def run(command, cwd):
 	return subprocess.check_output(
 		shlex.split(command), stderr=subprocess.STDOUT, cwd=cwd
 	).decode()
+
+
+def check_python_syntax(dirpath: str) -> str:
+	"""
+	Script `compileall` will compile all the Python files
+	in the given directory.
+
+	If there are errors then return code will be non-zero.
+
+	Flags:
+	- -q: quiet, only print errors (stdout)
+	- -o: optimize level, 0 is no optimization
+	"""
+
+	command = f"python -m compileall -q -o 0 {dirpath}"
+	proc = subprocess.run(
+		shlex.split(command),
+		text=True,
+		capture_output=True,
+	)
+	if proc.returncode == 0:
+		return ""
+
+	if not proc.stdout:
+		return proc.stderr
+
+	return proc.stdout
+
+
+def check_pyproject_syntax(dirpath: str) -> str:
+	# tomllib does not report errors as expected
+	# instead returns empty dict
+	from tomli import TOMLDecodeError, load
+
+	pyproject_path = os.path.join(dirpath, "pyproject.toml")
+	if not os.path.isfile(pyproject_path):
+		return ""
+
+	with open(pyproject_path, "rb") as f:
+		try:
+			load(f)
+		except TOMLDecodeError as err:
+			return "Invalid pyproject.toml at project root\n" + "\n".join(err.args)
+
+	return ""

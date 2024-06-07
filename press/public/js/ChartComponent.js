@@ -39,7 +39,7 @@ class ChartComponent {
 			}
 		} else {
 			chart_section.append(`
-                <table style="height: 250px"> 
+                <table style="height: 250px">
                     <tbody>
                         <tr>
                             <td/>

@@ -10,6 +10,10 @@ no_cache = 1
 
 
 def get_context():
+	return _get_context()
+
+
+def _get_context():
 	csrf_token = frappe.sessions.get_csrf_token()
 	frappe.db.commit()
 	context = frappe._dict()
@@ -29,6 +33,7 @@ def get_boot():
 	return frappe._dict(
 		frappe_version=frappe.__version__,
 		press_frontend_sentry_dsn=frappe.conf.press_frontend_sentry_dsn or "",
+		press_dashboard_sentry_dsn=frappe.conf.press_dashboard_sentry_dsn or "",
 		press_frontend_posthog_host=frappe.conf.posthog_host or "",
 		press_frontend_posthog_project_id=frappe.conf.posthog_project_id or "",
 		press_site_name=frappe.conf.site,

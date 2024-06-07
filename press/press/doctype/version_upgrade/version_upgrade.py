@@ -13,6 +13,25 @@ from press.utils import log_error
 
 
 class VersionUpgrade(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		destination_group: DF.Link
+		last_output: DF.Code | None
+		last_traceback: DF.Code | None
+		scheduled_time: DF.Datetime | None
+		site: DF.Link
+		site_update: DF.Link | None
+		skip_failing_patches: DF.Check
+		source_group: DF.Link | None
+		status: DF.Literal["Scheduled", "Pending", "Running", "Success", "Failure"]
+	# end: auto-generated types
+
 	doctype = "Version Upgrade"
 
 	def validate(self):
@@ -161,8 +180,8 @@ def update_from_site_update():
 				)
 			version_upgrade.save()
 			frappe.db.commit()
-		except Exception as e:
-			frappe.log_error(f"Error while updating Version Upgrade {version_upgrade.name}", e)
+		except Exception:
+			frappe.log_error(f"Error while updating Version Upgrade {version_upgrade.name}")
 			frappe.db.rollback()
 
 

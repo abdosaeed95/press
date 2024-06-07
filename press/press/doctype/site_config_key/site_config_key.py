@@ -7,7 +7,22 @@ from frappe.model.document import Document
 
 
 class SiteConfigKey(Document):
-	dashboard_fields = ["key", "title", "description", "type"]
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		description: DF.SmallText | None
+		internal: DF.Check
+		key: DF.Data
+		title: DF.Data | None
+		type: DF.Literal["Password", "String", "Number", "Boolean", "JSON"]
+	# end: auto-generated types
+
+	dashboard_fields = ["key", "title", "description", "type", "internal"]
 
 	def validate(self):
 		import frappe

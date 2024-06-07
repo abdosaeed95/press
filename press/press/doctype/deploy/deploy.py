@@ -11,6 +11,22 @@ from press.overrides import get_permission_query_conditions_for_doctype
 
 
 class Deploy(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+		from press.press.doctype.deploy_bench.deploy_bench import DeployBench
+
+		benches: DF.Table[DeployBench]
+		candidate: DF.Link
+		group: DF.Link
+		staging: DF.Check
+		team: DF.Link
+	# end: auto-generated types
+
 	def autoname(self):
 		self.name = append_number_if_name_exists("Deploy", self.candidate, separator="-")
 
@@ -48,29 +64,28 @@ class Deploy(Document):
 			).insert()
 			bench.bench = new.name
 
-			frappe.enqueue(
-				"press.press.doctype.deploy.deploy.create_deploy_candidate_differences",
-				bench=new,
-				enqueue_after_commit=True,
-			)
+		frappe.enqueue(
+			"press.press.doctype.deploy.deploy.create_deploy_candidate_differences",
+			destination=self.candidate,
+			enqueue_after_commit=True,
+		)
 		self.save()
 
 
-def create_deploy_candidate_differences(bench):
-	group = bench.group
-	destination = bench.candidate
-	destination_creation = frappe.db.get_value("Deploy Candidate", destination, "creation")
-	benches = frappe.get_all(
+def create_deploy_candidate_differences(destination):
+	destination = frappe.get_cached_doc("Deploy Candidate", destination)
+	group = destination.group
+	destination_creation = destination.creation
+	candidates = frappe.get_all(
 		"Bench",
-		fields="candidate",
+		pluck="candidate",
 		filters={
-			"server": bench.server,
 			"status": ("!=", "Archived"),
 			"group": group,
-			"candidate": ("!=", destination),
+			"candidate": ("!=", destination.name),
 		},
 	)
-	candidates = list(set(b.candidate for b in benches))
+	candidates = list(set(candidates))
 	for source in candidates:
 		try:
 			source_creation = frappe.db.get_value("Deploy Candidate", source, "creation")
@@ -80,7 +95,7 @@ def create_deploy_candidate_differences(bench):
 					filters={
 						"group": group,
 						"source": source,
-						"destination": destination,
+						"destination": destination.name,
 					},
 					limit=1,
 				):
@@ -90,14 +105,14 @@ def create_deploy_candidate_differences(bench):
 						"doctype": "Deploy Candidate Difference",
 						"group": group,
 						"source": source,
-						"destination": destination,
+						"destination": destination.name,
 					}
 				).insert()
 				frappe.db.commit()
 		except Exception:
 			log_error(
 				"Deploy Candidate Difference Creation Error",
-				bench=bench.as_dict(),
+				destination=destination,
 				candidates=candidates,
 				source=source,
 			)

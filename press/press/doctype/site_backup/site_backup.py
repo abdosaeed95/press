@@ -4,7 +4,7 @@
 
 
 import json
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict
 
 import frappe
@@ -14,6 +14,42 @@ from press.agent import Agent
 
 
 class SiteBackup(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		config_file: DF.Data | None
+		config_file_size: DF.Data | None
+		config_file_url: DF.Text | None
+		database: DF.Data | None
+		database_file: DF.Data | None
+		database_size: DF.Data | None
+		database_url: DF.Text | None
+		files_availability: DF.Literal["", "Available", "Unavailable"]
+		job: DF.Link | None
+		offsite: DF.Check
+		offsite_backup: DF.Code | None
+		private_file: DF.Data | None
+		private_size: DF.Data | None
+		private_url: DF.Text | None
+		public_file: DF.Data | None
+		public_size: DF.Data | None
+		public_url: DF.Text | None
+		remote_config_file: DF.Link | None
+		remote_database_file: DF.Link | None
+		remote_private_file: DF.Link | None
+		remote_public_file: DF.Link | None
+		site: DF.Link
+		size: DF.Data | None
+		status: DF.Literal["Pending", "Running", "Success", "Failure"]
+		url: DF.Data | None
+		with_files: DF.Check
+	# end: auto-generated types
+
 	dashboard_fields = [
 		"status",
 		"database_url",
@@ -27,12 +63,16 @@ class SiteBackup(Document):
 		"with_files",
 		"offsite",
 		"files_availability",
+		"remote_database_file",
+		"remote_public_file",
+		"remote_private_file",
+		"remote_config_file",
 	]
 
 	def before_insert(self):
 		if getattr(self, "force", False):
 			return
-		two_hours_ago = datetime.now() - timedelta(hours=2)
+		two_hours_ago = frappe.utils.add_to_date(None, hours=-2)
 		if frappe.db.count(
 			"Site Backup",
 			{
@@ -118,7 +158,12 @@ def process_backup_site_job_update(job):
 		return
 	backup = backups[0]
 	if job.status != backup.status:
-		frappe.db.set_value("Site Backup", backup.name, "status", job.status)
+
+		status = job.status
+		if job.status == "Delivery Failure":
+			status = "Failure"
+
+		frappe.db.set_value("Site Backup", backup.name, "status", status)
 		if job.status == "Success":
 			job_data = json.loads(job.data)
 			backup_data, offsite_backup_data = job_data["backups"], job_data["offsite"]
@@ -174,3 +219,7 @@ def get_backup_bucket(cluster, region=False):
 		return bucket_for_cluster[0] if bucket_for_cluster else default_bucket
 	else:
 		return bucket_for_cluster[0]["name"] if bucket_for_cluster else default_bucket
+
+
+def on_doctype_update():
+	frappe.db.add_index("Site Backup", ["files_availability", "job"])

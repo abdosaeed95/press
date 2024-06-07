@@ -3,8 +3,8 @@ from frappe.utils import get_url
 from typing import Dict, List
 
 from press.api.developer import raise_invalid_key_error
-from press.api.marketplace import prepaid_saas_payment
 from press.api.site import get_plans as get_site_plans
+from press.utils.telemetry import capture
 
 
 class DeveloperApiHandler:
@@ -54,7 +54,6 @@ class DeveloperApiHandler:
 	def get_subscription(self) -> Dict:
 		team = self.app_subscription_doc.team
 		with SessionManager(team) as _:
-			from press.utils.telemetry import capture
 
 			currency, address = frappe.db.get_value(
 				"Team", team, ["currency", "billing_address"]
@@ -81,8 +80,7 @@ class DeveloperApiHandler:
 				"current_plan": frappe.db.get_value("Site", self.app_subscription_doc.site, "plan"),
 			}
 
-			capture("clicked_subscribe_button", "fc_signup", team)
-
+			capture("attempted", "fc_subscribe", team)
 			return response
 
 	def update_billing_info(self, data: Dict) -> str:
@@ -91,6 +89,7 @@ class DeveloperApiHandler:
 			team_doc = frappe.get_doc("Team", team)
 			team_doc.update_billing_details(data)
 
+			capture("updated_address", "fc_subscribe", team)
 			return "success"
 
 	def get_publishable_key_and_setup_intent(self):
@@ -100,28 +99,19 @@ class DeveloperApiHandler:
 			return get_publishable_key_and_setup_intent()
 
 	def setup_intent_success(self, setup_intent):
-		with SessionManager(self.app_subscription_doc.team) as _:
+		team = self.app_subscription_doc.team
+		with SessionManager(team) as _:
 			from press.api.billing import setup_intent_success
 
+			capture("added_card", "fc_subscribe", team)
 			return setup_intent_success(setup_intent)
 
 	def change_site_plan(self, plan):
-		with SessionManager(self.app_subscription_doc.team) as _:
+		team = self.app_subscription_doc.team
+		with SessionManager(team) as _:
 			site = frappe.get_doc("Site", self.app_subscription_doc.site)
 			site.change_plan(plan)
-
-	def saas_payment(self, data: Dict) -> Dict:
-		with SessionManager(self.app_subscription_doc.team) as _:
-			return prepaid_saas_payment(
-				data["sub_name"],
-				data["app"],
-				data["site"],
-				data["new_plan"]["name"],
-				data["total"],
-				data["total"],
-				12 if data["billing"] == "annual" else 1,
-				False,
-			)
+			capture("changed_plan", "fc_subscribe", team)
 
 	def send_login_link(self):
 		try:
@@ -236,13 +226,6 @@ def setup_intent_success(secret_key: str, setup_intent) -> str:
 def change_site_plan(secret_key: str, plan: str) -> str:
 	api_handler = DeveloperApiHandler(secret_key)
 	return api_handler.change_site_plan(plan)
-
-
-@frappe.whitelist(allow_guest=True)
-def saas_payment(secret_key: str, data) -> str:
-	data = frappe.parse_json(data)
-	api_handler = DeveloperApiHandler(secret_key)
-	return api_handler.saas_payment(data)
 
 
 @frappe.whitelist(allow_guest=True)

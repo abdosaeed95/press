@@ -9,6 +9,7 @@ export function getTeam() {
 			name: getCurrentTeam(),
 			whitelistedMethods: {
 				getTeamMembers: 'get_team_members',
+				inviteTeamMember: 'invite_team_member',
 				removeTeamMember: 'remove_team_member'
 			}
 		});
@@ -31,7 +32,7 @@ function getCurrentTeam() {
 			!window.is_system_user)
 	) {
 		currentTeam = window.default_team;
-		localStorage.setItem('current_team', currentTeam);
+		if (currentTeam) localStorage.setItem('current_team', currentTeam);
 	}
 	return currentTeam;
 }

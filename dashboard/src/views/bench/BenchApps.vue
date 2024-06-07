@@ -43,7 +43,7 @@
 									placement="top"
 								>
 									<a
-										href="https://frappecloud.com/docs/faq/custom_apps#why-does-it-show-attention-required-next-to-my-custom-app"
+										href="https://frappecloud.com/docs/faq/app-installation-issue"
 										target="_blank"
 									>
 										<FeatherIcon
@@ -127,7 +127,6 @@
 					</Button>
 				</template>
 			</Dialog>
-
 			<ChangeAppBranchDialog
 				:bench="benchName"
 				v-model:app="appToChangeBranchOf"
@@ -152,6 +151,7 @@ export default {
 		return {
 			selectedApps: [],
 			showAddAppDialog: false,
+			appToPatch: null,
 			appToChangeBranchOf: null,
 			searchTerm: '',
 			filteredOptions: []

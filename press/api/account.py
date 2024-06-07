@@ -9,7 +9,8 @@ import frappe
 from frappe import _
 from frappe.core.doctype.user.user import update_password
 from frappe.exceptions import DoesNotExistError
-from frappe.utils import get_url, random_string
+from frappe.utils.data import sha256_hash
+from frappe.utils import get_url
 from frappe.utils.oauth import get_oauth2_authorize_url, get_oauth_keys
 from frappe.website.utils import build_response
 from frappe.core.utils import find
@@ -76,6 +77,7 @@ def setup_account(
 	accepted_user_terms=False,
 	invited_by_parent_team=False,
 	oauth_signup=False,
+	oauth_domain=False,
 	signup_values=None,
 ):
 	account_request = get_account_request_from_key(key)
@@ -86,7 +88,7 @@ def setup_account(
 		if not first_name:
 			frappe.throw("First Name is required")
 
-		if not password and not oauth_signup:
+		if not password and not (oauth_signup or oauth_domain):
 			frappe.throw("Password is required")
 
 		if not is_invitation and not country:
@@ -127,6 +129,7 @@ def setup_account(
 			password=password,
 			country=country,
 			user_exists=bool(user_exists),
+			default_to_new_dashboard=True,
 		)
 		if invited_by_parent_team:
 			doc = frappe.get_doc("Team", account_request.invited_by)
@@ -193,29 +196,6 @@ def login_using_key(key):
 			http_status_code=403,
 			indicator_color="red",
 		)
-
-
-@frappe.whitelist()
-def approve_partner_request(key):
-	partner_request_doc = frappe.get_doc("Partner Approval Request", {"key": key})
-
-	if partner_request_doc and partner_request_doc.status == "Pending":
-		partner_request_doc.status = "Approved"
-		partner_request_doc.save(ignore_permissions=True)
-
-		partner = frappe.get_doc("Team", partner_request_doc.partner)
-
-		customer_team = frappe.get_doc("Team", partner_request_doc.requested_by)
-		customer_team.partner_email = partner.partner_email
-		team_members = [d.user for d in customer_team.team_members]
-		if partner.user not in team_members:
-			customer_team.append("team_members", {"user": partner.user})
-		customer_team.save(ignore_permissions=True)
-
-		frappe.db.commit()
-
-		frappe.response.type = "redirect"
-		frappe.response.location = "/dashboard/settings/partner"
 
 
 @frappe.whitelist()
@@ -316,96 +296,22 @@ def validate_request_key(key, timezone=None):
 			"user_exists": frappe.db.exists("User", account_request.email),
 			"team": account_request.team,
 			"is_invitation": frappe.db.get_value("Team", account_request.team, "enabled"),
+			"invited_by": account_request.invited_by,
 			"invited_by_parent_team": account_request.invited_by_parent_team,
 			"oauth_signup": account_request.oauth_signup,
+			"oauth_domain": frappe.db.exists(
+				"OAuth Domain Mapping", {"email_domain": account_request.email.split("@")[1]}
+			),
 			"saas_product": {
 				"name": saas_product_doc.name,
 				"title": saas_product_doc.title,
 				"logo": saas_product_doc.logo,
 				"signup_fields": saas_product_doc.signup_fields,
-				"description": frappe.utils.md_to_html(saas_product_doc.description),
+				"description": saas_product_doc.description,
 			}
 			if saas_product_doc
 			else None,
 		}
-
-
-@frappe.whitelist()
-def get_partner_request_status(team):
-	return frappe.db.get_value(
-		"Partner Approval Request", {"requested_by": team}, "status"
-	)
-
-
-@frappe.whitelist()
-def update_partnership_date(team, partnership_date):
-	if team:
-		team_doc = frappe.get_doc("Team", team)
-		team_doc.partnership_date = partnership_date
-		team_doc.save()
-
-
-@frappe.whitelist()
-def get_partner_details(partner_email):
-	from press.utils.billing import get_frappe_io_connection
-
-	client = get_frappe_io_connection()
-	data = client.get_doc(
-		"Partner",
-		filters={"email": partner_email, "enabled": 1},
-		fields=[
-			"email",
-			"partner_type",
-			"company_name",
-			"custom_ongoing_period_fc_invoice_contribution",
-			"custom_ongoing_period_enterprise_invoice_contribution",
-			"custom_ongoing_period_revenue_contribution",
-			"partner_name",
-		],
-	)
-	if data:
-		return data[0]
-	else:
-		frappe.throw("Partner Details not found")
-
-
-@frappe.whitelist()
-def get_partner_name(partner_email):
-	return frappe.db.get_value(
-		"Team",
-		{"partner_email": partner_email, "enabled": 1, "erpnext_partner": 1},
-		"billing_name",
-	)
-
-
-@frappe.whitelist()
-def transfer_credits(amount, customer, partner):
-	amt = frappe.utils.flt(amount)
-	partner_doc = frappe.get_doc("Team", partner)
-	credits_available = partner_doc.get_balance()
-
-	if credits_available < amt:
-		frappe.throw("Insufficient Credits to transfer")
-
-	customer_doc = frappe.get_doc("Team", customer)
-	credits_to_transfer = amt
-	if customer_doc.currency != partner_doc.currency:
-		if partner_doc.currency == "USD":
-			credits_to_transfer = amt * 83
-		else:
-			credits_to_transfer = amt / 83
-
-	try:
-		customer_doc.allocate_credit_amount(
-			credits_to_transfer, "Transferred Credits", f"From {partner_doc.name}"
-		)
-		partner_doc.allocate_credit_amount(
-			amt * -1, "Transferred Credits", f"To {customer_doc.name}"
-		)
-		frappe.db.commit()
-	except Exception:
-		frappe.throw("Error in transferring credits")
-		frappe.db.rollback()
 
 
 @frappe.whitelist(allow_guest=True)
@@ -449,16 +355,16 @@ def get():
 	cached = None
 	try:
 		cached = frappe.cache.get_value("cached-account.get", user=frappe.session.user)
-	except: 
+	except:
 		pass
-	
+
 	if cached:
 		return cached
 	else:
 		value = _get()
 		frappe.cache.set_value(
-				"cached-account.get", value, user=frappe.session.user, expires_in_sec=60
-			)
+			"cached-account.get", value, user=frappe.session.user, expires_in_sec=60
+		)
 		return value
 
 
@@ -571,11 +477,13 @@ def signup_settings(product=None):
 			["title", "description", "logo"],
 			as_dict=1,
 		)
-		saas_product.description = frappe.utils.md_to_html(saas_product.description)
 
 	return {
 		"enable_google_oauth": settings.enable_google_oauth,
 		"saas_product": saas_product,
+		"oauth_domains": frappe.get_all(
+			"OAuth Domain Mapping", ["email_domain", "social_login_key", "provider_name"]
+		),
 	}
 
 
@@ -700,13 +608,31 @@ def update_feature_flags(values=None):
 @frappe.whitelist(allow_guest=True)
 @rate_limit(limit=5, seconds=60 * 60)
 def send_reset_password_email(email):
-	frappe.utils.validate_email_address(email, True)
+	email = frappe.utils.validate_email_address(email, True)
+	if not email:
+		frappe.throw(
+			"{} is not a valid Email Address".format(email),
+			frappe.InvalidEmailAddressError,
+		)
 
 	email = email.strip()
-	key = random_string(32)
+	key = frappe.generate_hash()
+	hashed_key = sha256_hash(key)
 	if frappe.db.exists("User", email):
-		frappe.db.set_value("User", email, "reset_password_key", key)
+		frappe.db.set_value(
+			"User",
+			email,
+			{
+				"reset_password_key": hashed_key,
+				"last_reset_password_key_generated_on": frappe.utils.now_datetime(),
+			},
+		)
 		url = get_url("/dashboard/reset-password/" + key)
+		if frappe.conf.developer_mode:
+			print(f"\nReset password URL for {email}:")
+			print(url)
+			print()
+			return
 		frappe.sendmail(
 			recipients=email,
 			subject="Reset Password",
@@ -728,11 +654,12 @@ def get_user_for_reset_password_key(key):
 	if not key or not isinstance(key, str):
 		frappe.throw(_("Invalid Key"))
 
-	return frappe.db.get_value("User", {"reset_password_key": key}, "name")
+	hashed_key = sha256_hash(key)
+	return frappe.db.get_value("User", {"reset_password_key": hashed_key}, "name")
 
 
 @frappe.whitelist()
-def add_team_member(email):
+def add_team_member(email, new_dashboard=False):
 	frappe.utils.validate_email_address(email, True)
 
 	team = get_current_team(True)
@@ -743,6 +670,7 @@ def add_team_member(email):
 			"email": email,
 			"role": "Press Member",
 			"invited_by": team.user,
+			"new_signup_flow": new_dashboard,
 			"send_email": True,
 		}
 	).insert()
@@ -841,6 +769,9 @@ def feedback(message, route=None):
 
 @frappe.whitelist()
 def user_prompts():
+	if frappe.local.dev_server:
+		return
+
 	team = get_current_team(True)
 	doc = frappe.get_doc("Team", team.name)
 
@@ -862,6 +793,37 @@ def user_prompts():
 			"UpdateBillingDetails",
 			"If you have a registered GSTIN number, you are required to update it, so that we can generate a GST Invoice.",
 		]
+
+
+@frappe.whitelist()
+def get_site_request(product):
+	team = frappe.local.team()
+	requests = frappe.qb.get_query(
+		"SaaS Product Site Request",
+		filters={
+			"team": team.name,
+			"saas_product": product,
+		},
+		fields=["name", "status", "site", "site.trial_end_date as trial_end_date"],
+		order_by="creation desc",
+	).run(as_dict=1)
+	if not requests:
+		site_request = frappe.new_doc(
+			"SaaS Product Site Request",
+			saas_product=product,
+			team=team.name,
+		).insert(ignore_permissions=True)
+		return {"pending": site_request.name}
+	else:
+		pending = [
+			d
+			for d in requests
+			if not d.site or d.status in ["Pending", "Wait for Site", "Error"]
+		]
+		return {
+			"pending": pending[0].name if pending else None,
+			"completed": [d for d in requests if d.site and d.status == "Site Created"],
+		}
 
 
 def redirect_to(location):
@@ -893,49 +855,10 @@ def get_frappe_io_auth_url() -> Union[str, None]:
 
 
 @frappe.whitelist()
-def add_partner(referral_code: str):
-	team = get_current_team(get_doc=True)
-	partner = frappe.get_doc("Team", {"partner_referral_code": referral_code}).name
-	doc = frappe.get_doc(
-		{
-			"doctype": "Partner Approval Request",
-			"partner": partner,
-			"requested_by": team.name,
-			"status": "Pending",
-			"send_mail": True,
-		}
-	)
-	doc.insert(ignore_permissions=True)
-
-
-@frappe.whitelist()
-def validate_partner_code(code):
-	partner = frappe.db.get_value(
-		"Team",
-		{"enabled": 1, "erpnext_partner": 1, "partner_referral_code": code},
-		"billing_name",
-	)
-	if partner:
-		return True, partner
-	return False, None
-
-
-@frappe.whitelist()
-def get_partner_customers():
-	team = get_current_team(get_doc=True)
-	customers = frappe.get_all(
-		"Team",
-		{"enabled": 1, "erpnext_partner": 0, "partner_email": team.partner_email},
-		["name", "user", "payment_mode", "billing_name", "currency"],
-	)
-	return customers
-
-
-@frappe.whitelist()
 def get_emails():
-	team = get_current_team(True)
+	team = get_current_team()
 	data = frappe.get_all(
-		"Communication Email", filters={"parent": team.name}, fields=["type", "value"]
+		"Communication Email", filters={"parent": team}, fields=["type", "value"]
 	)
 
 	return data
@@ -946,7 +869,7 @@ def update_emails(data):
 	from frappe.utils import validate_email_address
 
 	data = {x["type"]: x["value"] for x in json.loads(data)}
-	for key, value in data:
+	for key, value in data.items():
 		validate_email_address(value, throw=True)
 
 	team_doc = get_current_team(get_doc=True)
@@ -961,6 +884,13 @@ def add_key(key):
 	frappe.get_doc(
 		{"doctype": "User SSH Key", "user": frappe.session.user, "ssh_public_key": key}
 	).insert()
+
+
+@frappe.whitelist()
+def mark_key_as_default(key_name):
+	key = frappe.get_doc("User SSH Key", key_name)
+	key.is_default = True
+	key.save()
 
 
 @frappe.whitelist()
@@ -1152,3 +1082,28 @@ def remove_permission_group_user(name, user):
 			doc.remove(group_user)
 			doc.save(ignore_permissions=True)
 			break
+
+
+@frappe.whitelist()
+def get_permission_roles():
+	PressRole = frappe.qb.DocType("Press Role")
+	PressRoleUser = frappe.qb.DocType("Press Role User")
+
+	return (
+		frappe.qb.from_(PressRole)
+		.select(
+			PressRole.name,
+			PressRole.allow_billing,
+			PressRole.allow_apps,
+			PressRole.allow_site_creation,
+			PressRole.allow_bench_creation,
+			PressRole.allow_server_creation,
+		)
+		.join(PressRoleUser)
+		.on(
+			(PressRole.name == PressRoleUser.parent)
+			& (PressRoleUser.user == frappe.session.user)
+		)
+		.where(PressRole.team == get_current_team())
+		.run(as_dict=True)
+	)

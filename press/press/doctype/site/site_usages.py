@@ -1,6 +1,6 @@
 import frappe
 import functools
-from press.press.doctype.plan.plan import get_plan_config
+from press.press.doctype.site_plan.site_plan import get_plan_config
 from press.api.analytics import get_current_cpu_usage
 from press.utils import log_error
 
@@ -49,7 +49,7 @@ def update_cpu_usages():
 				site_doc.current_cpu_usage = latest_cpu_usage
 				site_doc.save()
 				frappe.db.commit()
-			except Exception():
+			except Exception:
 				log_error("Site CPU Usage Update Error", cpu_usage=cpu_usage, cpu_limit=cpu_limit)
 				frappe.db.rollback()
 
@@ -58,7 +58,7 @@ def update_disk_usages():
 	"""Update Storage and Database Usages fields Site.current_database_usage and Site.current_disk_usage for sites that have Site Usage documents"""
 
 	latest_disk_usages = frappe.db.sql(
-		r"""WITH disk_usage AS (
+		"""WITH disk_usage AS (
 			SELECT
 				`site`,
 				`database`,
@@ -67,7 +67,7 @@ def update_disk_usages():
 			FROM
 				`tabSite Usage`
 			WHERE
-				`site` NOT LIKE '%cloud.archived%'
+				`creation` > %s
 		),
 		joined AS (
 			SELECT
@@ -93,7 +93,8 @@ def update_disk_usages():
 			WHERE
 				`rank` = 1 AND
 				s.`document_type` = 'Site' AND
-				s.`enabled`
+				s.`enabled` AND
+				site.`status` != "Archived"
 		)
 		SELECT
 			j.site,
@@ -105,16 +106,19 @@ def update_disk_usages():
 			ABS(j.latest_database_usage - j.current_database_usage ) > 1 OR
 			ABS(j.latest_disk_usage - j.current_disk_usage) > 1
 	""",
+		values=(frappe.utils.add_to_date(frappe.utils.now(), hours=-12),),
 		as_dict=True,
 	)
 
 	for usage in latest_disk_usages:
 		try:
-			site = frappe.get_doc("Site", usage.site)
+			site = frappe.get_doc("Site", usage.site, for_update=True)
 			site.current_database_usage = usage.latest_database_usage
 			site.current_disk_usage = usage.latest_disk_usage
 			site.save()
 			frappe.db.commit()
+		except frappe.DoesNotExistError:
+			frappe.db.rollback()
 		except Exception:
 			log_error("Site Disk Usage Update Error", usage=usage)
 			frappe.db.rollback()

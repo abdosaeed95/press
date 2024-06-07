@@ -78,7 +78,7 @@
 									'site',
 									'sites'
 							  )}`
-							: 'Skip and Deploy'
+							: 'Skip and deploy'
 					"
 					:loading="$resources.deploy.loading"
 					@click="$resources.deploy.submit()"
@@ -223,9 +223,10 @@ export default {
 						}
 					},
 					{
-						label: 'View Changes',
+						label: 'Changes',
 						type: 'Button',
 						width: 0.5,
+						align: 'right',
 						Button({ row }) {
 							let url;
 							if (row.current_hash && row.next_release) {

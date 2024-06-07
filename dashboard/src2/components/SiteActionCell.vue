@@ -4,14 +4,19 @@
 			<h3 class="text-base font-medium">{{ props.actionLabel }}</h3>
 			<p class="mt-1 text-p-base text-gray-600">{{ props.description }}</p>
 		</div>
-		<RestrictedAction
+		<Button
 			v-if="site?.doc"
-			:doctype="site.doc.doctype"
-			:docname="site.doc.name"
-			:method="props.method"
-			:label="props.buttonLabel"
+			class="whitespace-nowrap"
 			@click="getSiteActionHandler(props.actionLabel)"
-		/>
+		>
+			<p
+				:class="
+					group === 'Dangerous Actions' ? 'text-red-600' : 'text-gray-800'
+				"
+			>
+				{{ props.buttonLabel }}
+			</p>
+		</Button>
 	</div>
 </template>
 
@@ -19,7 +24,6 @@
 import { getCachedDocumentResource } from 'frappe-ui';
 import { defineAsyncComponent, h } from 'vue';
 import { toast } from 'vue-sonner';
-import RestrictedAction from '../components/RestrictedAction.vue';
 import { confirmDialog, renderDialog } from '../utils/components';
 import router from '../router';
 
@@ -28,7 +32,8 @@ const props = defineProps({
 	actionLabel: { type: String, required: true },
 	method: { type: String, required: true },
 	description: { type: String, required: true },
-	buttonLabel: { type: String, required: true }
+	buttonLabel: { type: String, required: true },
+	group: { type: String, required: false }
 });
 
 const site = getCachedDocumentResource('Site', props.siteName);
@@ -37,6 +42,9 @@ function getSiteActionHandler(action) {
 	const actionDialogs = {
 		'Restore from backup': defineAsyncComponent(() =>
 			import('./SiteDatabaseRestoreDialog.vue')
+		),
+		'Restore from an existing site': defineAsyncComponent(() =>
+			import('./site/SiteDatabaseRestoreFromURLDialog.vue')
 		),
 		'Access site database': defineAsyncComponent(() =>
 			import('./SiteDatabaseAccessDialog.vue')
@@ -134,7 +142,9 @@ function onDropSite() {
 			variant: 'solid',
 			theme: 'red',
 			onClick: ({ hide, values }) => {
-				if (values.confirmSiteName !== site.doc.name) {
+				if (
+					![site.doc.name, site.doc.host_name].includes(values.confirmSiteName)
+				) {
 					throw new Error('Site name does not match.');
 				}
 				return site.archive.submit({ force: values.force }).then(() => {
@@ -226,7 +236,7 @@ function onTransferSite() {
 			variant: 'solid',
 			onClick: ({ hide, values }) => {
 				return site.sendTransferRequest
-					.submit({ team_mail_id: values.email, reason: values.reason })
+					.submit({ team_mail_id: values.email, reason: values.reason || '' })
 					.then(() => {
 						hide();
 						toast.success(

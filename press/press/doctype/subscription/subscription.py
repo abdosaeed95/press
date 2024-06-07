@@ -4,7 +4,9 @@
 
 
 from typing import List
-from press.press.doctype.plan.plan import Plan
+
+from frappe.query_builder.functions import Coalesce, Count
+from press.press.doctype.site_plan.site_plan import SitePlan
 
 import frappe
 from frappe.model.document import Document
@@ -13,6 +15,72 @@ from press.overrides import get_permission_query_conditions_for_doctype
 
 
 class Subscription(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		document_name: DF.DynamicLink
+		document_type: DF.Link
+		enabled: DF.Check
+		interval: DF.Literal["Daily", "Monthly"]
+		marketplace_app_subscription: DF.Link | None
+		plan: DF.DynamicLink
+		plan_type: DF.Link
+		site: DF.Link | None
+		team: DF.Link
+	# end: auto-generated types
+
+	dashboard_fields = [
+		"site",
+		"enabled",
+		"document_type",
+		"document_name",
+		"team",
+	]
+
+	@staticmethod
+	def get_list_query(query, **list_args):
+		Subscription = frappe.qb.DocType("Subscription")
+		UsageRecord = frappe.qb.DocType("Usage Record")
+		Plan = frappe.qb.DocType("Marketplace App Plan")
+		price_field = (
+			Plan.price_inr if frappe.local.team().currency == "INR" else Plan.price_usd
+		)
+		filters = list_args.get("filters", {})
+
+		query = (
+			frappe.qb.from_(Subscription)
+			.join(Plan)
+			.on(Subscription.plan == Plan.name)
+			.left_join(UsageRecord)
+			.on(UsageRecord.subscription == Subscription.name)
+			.groupby(Subscription.name)
+			.select(
+				Subscription.site,
+				Subscription.enabled,
+				price_field.as_("price"),
+				Coalesce(Count(UsageRecord.subscription), 0).as_("active_for"),
+			)
+			.where(
+				(Subscription.document_type == "Marketplace App")
+				& (Subscription.document_name == filters["document_name"])
+				& (Subscription.site != "")
+				& (price_field > 0)
+			)
+			.limit(list_args["limit"])
+			.offset(list_args["start"])
+		)
+
+		if filters.get("enabled"):
+			enabled = 1 if filters["enabled"] == "Active" else 0
+			query = query.where(Subscription.enabled == enabled)
+
+		return query.run(as_dict=True)
+
 	def validate(self):
 		self.validate_duplicate()
 
@@ -33,6 +101,8 @@ class Subscription(Document):
 			doc.save()
 
 	def enable(self):
+		if self.enabled:
+			return
 		try:
 			self.enabled = True
 			self.save()
@@ -40,6 +110,8 @@ class Subscription(Document):
 			frappe.log_error(title="Enable Subscription Error")
 
 	def disable(self):
+		if not self.enabled:
+			return
 		try:
 			self.enabled = False
 			self.save()
@@ -152,7 +224,7 @@ class Subscription(Document):
 
 	@classmethod
 	def get_sites_without_offsite_backups(cls) -> List[str]:
-		plans = Plan.get_ones_without_offsite_backups()
+		plans = SitePlan.get_ones_without_offsite_backups()
 		return frappe.get_all(
 			"Subscription",
 			filters={"document_type": "Site", "plan": ("in", plans)},
@@ -174,7 +246,9 @@ def create_usage_records():
 			"document_name": ("not in", free_sites),
 		},
 		pluck="name",
+		order_by=None,
 		limit=2000,
+		ignore_ifnull=True,
 	)
 	for name in subscriptions:
 		subscription = frappe.get_cached_doc("Subscription", name)
@@ -208,6 +282,7 @@ def sites_with_free_hosting():
 		"Site",
 		{"status": ("not in", ("Archived", "Suspended")), "team": ("in", free_teams)},
 		pluck="name",
+		ignore_ifnull=True,
 	)
 	return free_team_sites + frappe.get_all(
 		"Site",
@@ -217,6 +292,7 @@ def sites_with_free_hosting():
 			"team": ("not in", free_teams),
 		},
 		pluck="name",
+		ignore_ifnull=True,
 	)
 
 
@@ -234,6 +310,7 @@ def created_usage_records(free_sites, date=None):
 			"document_name": ("not in", free_sites),
 		},
 		pluck="subscription",
+		order_by=None,
 		ignore_ifnull=True,
 	)
 

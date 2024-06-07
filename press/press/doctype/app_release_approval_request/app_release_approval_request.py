@@ -12,10 +12,33 @@ import frappe
 from frappe.model.document import Document
 from frappe.model.naming import make_autoname
 from press.press.doctype.app_release.app_release import AppRelease
-from press.press.doctype.marketplace_app.marketplace_app import MarketplaceApp
 
 
 class AppReleaseApprovalRequest(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		app: DF.Link | None
+		app_release: DF.Link
+		baseline_request: DF.Data | None
+		baseline_requirements: DF.Code | None
+		baseline_result: DF.Code | None
+		marketplace_app: DF.Link
+		reason_for_rejection: DF.TextEditor | None
+		requirements: DF.Code | None
+		result: DF.Code | None
+		result_html: DF.Code | None
+		reviewed_by: DF.Link | None
+		screening_status: DF.Literal["Not Started", "Screening", "Complete"]
+		status: DF.Literal["Open", "Cancelled", "Approved", "Rejected"]
+		team: DF.Link | None
+	# end: auto-generated types
+
 	def before_save(self):
 		apps = frappe.get_all("Featured App", {"parent": "Marketplace Settings"}, pluck="app")
 		teams = frappe.get_all(
@@ -97,16 +120,8 @@ class AppReleaseApprovalRequest(Document):
 		release.save(ignore_permissions=True)
 		frappe.db.commit()
 
-		if status_updated:
-			self.publish_status_change(release.source)
-
-	def publish_status_change(self, source):
-		frappe.publish_realtime(event="request_status_changed", message={"source": source})
-
 	def notify_publisher(self):
-		marketplace_app: MarketplaceApp = frappe.get_doc(
-			"Marketplace App", self.marketplace_app
-		)
+		marketplace_app = frappe.get_doc("Marketplace App", self.marketplace_app)
 		app_release: AppRelease = frappe.get_doc("App Release", self.app_release)
 		publisher_email = frappe.get_doc("Team", marketplace_app.team).user
 

@@ -3,12 +3,12 @@
 # For license information, please see license.txt
 
 import json
-import frappe
-
 from typing import Dict, List
+
+import frappe
 from frappe.core.utils import find
+
 from press.api.bench import options
-from press.api.billing import create_payment_intent_for_prepaid_app
 from press.api.site import (
 	is_marketplace_app_source,
 	is_prepaid_marketplace_app,
@@ -18,15 +18,122 @@ from press.marketplace.doctype.marketplace_app_plan.marketplace_app_plan import 
 	MarketplaceAppPlan,
 )
 from press.press.doctype.app.app import new_app as new_app_doc
-from press.press.doctype.app_source.app_source import AppSource
 from press.press.doctype.app_release.app_release import AppRelease
-from press.utils import get_current_team, get_last_doc, unique, get_app_tag
-from press.press.doctype.marketplace_app.marketplace_app import MarketplaceApp
-from press.press.doctype.app_release_approval_request.app_release_approval_request import (
-	AppReleaseApprovalRequest,
+from press.press.doctype.app_source.app_source import AppSource
+from press.press.doctype.marketplace_app.marketplace_app import (
+	MarketplaceApp,
+	get_plans_for_app,
 )
-from press.press.doctype.marketplace_app.marketplace_app import get_plans_for_app
+from press.utils import get_app_tag, get_current_team, get_last_doc, unique
 from press.utils.billing import get_frappe_io_connection
+
+
+@frappe.whitelist()
+def get_install_app_options(marketplace_app: str):
+	"""Get options for installing a marketplace app"""
+
+	is_app_approved = frappe.db.get_value(
+		"Marketplace App", marketplace_app, "frappe_approved"
+	)
+
+	private_site_plan = frappe.db.get_value(
+		"Site Plan",
+		{"private_benches": 1, "document_type": "Site", "price_inr": ["!=", 0]},
+		order_by="price_inr asc",
+	)
+
+	public_site_plan = frappe.db.get_value(
+		"Site Plan",
+		{"private_benches": 0, "document_type": "Site", "price_inr": ["!=", 0]},
+		order_by="price_inr asc",
+	)
+
+	clusters = private_groups = []
+
+	latest_stable_version = frappe.get_all(
+		"Frappe Version", "max(name) as latest_version", pluck="latest_version"
+	)[0]
+	latest_public_group = frappe.db.get_value(
+		"Release Group",
+		filters={"public": 1, "version": latest_stable_version},
+	)
+	proxy_servers = frappe.db.get_all(
+		"Proxy Server",
+		{"is_primary": 1},
+		["name", "cluster"],
+	)
+
+	if is_app_approved:
+		clusters = frappe.db.get_all(
+			"Cluster",
+			filters={"public": 1},
+			fields=["name", "title", "image", "beta"],
+		)
+
+		for cluster in clusters:
+			cluster["bench"] = frappe.db.get_value(
+				"Bench",
+				filters={
+					"cluster": cluster["name"],
+					"status": "Active",
+					"group": latest_public_group,
+				},
+				order_by="creation desc",
+			)
+
+			cluster.proxy_server = find(proxy_servers, lambda x: x.cluster == cluster.name)
+
+	ReleasGroup = frappe.qb.DocType("Release Group")
+	ReleasGroupApp = frappe.qb.DocType("Release Group App")
+	private_groups = (
+		frappe.qb.from_(ReleasGroup)
+		.left_join(ReleasGroupApp)
+		.on(ReleasGroup.name == ReleasGroupApp.parent)
+		.select(ReleasGroup.name, ReleasGroup.title)
+		.where(ReleasGroup.enabled == 1)
+		.where(ReleasGroup.team == get_current_team())
+		.where(ReleasGroup.public == 0)
+		.where(ReleasGroupApp.app == marketplace_app)
+		.run(as_dict=True)
+	)
+
+	for group in private_groups:
+		benches = frappe.db.get_all(
+			"Bench",
+			filters={"team": get_current_team(), "status": "Active", "group": group.name},
+			fields=["name", "cluster"],
+			order_by="creation desc",
+			limit=1,
+		)
+
+		group.clusters = frappe.db.get_all(
+			"Cluster",
+			filters={"public": 1, "name": ("in", [bench.cluster for bench in benches])},
+			fields=["name", "title", "image", "beta"],
+		)
+
+		for cluster in group.clusters:
+			cluster["bench"] = frappe.db.get_value(
+				"Bench",
+				filters={
+					"cluster": cluster["name"],
+					"status": "Active",
+					"group": latest_public_group,
+				},
+				order_by="creation desc",
+			)
+
+			cluster.proxy_server = find(proxy_servers, lambda x: x.cluster == cluster.name)
+
+	return {
+		"plans": get_plans_for_app(marketplace_app),
+		"private_site_plan": private_site_plan,
+		"public_site_plan": public_site_plan,
+		"is_app_featured": is_app_approved,
+		"private_groups": private_groups,
+		"clusters": clusters,
+		"domain": frappe.db.get_single_value("Press Settings", "domain"),
+	}
 
 
 @frappe.whitelist()
@@ -247,8 +354,9 @@ def remove_app_screenshot(name, file):
 
 def validate_app_image_dimensions(file_content):
 	"""Throws if image is not a square image, atleast 300x300px in size"""
-	from PIL import Image
 	from io import BytesIO
+
+	from PIL import Image
 
 	im = Image.open(BytesIO(file_content))
 	im_width, im_height = im.size
@@ -335,9 +443,10 @@ def latest_approved_release(source: None | str) -> AppRelease:
 
 
 @frappe.whitelist()
-def create_approval_request(marketplace_app: str, app_release: str):
+@protected("Marketplace App")
+def create_approval_request(name, app_release: str):
 	"""Create a new Approval Request for given `app_release`"""
-	AppReleaseApprovalRequest.create(marketplace_app, app_release)
+	frappe.get_doc("Marketplace App", name).create_approval_request(app_release)
 
 
 @frappe.whitelist()
@@ -370,9 +479,7 @@ def get_latest_approval_request(app_release: str):
 	if len(approval_requests) == 0:
 		frappe.throw("No approval request exists for the given app release")
 
-	approval_request: AppReleaseApprovalRequest = frappe.get_doc(
-		"App Release Approval Request", approval_requests[0]
-	)
+	approval_request = frappe.get_doc("App Release Approval Request", approval_requests[0])
 
 	return approval_request
 
@@ -759,7 +866,10 @@ def update_app_plan(app_plan_name: str, updated_plan_data: Dict):
 		},
 	)
 
-	if no_of_active_subscriptions > 0:
+	if (
+		updated_plan_data["price_inr"] != app_plan_doc.price_inr
+		or updated_plan_data["price_usd"] != app_plan_doc.price_usd
+	) and no_of_active_subscriptions > 0:
 		# Someone is on this plan, don't change price for the plan,
 		# instead create and link a new plan
 		# TODO: Later we have to figure out a way for plan changes
@@ -852,57 +962,6 @@ def get_payout_details(name: str) -> Dict:
 			grouped_items["usd_items"].append(item)
 
 	return grouped_items
-
-
-@frappe.whitelist(allow_guest=True)
-def prepaid_saas_payment(
-	name, app, site, plan, amount, credits, payment_option, renewal, subscriptions=None
-):
-	if renewal:
-		line_items = [
-			{
-				"app": sub["app"],
-				"plan": sub["marketplace_app_plan"],
-				"subscription": sub["name"],
-				"amount": sub["selected_plan"]["amount"],
-				"quantity": payment_option,
-			}
-			for sub in subscriptions
-		]
-	else:
-		line_items = [
-			{
-				"app": app,
-				"plan": plan,
-				"subscription": name,
-				"amount": amount,
-				"quantity": payment_option,
-			}
-		]
-	metadata = {
-		"payment_for": "prepaid_marketplace",
-		"line_items": json.dumps(line_items),
-		"site": site,
-		"credits": credits,
-	}
-	return create_payment_intent_for_prepaid_app(int(amount), metadata)
-
-
-@frappe.whitelist(allow_guest=True)
-def get_plan(name):
-	plan, gst, discount_percent, block_monthly = frappe.db.get_value(
-		"Marketplace App Plan", name, ["plan", "gst", "discount_percent", "block_monthly"]
-	)
-	currency = get_current_team(True).currency.lower()
-	title, amount = frappe.db.get_value("Plan", plan, ["plan_title", f"price_{currency}"])
-
-	return {
-		"title": title,
-		"amount": amount,
-		"gst": gst,
-		"discount_percent": get_discount_percent(name, discount_percent),
-		"block_monthly": block_monthly,
-	}
 
 
 def get_discount_percent(plan, discount=0.0):
@@ -1013,10 +1072,11 @@ def options_for_version(name, source):
 	added_versions = frappe.get_all(
 		"Marketplace App Version", {"parent": name}, pluck="version"
 	)
-	return {
-		"versions": list(set(frappe_version).difference(set(added_versions))),
-		"branches": branches(source),
-	}
+	branchesList = branches(source)
+	versions = list(set(frappe_version).difference(set(added_versions)))
+	branchesList = [branch["name"] for branch in branchesList]
+
+	return [{"version": version, "branch": branchesList} for version in versions]
 
 
 @protected("Marketplace App")
@@ -1035,25 +1095,35 @@ def remove_version(name, version):
 
 @protected("Marketplace App")
 @frappe.whitelist()
-def review_stages(name):
+def review_steps(name):
 	app = frappe.get_doc("Marketplace App", name)
-	return {
-		"logo": True if app.image else False,
-		"description": True if app.description and app.long_description else False,
-		"publish": True
-		if frappe.db.exists("App Release Approval Request", {"marketplace_app": name})
-		else False,
-		"links": True if app.website and app.support and app.documentation else False,
-	}
+	return [
+		{"step": "Add a logo for your app", "completed": True if app.image else False},
+		{
+			"step": "Add links",
+			"completed": True if app.website and app.support and app.documentation else False,
+		},
+		{
+			"step": "Update description and long description",
+			"completed": True if app.description else False,
+		},
+		{
+			"step": "Publish a release for version",
+			"completed": True
+			if (
+				frappe.db.exists("App Release Approval Request", {"marketplace_app": name})
+				or frappe.db.exists("App Release", {"app": name, "status": "Approved"})
+			)
+			else False,
+		},
+	]
 
 
 @protected("Marketplace App")
 @frappe.whitelist()
-def start_review(name):
-	# TODO: Start security check and auto deploy process here
+def mark_app_ready_for_review(name):
 	app = frappe.get_doc("Marketplace App", name)
-	app.status = "In Review"
-	app.save(ignore_permissions=True)
+	app.mark_app_ready_for_review()
 
 
 @protected("Marketplace App")

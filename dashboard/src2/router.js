@@ -3,7 +3,7 @@ import { getTeam } from './data/team';
 import generateRoutes from './objects/generateRoutes';
 
 let router = createRouter({
-	history: createWebHistory('/dashboard-beta/'),
+	history: createWebHistory('/dashboard/'),
 	routes: [
 		{
 			path: '/',
@@ -43,6 +43,51 @@ let router = createRouter({
 			meta: { isLoginPage: true }
 		},
 		{
+			path: '/checkout/:secretKey',
+			name: 'Checkout',
+			component: () => import('../src/views/checkout/Checkout.vue'),
+			props: true,
+			meta: {
+				isLoginPage: true
+			}
+		},
+		{
+			path: '/subscription/:site?',
+			name: 'Subscription',
+			component: () => import('../src/views/checkout/Subscription.vue'),
+			props: true,
+			meta: {
+				hideSidebar: true
+			}
+		},
+		{
+			name: 'New Site',
+			path: '/sites/new',
+			component: () => import('./pages/NewSite.vue')
+		},
+		{
+			name: 'Bench New Site',
+			path: '/benches/:bench/sites/new',
+			component: () => import('./pages/NewSite.vue'),
+			props: true
+		},
+		{
+			name: 'New Release Group',
+			path: '/benches/new',
+			component: () => import('./pages/NewBench.vue')
+		},
+		{
+			name: 'Server New Bench',
+			path: '/servers/:server/benches/new',
+			component: () => import('./pages/NewBench.vue'),
+			props: true
+		},
+		{
+			name: 'New Server',
+			path: '/servers/new',
+			component: () => import('./pages/NewServer.vue')
+		},
+		{
 			name: 'Billing',
 			path: '/billing',
 			component: () => import('./pages/Billing.vue'),
@@ -66,6 +111,11 @@ let router = createRouter({
 					name: 'BillingPaymentMethods',
 					path: 'payment-methods',
 					component: () => import('./pages/BillingPaymentMethods.vue')
+				},
+				{
+					name: 'BillingMarketplacePayouts',
+					path: 'payouts',
+					component: () => import('./pages/BillingMarketplacePayouts.vue')
 				}
 			]
 		},
@@ -87,23 +137,27 @@ let router = createRouter({
 					component: () => import('./components/settings/TeamSettings.vue')
 				},
 				{
+					name: 'SettingsDeveloper',
+					path: 'developer',
+					component: () => import('./components/settings/DeveloperSettings.vue')
+				},
+				{
 					name: 'SettingsPermission',
 					path: 'permissions',
 					component: () =>
-						import('./components/settings/PermissionsSettings.vue'),
-					redirect: { name: 'SettingsPermissionGroupList' },
+						import('./components/settings/SettingsPermissions.vue'),
+					redirect: { name: 'SettingsPermissionRoles' },
 					children: [
 						{
-							path: 'groups',
-							name: 'SettingsPermissionGroupList',
-							component: () =>
-								import('./components/settings/PermissionGroupList.vue')
+							path: 'roles',
+							name: 'SettingsPermissionRoles',
+							component: () => import('./components/settings/RoleList.vue')
 						},
 						{
-							name: 'SettingsPermissionGroupPermissions',
-							path: 'groups/:groupId',
+							name: 'SettingsPermissionRolePermissions',
+							path: 'roles/:roleId',
 							component: () =>
-								import('./components/settings/PermissionGroupPermissions.vue'),
+								import('./components/settings/RolePermissions.vue'),
 							props: true
 						}
 					]
@@ -135,14 +189,35 @@ let router = createRouter({
 			]
 		},
 		{
-			name: 'NewAppSite',
-			path: '/new-app-site',
-			component: () => import('./pages/NewAppSite.vue')
+			name: 'NewAppTrial',
+			path: '/app-trial/:productId',
+			component: () => import('./pages/NewAppTrial.vue'),
+			props: true
 		},
 		{
 			name: 'Impersonate',
 			path: '/impersonate/:teamId',
 			component: () => import('./pages/Impersonate.vue'),
+			props: true
+		},
+		{
+			name: 'InstallApp',
+			path: '/install-app/:app',
+			component: () => import('./pages/InstallApp.vue'),
+			props: true
+		},
+		{
+			path: '/user-review/:marketplaceApp',
+			name: 'ReviewMarketplaceApp',
+			component: () =>
+				import('./components/marketplace/ReviewMarketplaceApp.vue'),
+			props: true
+		},
+		{
+			path: '/developer-reply/:marketplaceApp/:reviewId',
+			name: 'ReplyMarketplaceApp',
+			component: () =>
+				import('./components/marketplace/ReplyMarketplaceApp.vue'),
 			props: true
 		},
 		...generateRoutes(),
@@ -166,17 +241,21 @@ router.beforeEach(async (to, from, next) => {
 		let onboardingComplete = $team.doc.onboarding.complete;
 		let onboardingIncomplete = !onboardingComplete;
 		let defaultRoute = 'Site List';
-		let onboardingRoute = $team.doc.onboarding.saas_site_request
-			? 'NewAppSite'
-			: 'Welcome';
+		let onboardingRoute = 'Welcome';
 
-		if (onboardingIncomplete && to.name != onboardingRoute) {
+		let visitingSiteOrBillingOrSettings =
+			to.name.startsWith('Site') ||
+			to.name.startsWith('Billing') ||
+			to.name.startsWith('NewAppTrial') ||
+			to.name.startsWith('Settings');
+
+		// if onboarding is incomplete, only allow access to Welcome, Site, Billing, and Settings pages
+		if (
+			onboardingIncomplete &&
+			to.name != onboardingRoute &&
+			!visitingSiteOrBillingOrSettings
+		) {
 			next({ name: onboardingRoute });
-			return;
-		}
-
-		if (to.name == onboardingRoute && onboardingComplete) {
-			next({ name: defaultRoute });
 			return;
 		}
 

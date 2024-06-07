@@ -7,6 +7,41 @@ import json
 
 
 class PressJob(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		arguments: DF.Code
+		duration: DF.Time | None
+		end: DF.Datetime | None
+		job_type: DF.Link
+		name: DF.Int | None
+		server: DF.DynamicLink | None
+		server_type: DF.Link | None
+		start: DF.Datetime | None
+		status: DF.Literal["Pending", "Running", "Skipped", "Success", "Failure"]
+		virtual_machine: DF.Link | None
+	# end: auto-generated types
+
+	def before_insert(self):
+		frappe.db.get_value(self.server_type, self.server, "status", for_update=True)
+		if existing_jobs := frappe.db.get_all(
+			self.doctype,
+			{
+				"status": ("in", ["Pending", "Running"]),
+				"server_type": self.server_type,
+				"server": self.server,
+			},
+			["job_type", "status"],
+		):
+			frappe.throw(
+				f"A {existing_jobs[0].job_type} job is already {existing_jobs[0].status}. Please wait for the same."
+			)
+
 	def after_insert(self):
 		self.create_press_job_steps()
 		self.execute()
@@ -122,7 +157,9 @@ class PressJob(Document):
 		}
 
 	def publish_update(self):
-		frappe.publish_realtime("press_job_update", self.detail())
+		frappe.publish_realtime(
+			"press_job_update", doctype=self.doctype, docname=self.name, message=self.detail()
+		)
 
 	def on_trash(self):
 		frappe.db.delete("Press Job Step", {"job": self.name})

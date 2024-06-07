@@ -279,6 +279,22 @@ class ScheduledBackupJob:
 			frappe.db.rollback()
 
 
+def schedule_for_sites_with_backup_time():
+	"""
+	Schedule backups for sites with backup time.
+
+	Run this hourly only
+	"""
+	sites = Site.get_sites_with_backup_time()
+	now = frappe.utils.now_datetime()
+	for site in sites:
+		if now.hour != site.backup_time.total_seconds() // 3600:
+			continue
+		site_doc = frappe.get_doc("Site", site.name)
+		site_doc.backup(with_files=True, offsite=True)
+		frappe.db.commit()
+
+
 def schedule():
 	scheduled_backup_job = ScheduledBackupJob()
 	scheduled_backup_job.start()
@@ -286,6 +302,12 @@ def schedule():
 
 def cleanup_offsite():
 	"""Delete expired (based on policy) offsite backups and mark em as Unavailable."""
+	frappe.enqueue(
+		"press.press.doctype.site.backups._cleanup_offsite", queue="long", timeout=3600
+	)
+
+
+def _cleanup_offsite():
 	scheme = (
 		frappe.db.get_single_value("Press Settings", "backup_rotation_scheme") or "FIFO"
 	)

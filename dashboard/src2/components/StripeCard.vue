@@ -59,6 +59,7 @@
 import AddressForm from '@/components/AddressForm.vue';
 import StripeLogo from '@/components/StripeLogo.vue';
 import { loadStripe } from '@stripe/stripe-js';
+import { toast } from 'vue-sonner';
 
 export default {
 	name: 'StripeCard',
@@ -229,11 +230,13 @@ export default {
 									payment_method_name
 								);
 								this.addingCard = false;
+								toast.success('Card added successfully');
 							},
 							onError: error => {
 								console.error(error);
 								this.addingCard = false;
 								this.errorMessage = error.messages.join('\n');
+								toast.error(this.errorMessage);
 							}
 						}
 					);
@@ -289,7 +292,7 @@ export default {
 	computed: {
 		formattedMicroChargeAmount() {
 			const isINR = this.$team.doc.currency === 'INR';
-			return isINR ? '₹50' : '$0.5';
+			return isINR ? '₹100' : '$1';
 		},
 		browserTimezone() {
 			if (!window.Intl) {

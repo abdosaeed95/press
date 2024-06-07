@@ -95,6 +95,7 @@ frappe.ui.form.on('Database Server', {
 				frm.doc.is_server_setup,
 			],
 			[__('Upgrade MariaDB'), 'upgrade_mariadb', true, frm.doc.is_server_setup],
+			[__('Update MariaDB'), 'update_mariadb', true, frm.doc.is_server_setup],
 			[
 				__('Upgrade MariaDB Patched'),
 				'upgrade_mariadb_patched',
@@ -147,6 +148,12 @@ frappe.ui.form.on('Database Server', {
 				true,
 				frm.doc.virtual_machine,
 			],
+			[
+				__('Setup Essentials'),
+				'setup_essentials',
+				true,
+				frm.doc.is_self_hosted,
+			],
 		].forEach(([label, method, confirm, condition]) => {
 			if (typeof condition === 'undefined' || condition) {
 				frm.add_custom_button(
@@ -197,6 +204,33 @@ frappe.ui.form.on('Database Server', {
 
 					dialog.set_primary_action(__('Increase Swap'), (args) => {
 						frm.call('increase_swap', args).then(() => {
+							dialog.hide();
+							frm.refresh();
+						});
+					});
+					dialog.show();
+				},
+				__('Actions'),
+			);
+			frm.add_custom_button(
+				__('Perform Physical Backup'),
+				() => {
+					const dialog = new frappe.ui.Dialog({
+						title: __('Perform Physical Backup'),
+						fields: [
+							{
+								fieldtype: 'Data',
+								label: __('Backup Path'),
+								description: __('Absolute path to store the backup'),
+								default: '/tmp/replica',
+								fieldname: 'path',
+								reqd: 1,
+							},
+						],
+					});
+
+					dialog.set_primary_action(__('Backup'), (args) => {
+						frm.call('perform_physical_backup', args).then(() => {
 							dialog.hide();
 							frm.refresh();
 						});

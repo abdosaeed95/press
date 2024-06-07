@@ -248,6 +248,35 @@ Password: ${r.message.password}
 		);
 
 		frm.add_custom_button(
+			__('Update DNS Record'),
+			() => {
+				const dialog = new frappe.ui.Dialog({
+					title: __('Update DNS Record'),
+					fields: [
+						{
+							fieldtype: 'Data',
+							fieldname: 'value',
+							label: 'Value',
+							description: "Site's CNAME record will point to this value",
+							reqd: 1,
+						},
+					],
+					primary_action(args) {
+						frm
+							.call('update_dns_record', {
+								value: args.value,
+							})
+							.then(() => {
+								dialog.hide();
+							});
+					},
+				});
+				dialog.show();
+			},
+			__('Dangerous Actions'),
+		);
+
+		frm.add_custom_button(
 			__('Move to Group'),
 			() => {
 				const dialog = new frappe.ui.Dialog({
@@ -290,6 +319,72 @@ Password: ${r.message.password}
 				dialog.show();
 			},
 			__('Actions'),
+		);
+
+		frm.add_custom_button(
+			__('Forcefully Remove Site'),
+			() => {
+				const dialog = new frappe.ui.Dialog({
+					title: __('Forcefully Remove Site'),
+					fields: [
+						{
+							fieldtype: 'Link',
+							options: 'Bench',
+							label: __('Bench'),
+							fieldname: 'bench',
+							reqd: 1,
+							get_query: () => {
+								return {
+									filters: [
+										['name', '!=', frm.doc.bench],
+										['status', '!=', 'Archived'],
+									],
+								};
+							},
+						},
+						{
+							fieldtype: 'Check',
+							label: __("I know what I'm doing"),
+							fieldname: 'confirmation',
+							reqd: 1,
+						},
+					],
+				});
+
+				dialog.set_primary_action(__('Forcefully Remove Site'), (args) => {
+					if (!args.confirmation) {
+						frappe.throw(__("Please confirm that you know what you're doing"));
+					}
+					frm
+						.call('forcefully_remove_site', {
+							bench: args.bench,
+						})
+						.then((r) => {
+							dialog.hide();
+							frm.refresh();
+							if (r.message.job) {
+								message = `
+Removing site from **${r.message.bench}**.
+
+Track progress [here](https://${r.message.server}/agent/jobs/${r.message.job}).`;
+								frappe.msgprint(frappe.markdown(message), 'Removing Site');
+							} else {
+								message = `
+Couldn't remove site from **${r.message.bench}**.
+\`\`\`
+${r.message.error}
+\`\`\``;
+								frappe.msgprint(
+									frappe.markdown(message),
+									'Failed to Remove Site',
+								);
+							}
+						});
+				});
+
+				dialog.show();
+			},
+			__('Dangerous Actions'),
 		);
 	},
 });

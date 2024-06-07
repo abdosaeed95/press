@@ -4,12 +4,26 @@
 import frappe
 from frappe.model.document import Document
 
-from press.telegram_utils import Telegram
+from press.press.doctype.telegram_message.telegram_message import TelegramMessage
 from press.runner import Ansible
 from press.utils import log_error
 
 
 class SecurityUpdateCheck(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		play: DF.Link | None
+		server: DF.DynamicLink
+		server_type: DF.Link
+		status: DF.Literal["Pending", "Running", "Success", "Failure"]
+	# end: auto-generated types
+
 	def after_insert(self):
 		self.start()
 
@@ -24,7 +38,7 @@ class SecurityUpdateCheck(Document):
 		try:
 			_server = frappe.get_doc(self.server_type, self.server)
 			ansible = Ansible(
-				playbook="security_update_check.yml",
+				playbook="security_update.yml",
 				server=_server,
 				user=_server.ssh_user or "root",
 				port=_server.ssh_port or 22,
@@ -56,5 +70,4 @@ Security Update Check for *{self.server}* failed.
 
 [Security Update Check]({domain}{self.get_url()})
 """
-		telegram = Telegram()
-		telegram.send(message)
+		TelegramMessage.enqueue(message=message)

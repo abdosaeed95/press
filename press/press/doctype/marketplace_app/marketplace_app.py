@@ -2,35 +2,171 @@
 # Copyright (c) 2021, Frappe and contributors
 # For license information, please see license.txt
 
+from base64 import b64decode
+from typing import Dict, List
+
 import frappe
 import requests
-
-from typing import Dict, List
-from base64 import b64decode
-from press.utils import get_last_doc
-from press.api.github import get_access_token
 from frappe.query_builder.functions import Cast_
+from frappe.utils.caching import redis_cache
+from frappe.utils.safe_exec import safe_exec
 from frappe.website.utils import cleanup_page_name
 from frappe.website.website_generator import WebsiteGenerator
+
+from press.api.github import get_access_token
 from press.marketplace.doctype.marketplace_app_plan.marketplace_app_plan import (
 	get_app_plan_features,
 )
+from press.press.doctype.app.app import new_app as new_app_doc
+from press.press.doctype.app_release_approval_request.app_release_approval_request import (
+	AppReleaseApprovalRequest,
+)
 from press.press.doctype.marketplace_app.utils import get_rating_percentage_distribution
-from frappe.utils.safe_exec import safe_exec
+from press.utils import get_last_doc, get_current_team
+from press.api.client import dashboard_whitelist
 
 
 class MarketplaceApp(WebsiteGenerator):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+		from press.press.doctype.marketplace_app_categories.marketplace_app_categories import (
+			MarketplaceAppCategories,
+		)
+		from press.press.doctype.marketplace_app_screenshot.marketplace_app_screenshot import (
+			MarketplaceAppScreenshot,
+		)
+		from press.press.doctype.marketplace_app_version.marketplace_app_version import (
+			MarketplaceAppVersion,
+		)
+
+		after_install_script: DF.Code | None
+		after_uninstall_script: DF.Code | None
+		app: DF.Link
+		categories: DF.Table[MarketplaceAppCategories]
+		custom_verify_template: DF.Check
+		description: DF.SmallText
+		documentation: DF.Data | None
+		frappe_approved: DF.Check
+		image: DF.AttachImage | None
+		long_description: DF.TextEditor | None
+		message: DF.TextEditor | None
+		outgoing_email: DF.Data | None
+		outgoing_sender_name: DF.Data | None
+		poll_method: DF.Data | None
+		privacy_policy: DF.Data | None
+		published: DF.Check
+		review_stage: DF.Literal[
+			"Not Started",
+			"Description Missing",
+			"Logo Missing",
+			"App Release Not Reviewed",
+			"Ready for Review",
+			"Ready to Publish",
+			"Rejected",
+		]
+		route: DF.Data | None
+		run_after_install_script: DF.Check
+		run_after_uninstall_script: DF.Check
+		screenshots: DF.Table[MarketplaceAppScreenshot]
+		signature: DF.TextEditor | None
+		site_config: DF.JSON | None
+		sources: DF.Table[MarketplaceAppVersion]
+		status: DF.Literal[
+			"Draft", "Published", "In Review", "Attention Required", "Rejected"
+		]
+		stop_auto_review: DF.Check
+		subject: DF.Data | None
+		subscription_type: DF.Literal["Free", "Paid", "Freemium"]
+		subscription_update_hook: DF.Data | None
+		support: DF.Data | None
+		team: DF.Link | None
+		terms_of_service: DF.Data | None
+		title: DF.Data
+		website: DF.Data | None
+	# end: auto-generated types
+
+	dashboard_fields = [
+		"image",
+		"title",
+		"status",
+		"description",
+		"review_stage",
+	]
+
 	def autoname(self):
 		self.name = self.app
 
+	@dashboard_whitelist()
+	def delete(self):
+		if self.status != "Draft":
+			frappe.throw("You can only delete an app in Draft status")
+
+		if get_current_team() != self.team:
+			frappe.throw("You are not authorized to delete this app")
+
+		super().delete()
+
+	def on_trash(self):
+		frappe.db.delete("Marketplace App Plan", {"app": self.name})
+		frappe.db.delete("App Release Approval Request", {"marketplace_app": self.name})
+
+	@dashboard_whitelist()
+	def create_approval_request(self, app_release: str):
+		"""Create a new Approval Request for given `app_release`"""
+		AppReleaseApprovalRequest.create(self.app, app_release)
+
+	@dashboard_whitelist()
+	def cancel_approval_request(self, app_release: str):
+		approval_requests = frappe.get_all(
+			"App Release Approval Request",
+			filters={"app_release": app_release},
+			pluck="name",
+			order_by="creation desc",
+		)
+
+		if len(approval_requests) == 0:
+			frappe.throw("No approval request exists for the given app release")
+
+		frappe.get_doc("App Release Approval Request", approval_requests[0]).cancel()
+
 	def before_insert(self):
+
 		if not frappe.flags.in_test:
-			self.long_description = self.fetch_readme()
+			self.check_if_duplicate()
+			self.create_app_and_source_if_needed()
+			self.long_description = frappe.utils.md_to_html(self.fetch_readme())
 
 		self.set_route()
 
 	def set_route(self):
 		self.route = "marketplace/apps/" + cleanup_page_name(self.app)
+
+	def check_if_duplicate(self):
+		if frappe.db.exists("Marketplace App", self.app):
+			frappe.throw(
+				f"App {self.app} already exists and is owned by some other team. Please contact support"
+			)
+
+	def create_app_and_source_if_needed(self):
+		if frappe.db.exists("App", self.app or self.name):
+			app_doc = frappe.get_doc("App", self.app or self.name)
+		else:
+			app_doc = new_app_doc(self.name, self.title)
+
+		if not self.sources:
+			source = app_doc.add_source(
+				self.version,
+				self.repository_url,
+				self.branch,
+				self.team,
+			)
+			self.app = source.app
+			self.append("sources", {"version": self.version, "source": source.name})
 
 	def validate(self):
 		self.published = self.status == "Published"
@@ -94,6 +230,7 @@ class MarketplaceApp(WebsiteGenerator):
 			source_doc.branch = to_branch
 			source_doc.save()
 
+	@dashboard_whitelist()
 	def add_version(self, version, branch):
 		existing_source = frappe.db.exists(
 			"App Source",
@@ -131,6 +268,7 @@ class MarketplaceApp(WebsiteGenerator):
 		self.append("sources", {"version": version, "source": source_doc.name})
 		self.save()
 
+	@dashboard_whitelist()
 	def remove_version(self, version):
 		if self.status == "Published" and len(self.sources) == 1:
 			frappe.throw("Failed to remove. Need at least 1 version for a published app")
@@ -382,11 +520,72 @@ class MarketplaceApp(WebsiteGenerator):
 		)
 		return payout[0] if payout else {"usd_amount": 0, "inr_amount": 0}
 
+	@dashboard_whitelist()
+	def site_installs(self):
+		site = frappe.qb.DocType("Site")
+		site_app = frappe.qb.DocType("Site App")
+		site_plan = frappe.qb.DocType("Site Plan")
+		team = frappe.qb.DocType("Team")
+
+		query = (
+			frappe.qb.from_(site)
+			.left_join(team)
+			.on(team.name == site.team)
+			.left_outer_join(site_app)
+			.on(site.name == site_app.parent)
+			.left_outer_join(site_plan)
+			.on(site_app.plan == site_plan.name)
+			.select(site.name, site.plan, team.user)
+			.where(
+				(site.status == "Active") & (site_app.app == self.app) & (site_plan.price_usd >= 0)
+			)
+		)
+		return query.run(as_dict=True)
+
+	@dashboard_whitelist()
+	def listing_details(self):
+		return {
+			"support": self.support,
+			"website": self.website,
+			"documentation": self.documentation,
+			"privacy_policy": self.privacy_policy,
+			"terms_of_service": self.terms_of_service,
+			"description": self.description,
+			"long_description": self.long_description,
+			"screenshots": [screenshot.image for screenshot in self.screenshots],
+		}
+
+	@dashboard_whitelist()
+	def mark_app_ready_for_review(self):
+		# TODO: Start security check and auto deploy process here
+		self.review_stage = "Ready for Review"
+		self.save()
+
+	@dashboard_whitelist()
+	def update_listing(self, *args):
+		data = frappe._dict(args[0])
+		self.title = data.get("title") or self.title
+		self.description = data.get("description")
+		self.long_description = data.get("long_description")
+		self.support = data.get("support")
+		self.website = data.get("website")
+		self.documentation = data.get("documentation")
+		self.privacy_policy = data.get("privacy_policy")
+		self.terms_of_service = data.get("terms_of_service")
+		self.save()
+
 	def get_analytics(self):
+		today = frappe.utils.today()
+		last_week = frappe.utils.add_days(today, -7)
+
 		return {
 			"total_installs": self.total_installs(),
-			"num_installs_active_sites": self.total_active_sites(),
-			"num_installs_active_benches": self.total_active_benches(),
+			"installs_active_sites": self.total_active_sites(),
+			"installs_active_benches": self.total_active_benches(),
+			"installs_last_week": frappe.db.count(
+				"Site Activity",
+				{"action": "Install App", "reason": self.app, "creation": (">=", last_week)},
+			),
 			"total_payout": self.get_payout_amount(),
 			"paid_payout": self.get_payout_amount(status="Paid"),
 			"pending_payout": self.get_payout_amount(status="Draft"),
@@ -423,7 +622,6 @@ def get_plans_for_app(
 		fields=[
 			"name",
 			"title",
-			"plan",
 			"enabled",
 			"price_inr",
 			"price_usd",
@@ -471,3 +669,13 @@ def run_script(app, site, op):
 		script = frappe.db.get_value("Marketplace App", app, script)
 		local = {"doc": frappe.get_doc("Site", site)}
 		safe_exec(script, _locals=local)
+
+
+@redis_cache(ttl=60 * 60 * 24)
+def get_total_installs_by_app():
+	total_installs = frappe.db.get_all(
+		"Site App",
+		fields=["app", "count(*) as count"],
+		group_by="app",
+	)
+	return {installs["app"]: installs["count"] for installs in total_installs}

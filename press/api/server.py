@@ -133,20 +133,10 @@ def get(name):
 def overview(name):
 	server = poly_get_doc(["Server", "Database Server"], name)
 	plan = frappe.get_doc("Server Plan", server.plan) if server.plan else None
-
-	if server.is_self_hosted and plan:  # Hacky way to show current specs in place of Plans
-		filters = {}
-		if server.doctype == "Database Server":
-			filters["database_server"] = server.name
-		else:
-			filters["server"] = server.name
-
-		self_hosted_server_name = frappe.db.get_value("Self Hosted Server", filters, "name")
-		self_hosted_server = frappe.get_doc("Self Hosted Server", self_hosted_server_name)
-
-		plan.vcpu = self_hosted_server.vcpus
-		plan.memory = self_hosted_server.ram
-		plan.disk = self_hosted_server.total_storage.split(" ")[0]  # Saved in DB as "50 GB"
+	if plan:
+		# override plan disk size with the actual disk size
+		# TODO: Remove this once we remove old dashboard
+		plan.disk = frappe.db.get_value("Virtual Machine", name, "disk_size")
 
 	return {
 		"plan": plan if plan else None,
@@ -309,8 +299,8 @@ def analytics(name, query, timezone, duration):
 			lambda x: x["device"],
 		),
 		"space": (
-			f"""100 - ((node_filesystem_avail_bytes{{instance="{name}", job="node", device="/dev/root"}} * 100) / node_filesystem_size_bytes{{instance="{name}", job="node", device="/dev/root"}})""",
-			lambda x: x["device"],
+			f"""100 - ((node_filesystem_avail_bytes{{instance="{name}", job="node", mountpoint="/"}} * 100) / node_filesystem_size_bytes{{instance="{name}", job="node", mountpoint="/"}})""",
+			lambda x: x["mountpoint"],
 		),
 		"loadavg": (
 			f"""{{__name__=~"node_load1|node_load5|node_load15", instance="{name}", job="node"}}""",
@@ -330,7 +320,7 @@ def analytics(name, query, timezone, duration):
 def prometheus_query(query, function, timezone, timespan, timegrain):
 	monitor_server = frappe.db.get_single_value("Press Settings", "monitor_server")
 	if not monitor_server:
-		return []
+		return {"datasets": [], "labels": []}
 
 	url = f"https://{monitor_server}/prometheus/api/v1/query_range"
 	password = get_decrypted_password("Monitor Server", monitor_server, "grafana_password")
@@ -401,6 +391,7 @@ def plans(name, cluster=None):
 			"disk",
 			"cluster",
 			"instance_type",
+			"premium",
 		],
 		filters={"server_type": name, "cluster": cluster}
 		if cluster

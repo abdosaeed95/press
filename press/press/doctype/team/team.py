@@ -12,21 +12,82 @@ from hashlib import blake2b
 from press.utils import log_error, get_valid_teams_for_user
 from frappe.utils import get_fullname
 from frappe.utils import get_url_to_form, random_string
-from press.telegram_utils import Telegram
+from press.press.doctype.telegram_message.telegram_message import TelegramMessage
 from frappe.model.document import Document
 from press.exceptions import FrappeioServerNotSet
 from frappe.contacts.address_and_contact import load_address_and_contact
 from press.press.doctype.account_request.account_request import AccountRequest
 from press.utils.billing import (
-	get_erpnext_com_connection,
 	get_frappe_io_connection,
 	get_stripe,
 	process_micro_debit_test_charge,
 )
 from press.utils.telemetry import capture
+from press.api.client import dashboard_whitelist
 
 
 class Team(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+		from press.press.doctype.child_team_member.child_team_member import ChildTeamMember
+		from press.press.doctype.communication_email.communication_email import (
+			CommunicationEmail,
+		)
+		from press.press.doctype.invoice_discount.invoice_discount import InvoiceDiscount
+		from press.press.doctype.team_member.team_member import TeamMember
+
+		account_request: DF.Link | None
+		benches_enabled: DF.Check
+		billing_address: DF.Link | None
+		billing_name: DF.Data | None
+		billing_team: DF.Link | None
+		child_team_members: DF.Table[ChildTeamMember]
+		code_servers_enabled: DF.Check
+		communication_emails: DF.Table[CommunicationEmail]
+		country: DF.Link | None
+		currency: DF.Link | None
+		database_access_enabled: DF.Check
+		default_payment_method: DF.Link | None
+		discounts: DF.Table[InvoiceDiscount]
+		enabled: DF.Check
+		erpnext_partner: DF.Check
+		frappe_partnership_date: DF.Date | None
+		free_account: DF.Check
+		free_credits_allocated: DF.Check
+		github_access_token: DF.Data | None
+		is_code_server_user: DF.Check
+		is_developer: DF.Check
+		is_saas_user: DF.Check
+		is_us_eu: DF.Check
+		last_used_team: DF.Link | None
+		notify_email: DF.Data | None
+		parent_team: DF.Link | None
+		partner_email: DF.Data | None
+		partner_referral_code: DF.Data | None
+		partnership_date: DF.Date | None
+		payment_mode: DF.Literal[
+			"", "Card", "Prepaid Credits", "Partner Credits", "Paid By Partner"
+		]
+		razorpay_enabled: DF.Check
+		referrer_id: DF.Data | None
+		security_portal_enabled: DF.Check
+		self_hosted_servers_enabled: DF.Check
+		send_notifications: DF.Check
+		servers_enabled: DF.Check
+		skip_backups: DF.Check
+		ssh_access_enabled: DF.Check
+		stripe_customer_id: DF.Data | None
+		team_members: DF.Table[TeamMember]
+		team_title: DF.Data | None
+		user: DF.Link | None
+		via_erpnext: DF.Check
+	# end: auto-generated types
+
 	dashboard_fields = [
 		"enabled",
 		"team_title",
@@ -46,8 +107,9 @@ class Team(Document):
 		"billing_name",
 		"referrer_id",
 		"partner_referral_code",
+		"parent_team",
+		"is_developer",
 	]
-	dashboard_actions = ["get_team_members", "remove_team_member"]
 
 	def get_doc(self, doc):
 		if (
@@ -60,7 +122,7 @@ class Team(Document):
 		user = frappe.db.get_value(
 			"User",
 			frappe.session.user,
-			["name", "first_name", "last_name", "user_image", "user_type", "email"],
+			["name", "first_name", "last_name", "user_image", "user_type", "email", "api_key"],
 			as_dict=True,
 		)
 		doc.user_info = user
@@ -70,6 +132,8 @@ class Team(Document):
 		doc.onboarding = self.get_onboarding()
 		doc.billing_info = self.billing_info()
 		doc.billing_details = self.billing_details()
+		doc.trial_sites = self.get_trial_sites()
+		doc.pending_site_request = self.get_pending_saas_site_request()
 		doc.payment_method = frappe.db.get_value(
 			"Stripe Payment Method",
 			{"team": self.name, "name": self.default_payment_method},
@@ -170,6 +234,7 @@ class Team(Document):
 		is_us_eu: bool = False,
 		via_erpnext: bool = False,
 		user_exists: bool = False,
+		default_to_new_dashboard=True,
 	):
 		"""Create new team along with user (user created first)."""
 		team = frappe.get_doc(
@@ -181,6 +246,7 @@ class Team(Document):
 				"via_erpnext": via_erpnext,
 				"is_us_eu": is_us_eu,
 				"account_request": account_request.name,
+				"default_to_new_dashboard": default_to_new_dashboard,
 			}
 		)
 
@@ -217,10 +283,6 @@ class Team(Document):
 		if not team.via_erpnext:
 			if not account_request.invited_by_parent_team:
 				team.create_upcoming_invoice()
-			# TODO: Partner account moved to PRM
-			if team.has_partner_account_on_erpnext_com():
-				team.enable_erpnext_partner_privileges()
-
 		return team
 
 	@staticmethod
@@ -246,7 +308,7 @@ class Team(Document):
 		self.append("team_members", {"user": user.name})
 		self.save(ignore_permissions=True)
 
-	@frappe.whitelist()
+	@dashboard_whitelist()
 	def remove_team_member(self, member):
 		member_to_remove = find(self.team_members, lambda x: x.user == member)
 		if member_to_remove:
@@ -265,8 +327,7 @@ class Team(Document):
 			self.user = self.team_members[0].user
 
 	def set_team_currency(self):
-		if not self.currency and self.country:
-			self.currency = "INR" if self.country == "India" else "USD"
+		self.currency = "INR" if self.country == "India" else "USD"
 
 	def get_user_list(self):
 		return [row.user for row in self.team_members]
@@ -620,6 +681,7 @@ class Team(Document):
 		self.allocate_free_credits()
 		# Telemetry: Added card
 		capture("added_card_or_prepaid_credits", "fc_signup", self.account_request)
+		self.remove_subscription_config_in_trial_sites()
 
 		return doc
 
@@ -693,10 +755,8 @@ class Team(Document):
 		self.reload()
 		if not self.default_payment_method:
 			# change payment mode to prepaid credits if default is card or not set
-			self.payment_mode = (
-				"Prepaid Credits" if self.payment_mode != "Partner Credits" else self.payment_mode
-			)
-			self.save()
+			self.payment_mode = self.payment_mode
+			self.save(ignore_permissions=True)
 		return doc
 
 	def get_available_credits(self):
@@ -713,15 +773,15 @@ class Team(Document):
 		balance = (customer_object["balance"] * -1) / 100
 		return balance
 
-	@frappe.whitelist()
+	@dashboard_whitelist()
 	def get_team_members(self):
 		return get_team_members(self.name)
 
-	@frappe.whitelist()
-	def invite_team_member(self, email):
+	@dashboard_whitelist()
+	def invite_team_member(self, email, new_dashboard=False):
 		from press.api.account import add_team_member
 
-		add_team_member(email)
+		add_team_member(email, new_dashboard)
 
 	@frappe.whitelist()
 	def get_balance(self):
@@ -736,59 +796,13 @@ class Team(Document):
 			return 0
 		return res[0]
 
-	@frappe.whitelist()
-	def get_available_partner_credits(self):
-		client = get_frappe_io_connection()
-		response = client.session.post(
-			f"{client.url}/api/method/partner_relationship_management.api.get_partner_credit_balance",
-			data={"email": self.partner_email},
-			headers=client.headers,
-		)
-
-		if response.ok:
-			res = response.json()
-			message = res.get("message")
-
-			if message.get("credit_balance") is not None:
-				return message.get("credit_balance")
-			else:
-				error_message = message.get("error_message")
-				log_error(
-					"Partner Credit Fetch Error",
-					team=self.name,
-					email=self.partner_email,
-					error_message=error_message,
-				)
-				frappe.throw(error_message)
-
-		else:
-			log_error(
-				"Problem fetching partner credit balance from frappe.io",
-				team=self.name,
-				email=self.partner_email,
-				response=response.text,
-			)
-			frappe.throw("Problem fetching partner credit balance.")
-
-	def is_partner_and_has_enough_credits(self):
-		return self.erpnext_partner and self.get_balance() > 0
-
-	def has_partner_account_on_erpnext_com(self):
-		if frappe.conf.developer_mode:
-			return False
-		try:
-			erpnext_com = get_erpnext_com_connection()
-		except Exception:
-			self.log_error("Cannot connect to erpnext.com to check partner account")
-			return False
-		res = erpnext_com.get_value(
-			"ERPNext Partner", "name", filters={"email": self.user, "status": "Approved"}
-		)
-		return res["name"] if res else None
-
 	def can_create_site(self):
 		why = ""
 		allow = (True, "")
+
+		if not self.enabled:
+			why = "You cannot create a new site because your account is disabled"
+			return (False, why)
 
 		if self.free_account or self.parent_team or self.billing_team:
 			return allow
@@ -799,11 +813,9 @@ class Team(Document):
 			else:
 				why = "You have already created trial site in the past"
 
-		if self.payment_mode == "Partner Credits":
-			if self.get_available_partner_credits() > 0:
-				return allow
-			else:
-				why = "Cannot create site due to insufficient partner credits"
+		if not self.payment_mode:
+			why = "You cannot create a new site because your account doesn't have a valid payment method."
+			return (False, why)
 
 		if self.payment_mode == "Prepaid Credits":
 			if self.get_balance() > 0:
@@ -820,7 +832,7 @@ class Team(Document):
 		return (False, why)
 
 	def can_install_paid_apps(self):
-		if self.free_account or self.payment_mode == "Partner Credits" or self.billing_team:
+		if self.free_account or self.billing_team:
 			return True
 
 		return bool(
@@ -863,19 +875,39 @@ class Team(Document):
 
 		return billing_details
 
-	def get_onboarding(self):
-		if self.payment_mode == "Partner Credits":
-			billing_setup = True
-		elif self.payment_mode == "Prepaid Credits" and frappe.db.get_all(
-			"Invoice", {"team": self.name, "status": "Paid", "type": "Prepaid Credits"}, limit=1
-		):
-			billing_setup = True
+	def get_partner_level(self):
+		# fetch partner level from frappe.io
+		client = get_frappe_io_connection()
+		response = client.session.get(
+			f"{client.url}/api/method/get_partner_level",
+			headers=client.headers,
+			params={"email": self.partner_email},
+		)
+
+		if response.ok:
+			res = response.json()
+			partner_level = res.get("message")
+			legacy_contract = res.get("legacy_contract")
+			if partner_level:
+				return partner_level, legacy_contract
+		else:
+			self.add_comment(text="Failed to fetch partner level" + "<br><br>" + response.text)
+
+	def get_billing_setup(self):
+		if self.payment_mode in ("Prepaid Credits", "Paid By Partner"):
+			return True
 		elif (
 			self.payment_mode == "Card" and self.default_payment_method and self.billing_address
 		):
-			billing_setup = True
+			return True
 		else:
-			billing_setup = False
+			return False
+
+	def get_onboarding(self):
+		billing_setup = self.get_billing_setup()
+		if not billing_setup and self.parent_team:
+			parent_team = frappe.get_cached_doc("Team", self.parent_team)
+			billing_setup = parent_team.get_billing_setup()
 
 		site_created = frappe.db.count("Site", {"team": self.name}) > 0
 
@@ -900,10 +932,10 @@ class Team(Document):
 
 		saas_site_request = self.get_pending_saas_site_request()
 		complete = False
-		if saas_site_request:
-			complete = False
-		elif frappe.local.system_user():
+		if frappe.local.system_user():
 			complete = True
+		elif saas_site_request:
+			complete = False
 		elif billing_setup:
 			complete = True
 
@@ -920,24 +952,43 @@ class Team(Document):
 		)
 
 	def get_route_on_login(self):
-		if self.is_saas_user and not frappe.db.get_all("Site", {"team": self.name}, limit=1):
-			saas_product = frappe.db.get_value(
-				"SaaS Product Site Request",
-				{"team": self.name, "status": "Pending"},
-				"saas_product",
-			)
-			return f"/setup-site/{saas_product}"
+		if self.payment_mode:
+			return "/sites"
 
-		return "/sites"
+		if self.is_saas_user:
+			pending_site_request = self.get_pending_saas_site_request()
+			if pending_site_request:
+				saas_product = pending_site_request.saas_product
+			else:
+				saas_product = frappe.db.get_value(
+					"Account Request", self.account_request, "saas_product"
+				)
+			if saas_product:
+				return f"/app-trial/{saas_product}"
+
+		return "/welcome"
 
 	def get_pending_saas_site_request(self):
-		if self.is_saas_user:
-			return frappe.db.get_value(
-				"SaaS Product Site Request",
-				{"team": self.name, "status": ("in", ["Pending", "Wait for Site"])},
-				"name",
-				order_by="creation desc",
-			)
+		return frappe.db.get_value(
+			"SaaS Product Site Request",
+			{"team": self.name, "status": ("in", ["Pending", "Wait for Site", "Error"])},
+			["name", "saas_product", "saas_product.title", "status"],
+			order_by="creation desc",
+			as_dict=True,
+		)
+
+	def get_trial_sites(self):
+		return frappe.db.get_all(
+			"Site",
+			{
+				"team": self.name,
+				"is_standby": False,
+				"trial_end_date": ("is", "set"),
+				"status": ("!=", "Archived"),
+			},
+			["name", "trial_end_date", "standby_for_product.title as product_title"],
+			order_by="`tabSite`.`modified` desc",
+		)
 
 	@frappe.whitelist()
 	def suspend_sites(self, reason=None):
@@ -978,6 +1029,21 @@ class Team(Document):
 			frappe.get_doc("Site", site).unsuspend(reason)
 		return suspended_sites
 
+	def remove_subscription_config_in_trial_sites(self):
+		for site in frappe.db.get_all(
+			"Site",
+			{"team": self.name, "status": ("!=", "Archived"), "trial_end_date": ("is", "set")},
+			pluck="name",
+		):
+			try:
+				frappe.get_doc("Site", site).update_site_config(
+					{
+						"subscription": {"status": "Subscribed"},
+					}
+				)
+			except Exception:
+				log_error("Failed to remove subscription config in trial sites")
+
 	def get_upcoming_invoice(self):
 		# get the current period's invoice
 		today = frappe.utils.today()
@@ -1013,13 +1079,13 @@ class Team(Document):
 
 	@frappe.whitelist()
 	def send_telegram_alert_for_failed_payment(self, invoice):
-		telegram = Telegram()
 		team_url = get_url_to_form("Team", self.name)
 		invoice_url = get_url_to_form("Invoice", invoice)
-		telegram.send(
+		message = (
 			f"Failed Invoice Payment [{invoice}]({invoice_url}) of"
 			f" Partner: [{self.name}]({team_url})"
 		)
+		TelegramMessage.enqueue(message=message)
 
 	@frappe.whitelist()
 	def send_email_for_failed_payment(self, invoice, sites=None):
@@ -1074,7 +1140,7 @@ def get_team_members(team):
 				from `tabUser` u
 				left join `tabHas Role` r
 				on (r.parent = u.name)
-				where ifnull(u.name, '') in %s
+				where u.name in %s
 				group by u.name
 			""",
 			[member_emails],
@@ -1104,7 +1170,7 @@ def get_child_team_members(team):
 			"""
 				select t.name, t.team_title, t.parent_team, t.user
 				from `tabTeam` t
-				where ifnull(t.name, '') in %s
+				where t.name in %s
 				and t.enabled = 1
 			""",
 			[child_team_members],
@@ -1162,10 +1228,9 @@ def handle_payment_intent_succeeded(payment_intent):
 		amount - gst if gst else amount, source="Prepaid Credits", remark=payment_intent["id"]
 	)
 
-	# team.allocate_free_credits()
-
 	# Telemetry: Added prepaid credits
 	capture("added_card_or_prepaid_credits", "fc_signup", team.account_request)
+	team.remove_subscription_config_in_trial_sites()
 	invoice = frappe.get_doc(
 		doctype="Invoice",
 		team=team.name,
@@ -1202,7 +1267,16 @@ def handle_payment_intent_succeeded(payment_intent):
 		invoice.update_transaction_details(charge)
 		invoice.submit()
 
-	enqueue_finalize_unpaid_for_team(team.name)
+	_enqueue_finalize_unpaid_invoices_for_team(team.name)
+
+
+def _enqueue_finalize_unpaid_invoices_for_team(team: str):
+	# Enqueue a background job to call finalize_draft_invoice for unpaid invoices
+	frappe.enqueue(
+		"press.press.doctype.team.team.enqueue_finalize_unpaid_for_team",
+		team=team,
+		queue="long",
+	)
 
 
 def enqueue_finalize_unpaid_for_team(team: str):
@@ -1213,12 +1287,10 @@ def enqueue_finalize_unpaid_for_team(team: str):
 		pluck="name",
 	)
 
-	# Enqueue a background job to call finalize_draft_invoice
+	# Enqueue a background job to call finalize_invoice
 	for invoice in invoices:
-		frappe.enqueue(
-			"press.press.doctype.invoice.invoice.finalize_draft_invoice",
-			invoice=invoice,
-		)
+		doc = frappe.get_doc("Invoice", invoice)
+		doc.finalize_invoice()
 
 
 def get_permission_query_conditions(user):

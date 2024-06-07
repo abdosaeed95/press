@@ -11,3 +11,15 @@ class FrappeioServerNotSet(ValidationError):
 
 class CannotChangePlan(ValidationError):
 	pass
+
+
+class OngoingAgentJob(ValidationError):
+	pass
+
+
+class MissingAppsInBench(ValidationError):
+	pass
+
+
+class InsufficientSpaceOnServer(ValidationError):
+	pass

@@ -9,6 +9,40 @@ from press.utils import log_error
 
 
 class TraceServer(BaseServer):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		agent_password: DF.Password | None
+		domain: DF.Link | None
+		frappe_public_key: DF.Code | None
+		frappe_user_password: DF.Password | None
+		hostname: DF.Data
+		ip: DF.Data
+		is_server_setup: DF.Check
+		monitoring_password: DF.Password | None
+		private_ip: DF.Data
+		private_mac_address: DF.Data | None
+		private_vlan_id: DF.Data | None
+		provider: DF.Literal["Generic", "Scaleway", "AWS EC2", "OCI"]
+		root_public_key: DF.Code | None
+		sentry_admin_email: DF.Data | None
+		sentry_admin_password: DF.Password | None
+		sentry_mail_login: DF.Data | None
+		sentry_mail_password: DF.Password | None
+		sentry_mail_port: DF.Int
+		sentry_mail_server: DF.Data | None
+		sentry_oauth_client_id: DF.Data | None
+		sentry_oauth_client_secret: DF.Data | None
+		sentry_oauth_server_url: DF.Data | None
+		status: DF.Literal["Pending", "Installing", "Active", "Broken", "Archived"]
+		virtual_machine: DF.Link | None
+	# end: auto-generated types
+
 	def validate(self):
 		self.validate_agent_password()
 		self.validate_monitoring_password()
@@ -75,6 +109,42 @@ class TraceServer(BaseServer):
 		except Exception:
 			self.status = "Broken"
 			log_error("Trace Server Setup Exception", server=self.as_dict())
+		self.save()
+
+	@frappe.whitelist()
+	def upgrade_server(self):
+		self.status = "Installing"
+		self.save()
+		frappe.enqueue_doc(
+			self.doctype, self.name, "_upgrade_server", queue="long", timeout=2400
+		)
+
+	def _upgrade_server(self):
+		try:
+			ansible = Ansible(
+				playbook="trace_upgrade.yml",
+				server=self,
+				variables={
+					"server": self.name,
+					"sentry_admin_email": self.sentry_admin_email,
+					"sentry_mail_server": self.sentry_mail_server,
+					"sentry_mail_port": self.sentry_mail_port,
+					"sentry_mail_login": self.sentry_mail_login,
+					"sentry_mail_password": self.get_password("sentry_mail_password"),
+					"sentry_oauth_server_url": self.sentry_oauth_server_url,
+					"sentry_oauth_client_id": self.sentry_oauth_client_id,
+					"sentry_oauth_client_secret": self.get_password("sentry_oauth_client_secret"),
+				},
+			)
+			play = ansible.run()
+			self.reload()
+			if play.status == "Success":
+				self.status = "Active"
+			else:
+				self.status = "Broken"
+		except Exception:
+			self.status = "Broken"
+			log_error("Trace Server Upgrade Exception", server=self.as_dict())
 		self.save()
 
 	@frappe.whitelist()

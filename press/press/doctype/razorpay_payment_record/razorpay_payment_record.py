@@ -7,10 +7,26 @@ from datetime import datetime, timedelta
 from press.utils import log_error
 from frappe.model.document import Document
 from press.utils.billing import get_razorpay_client
-from press.press.doctype.team.team import enqueue_finalize_unpaid_for_team
+from press.press.doctype.team.team import _enqueue_finalize_unpaid_invoices_for_team
 
 
 class RazorpayPaymentRecord(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		failure_reason: DF.SmallText | None
+		order_id: DF.Data | None
+		payment_id: DF.Data | None
+		signature: DF.Data | None
+		status: DF.Literal["Captured", "Failed", "Pending"]
+		team: DF.Link | None
+	# end: auto-generated types
+
 	def on_update(self):
 		if self.has_value_changed("status") and self.status == "Captured":
 			self.process_prepaid_credits()
@@ -59,7 +75,7 @@ class RazorpayPaymentRecord(Document):
 		invoice.update_razorpay_transaction_details(payment)
 		invoice.submit()
 
-		enqueue_finalize_unpaid_for_team(team.name)
+		_enqueue_finalize_unpaid_invoices_for_team(team.name)
 
 	@frappe.whitelist()
 	def sync(self):
@@ -82,9 +98,9 @@ class RazorpayPaymentRecord(Document):
 			log_error(title="Failed to sync Razorpay Payment Record", order_id=self.order_id)
 
 
-def fetch_pending_payment_orders():
+def fetch_pending_payment_orders(hours=12):
 
-	past_12hrs_ago = datetime.now() - timedelta(hours=12)
+	past_12hrs_ago = datetime.now() - timedelta(hours=hours)
 	pending_orders = frappe.get_all(
 		"Razorpay Payment Record",
 		dict(status="Pending", creation=(">=", past_12hrs_ago)),

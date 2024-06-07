@@ -96,7 +96,7 @@ def validate_plan(secret_key):
 	if not secret_key or not isinstance(secret_key, str):
 		frappe.throw("Invalid Secret Key")
 
-	if frappe.db.exists("Saas App Subscription", {"secret_key": secret_key}):
+	if frappe.db.exists("Subscription", {"secret_key": secret_key}):
 		return True
 
 	# TODO: replace this with plan attributes
@@ -163,30 +163,46 @@ def event_log():
 	log the webhook and forward it to site
 	"""
 	data = json.loads(frappe.request.data)
+	event_data = data.get("event-data")
 
-	event_data = data["event-data"]
-	headers = event_data["message"]["headers"]
-	message_id = headers["message-id"]
-	site = message_id.split("@")[1]
-	status = event_data["event"]
-	secret_key = event_data["user-variables"]["sk_mail"]
+	if not event_data:
+		return
 
-	frappe.get_doc(
-		{
-			"doctype": "Mail Log",
-			"unique_token": secrets.token_hex(25),
-			"message_id": message_id,
-			"sender": headers["from"],
-			"recipient": event_data.get("recipient") or headers.get("to"),
-			"site": site,
-			"status": event_data["event"],
-			"subscription_key": secret_key,
-			"message": event_data["delivery-status"]["message"]
-			or event_data["delivery-status"]["description"],
-			"log": json.dumps(data),
-		}
-	).insert(ignore_permissions=True)
-	frappe.db.commit()
+	if event_data.get("user-variables", {}).get("sk_mail") is None:
+		# We don't know where to send this event
+		# TOOD: Investigate why this is happening
+		# Hint: Likely from other emails not sent via the email delivery app
+		return
+
+	try:
+		secret_key = event_data["user-variables"]["sk_mail"]
+		headers = event_data["message"]["headers"]
+		message_id = headers["message-id"]
+		site = (
+			frappe.get_cached_value("Subscription", {"secret_key": secret_key}, "site")
+			or message_id.split("@")[1]
+		)
+		status = event_data["event"]
+
+		frappe.get_doc(
+			{
+				"doctype": "Mail Log",
+				"unique_token": secrets.token_hex(25),
+				"message_id": message_id,
+				"sender": headers["from"],
+				"recipient": event_data.get("recipient") or headers.get("to"),
+				"site": site,
+				"status": event_data["event"],
+				"subscription_key": secret_key,
+				"message": event_data["delivery-status"]["message"]
+				or event_data["delivery-status"]["description"],
+				"log": json.dumps(data),
+			}
+		).insert(ignore_permissions=True)
+		frappe.db.commit()
+	except Exception:
+		log_error("Mail App: Event log error", data=data)
+		raise
 
 	data = {"status": status, "message_id": message_id, "secret_key": secret_key}
 

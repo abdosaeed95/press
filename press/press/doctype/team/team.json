@@ -11,16 +11,16 @@
   "team_title",
   "user",
   "account_request",
+  "partner_email",
+  "billing_team",
+  "parent_team",
+  "column_break_wejg",
+  "erpnext_partner",
   "is_developer",
   "is_saas_user",
   "is_code_server_user",
   "free_account",
   "via_erpnext",
-  "column_break_6",
-  "erpnext_partner",
-  "partner_email",
-  "billing_team",
-  "parent_team",
   "section_break_6",
   "team_members",
   "section_break_tdm9",
@@ -136,7 +136,8 @@
    "fieldname": "free_account",
    "fieldtype": "Check",
    "in_standard_filter": 1,
-   "label": "Free Account"
+   "label": "Free Account",
+   "search_index": 1
   },
   {
    "fieldname": "address_html",
@@ -263,10 +264,6 @@
    "fieldtype": "Table",
    "label": "Discounts",
    "options": "Invoice Discount"
-  },
-  {
-   "fieldname": "column_break_6",
-   "fieldtype": "Column Break"
   },
   {
    "fieldname": "partner_email",
@@ -409,6 +406,10 @@
    "fieldname": "is_code_server_user",
    "fieldtype": "Check",
    "label": "Is Code Server User"
+  },
+  {
+   "fieldname": "column_break_wejg",
+   "fieldtype": "Column Break"
   }
  ],
  "links": [
@@ -463,7 +464,7 @@
    "link_fieldname": "team"
   }
  ],
- "modified": "2023-12-19 12:53:24.914882",
+ "modified": "2024-04-04 22:20:46.667608",
  "modified_by": "Administrator",
  "module": "Press",
  "name": "Team",

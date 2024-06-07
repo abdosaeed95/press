@@ -30,13 +30,13 @@
   register: branches
   args:
     chdir: "{{ bench_path }}/apps/{{ item }}"
-  with_items: 
+  with_items:
     - "{{ apps.stdout }}"
 
 - name: Generate Apps List
   set_fact:
     rg_apps: "{{ rg_apps | default([])+ [{ 'app' : item.0, 'remote' : item.1, 'branch': item.2 }] }}"
-  with_together: 
+  with_together:
     - "{{ apps.stdout }}"
     - "{{ remote.results | map(attribute='stdout_lines') | list }}"
     - "{{ branches.results | map(attribute='stdout_lines') | list }}"

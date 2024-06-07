@@ -18,6 +18,67 @@ from frappe.core.utils import find
 
 
 class DatabaseServer(BaseServer):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+		from press.press.doctype.database_server_mariadb_variable.database_server_mariadb_variable import (
+			DatabaseServerMariaDBVariable,
+		)
+		from press.press.doctype.resource_tag.resource_tag import ResourceTag
+
+		agent_password: DF.Password | None
+		cluster: DF.Link | None
+		domain: DF.Link | None
+		frappe_public_key: DF.Code | None
+		frappe_user_password: DF.Password | None
+		hostname: DF.Data
+		hostname_abbreviation: DF.Data | None
+		ip: DF.Data | None
+		is_performance_schema_enabled: DF.Check
+		is_primary: DF.Check
+		is_replication_setup: DF.Check
+		is_self_hosted: DF.Check
+		is_server_prepared: DF.Check
+		is_server_renamed: DF.Check
+		is_server_setup: DF.Check
+		is_stalk_setup: DF.Check
+		mariadb_root_password: DF.Password | None
+		mariadb_system_variables: DF.Table[DatabaseServerMariaDBVariable]
+		memory_high: DF.Float
+		memory_max: DF.Float
+		memory_swap_max: DF.Float
+		plan: DF.Link | None
+		primary: DF.Link | None
+		private_ip: DF.Data | None
+		private_mac_address: DF.Data | None
+		private_vlan_id: DF.Data | None
+		provider: DF.Literal["Generic", "Scaleway", "AWS EC2", "OCI"]
+		ram: DF.Float
+		root_public_key: DF.Code | None
+		self_hosted_mariadb_server: DF.Data | None
+		self_hosted_server_domain: DF.Data | None
+		server_id: DF.Int
+		ssh_port: DF.Int
+		ssh_user: DF.Data | None
+		stalk_cycles: DF.Int
+		stalk_function: DF.Data | None
+		stalk_gdb_collector: DF.Check
+		stalk_interval: DF.Float
+		stalk_sleep: DF.Int
+		stalk_strace_collector: DF.Check
+		stalk_threshold: DF.Int
+		stalk_variable: DF.Data | None
+		status: DF.Literal["Pending", "Installing", "Active", "Broken", "Archived"]
+		tags: DF.Table[ResourceTag]
+		team: DF.Link | None
+		title: DF.Data | None
+		virtual_machine: DF.Link | None
+	# end: auto-generated types
+
 	def validate(self):
 		super().validate()
 		self.validate_mariadb_root_password()
@@ -212,6 +273,24 @@ class DatabaseServer(BaseServer):
 			log_error("MariaDB Upgrade Error", server=self.name)
 
 	@frappe.whitelist()
+	def update_mariadb(self):
+		frappe.enqueue_doc(self.doctype, self.name, "_update_mariadb", timeout=1800)
+
+	def _update_mariadb(self):
+		ansible = Ansible(
+			playbook="update_mariadb.yml",
+			server=self,
+			user=self.ssh_user or "root",
+			port=self.ssh_port or 22,
+			variables={
+				"server": self.name,
+			},
+		)
+		play = ansible.run()
+		if play.status == "Failure":
+			log_error("MariaDB Update Error", server=self.name)
+
+	@frappe.whitelist()
 	def upgrade_mariadb_patched(self):
 		frappe.enqueue_doc(self.doctype, self.name, "_upgrade_mariadb_patched", timeout=1800)
 
@@ -268,25 +347,7 @@ class DatabaseServer(BaseServer):
 				self.server_id = 1
 
 	def _setup_server(self):
-		agent_password = self.get_password("agent_password")
-		agent_repository_url = self.get_agent_repository_url()
-		mariadb_root_password = self.get_password("mariadb_root_password")
-		certificate_name = frappe.db.get_value(
-			"TLS Certificate", {"wildcard": True, "domain": self.domain}, "name"
-		)
-		certificate = frappe.get_doc("TLS Certificate", certificate_name)
-		monitoring_password = frappe.get_doc("Cluster", self.cluster).get_password(
-			"monitoring_password"
-		)
-
-		log_server = frappe.db.get_single_value("Press Settings", "log_server")
-		if log_server:
-			kibana_password = frappe.get_doc("Log Server", log_server).get_password(
-				"kibana_password"
-			)
-		else:
-			kibana_password = None
-
+		config = self._get_config()
 		try:
 			ansible = Ansible(
 				playbook="self_hosted_db.yml"
@@ -298,17 +359,17 @@ class DatabaseServer(BaseServer):
 				variables={
 					"server": self.name,
 					"workers": "2",
-					"agent_password": agent_password,
-					"agent_repository_url": agent_repository_url,
-					"monitoring_password": monitoring_password,
-					"log_server": log_server,
-					"kibana_password": kibana_password,
+					"agent_password": config.agent_password,
+					"agent_repository_url": config.agent_repository_url,
+					"monitoring_password": config.monitoring_password,
+					"log_server": config.log_server,
+					"kibana_password": config.kibana_password,
 					"private_ip": self.private_ip,
 					"server_id": self.server_id,
-					"mariadb_root_password": mariadb_root_password,
-					"certificate_private_key": certificate.private_key,
-					"certificate_full_chain": certificate.full_chain,
-					"certificate_intermediate_chain": certificate.intermediate_chain,
+					"mariadb_root_password": config.mariadb_root_password,
+					"certificate_private_key": config.certificate.private_key,
+					"certificate_full_chain": config.certificate.full_chain,
+					"certificate_intermediate_chain": config.certificate.intermediate_chain,
 				},
 			)
 			play = ansible.run()
@@ -316,12 +377,91 @@ class DatabaseServer(BaseServer):
 			if play.status == "Success":
 				self.status = "Active"
 				self.is_server_setup = True
+
+				self.process_hybrid_server_setup()
 			else:
 				self.status = "Broken"
 		except Exception:
 			self.status = "Broken"
 			log_error("Database Server Setup Exception", server=self.as_dict())
 		self.save()
+
+	def _get_config(self):
+		certificate_name = frappe.db.get_value(
+			"TLS Certificate", {"wildcard": True, "domain": self.domain}, "name"
+		)
+		certificate = frappe.get_doc("TLS Certificate", certificate_name)
+
+		log_server = frappe.db.get_single_value("Press Settings", "log_server")
+		if log_server:
+			kibana_password = frappe.get_doc("Log Server", log_server).get_password(
+				"kibana_password"
+			)
+		else:
+			kibana_password = None
+
+		return frappe._dict(
+			dict(
+				agent_password=self.get_password("agent_password"),
+				agent_repository_url=self.get_agent_repository_url(),
+				mariadb_root_password=self.get_password("mariadb_root_password"),
+				certificate=certificate,
+				monitoring_password=frappe.get_doc("Cluster", self.cluster).get_password(
+					"monitoring_password"
+				),
+				log_server=log_server,
+				kibana_password=kibana_password,
+			)
+		)
+
+	@frappe.whitelist()
+	def setup_essentials(self):
+		"""Setup missing esessiong after server setup"""
+		config = self._get_config()
+
+		try:
+			ansible = Ansible(
+				playbook="setup_essentials.yml",
+				server=self,
+				user=self.ssh_user or "root",
+				port=self.ssh_port or 22,
+				variables={
+					"server": self.name,
+					"workers": "2",
+					"agent_password": config.agent_password,
+					"agent_repository_url": config.agent_repository_url,
+					"monitoring_password": config.monitoring_password,
+					"log_server": config.log_server,
+					"kibana_password": config.kibana_password,
+					"private_ip": self.private_ip,
+					"server_id": self.server_id,
+					"certificate_private_key": config.certificate.private_key,
+					"certificate_full_chain": config.certificate.full_chain,
+					"certificate_intermediate_chain": config.certificate.intermediate_chain,
+				},
+			)
+			play = ansible.run()
+			self.reload()
+			if play.status == "Success":
+				self.status = "Active"
+		except Exception:
+			self.status = "Broken"
+			log_error("Setup failed for missing essentials", server=self.as_dict())
+		self.save()
+
+	def process_hybrid_server_setup(self):
+		try:
+			hybird_server = frappe.db.get_value(
+				"Self Hosted Server", {"database_server": self.name}, "name"
+			)
+
+			if hybird_server:
+				hybird_server = frappe.get_doc("Self Hosted Server", hybird_server)
+
+				if not hybird_server.different_database_server:
+					hybird_server._setup_app_server()
+		except Exception:
+			log_error("Hybrid Server Setup exception", server=self.as_dict())
 
 	def _setup_primary(self, secondary):
 		mariadb_root_password = self.get_password("mariadb_root_password")
@@ -333,6 +473,7 @@ class DatabaseServer(BaseServer):
 				playbook="primary.yml",
 				server=self,
 				variables={
+					"backup_path": "/tmp/replica",
 					"mariadb_root_password": mariadb_root_password,
 					"secondary_root_public_key": secondary_root_public_key,
 				},
@@ -388,6 +529,34 @@ class DatabaseServer(BaseServer):
 		frappe.enqueue_doc(
 			self.doctype, self.name, "_setup_replication", queue="long", timeout=18000
 		)
+
+	@frappe.whitelist()
+	def perform_physical_backup(self, path):
+		if not path:
+			frappe.throw("Provide a path to store the physical backup")
+		frappe.enqueue_doc(
+			self.doctype,
+			self.name,
+			"_perform_physical_backup",
+			queue="long",
+			timeout=18000,
+			path=path,
+		)
+
+	def _perform_physical_backup(self, path):
+		mariadb_root_password = self.get_password("mariadb_root_password")
+		try:
+			ansible = Ansible(
+				playbook="mariadb_physical_backup.yml",
+				server=self,
+				variables={
+					"mariadb_root_password": mariadb_root_password,
+					"backup_path": path,
+				},
+			)
+			ansible.run()
+		except Exception:
+			log_error("MariaDB Physical Backup Exception", server=self.as_dict())
 
 	def _trigger_failover(self):
 		try:
@@ -648,7 +817,10 @@ class DatabaseServer(BaseServer):
 		)
 
 	def get_stalks(self):
-		return self.agent.get("database/stalks") or []
+		result = self.agent.get("database/stalks", raises=False)
+		if (not result) or ("error" in result):
+			return []
+		return result
 
 	def get_stalk(self, name):
 		return self.agent.get(f"database/stalks/{name}")

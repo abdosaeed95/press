@@ -9,9 +9,30 @@ from press.api.billing import get_stripe
 from frappe.contacts.address_and_contact import load_address_and_contact
 from press.overrides import get_permission_query_conditions_for_doctype
 from press.utils import log_error
+from press.api.client import dashboard_whitelist
 
 
 class StripePaymentMethod(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		brand: DF.Data | None
+		expiry_month: DF.Data | None
+		expiry_year: DF.Data | None
+		is_default: DF.Check
+		is_verified_with_micro_charge: DF.Check
+		last_4: DF.Data | None
+		name_on_card: DF.Data | None
+		stripe_customer_id: DF.Data | None
+		stripe_payment_method_id: DF.Data | None
+		team: DF.Link
+	# end: auto-generated types
+
 	dashboard_fields = [
 		"is_default",
 		"expiry_month",
@@ -20,12 +41,15 @@ class StripePaymentMethod(Document):
 		"name_on_card",
 		"last_4",
 	]
-	dashboard_actions = ["set_default"]
 
 	def onload(self):
 		load_address_and_contact(self)
 
-	@frappe.whitelist()
+	@dashboard_whitelist()
+	def delete(self):
+		super().delete()
+
+	@dashboard_whitelist()
 	def set_default(self):
 		stripe = get_stripe()
 		# set default payment method on stripe
@@ -92,3 +116,7 @@ class StripePaymentMethod(Document):
 get_permission_query_conditions = get_permission_query_conditions_for_doctype(
 	"Stripe Payment Method"
 )
+
+
+def on_doctype_update():
+	frappe.db.add_index("Stripe Payment Method", ["team", "is_verified_with_micro_charge"])

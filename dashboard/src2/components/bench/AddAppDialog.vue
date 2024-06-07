@@ -1,8 +1,8 @@
 <template>
 	<Dialog
 		:options="{
-			title: 'Add app to bench',
-			size: '4xl'
+			title: 'Add Marketplace App',
+			size: '6xl'
 		}"
 		v-model="showDialog"
 	>
@@ -76,24 +76,36 @@
 							:key="row.name"
 						>
 							<template v-slot="{ column, item }">
-								<Dropdown
-									:options="dropdownItems(row)"
-									right
-									v-if="column.type === 'select'"
-								>
-									<template v-slot="{ open }">
-										<Button type="white" icon-right="chevron-down">
-											<span>{{ row.source.branch }}</span>
-										</Button>
-									</template>
-								</Dropdown>
-								<Button
-									v-else-if="column.type === 'Button'"
-									label="Add"
-									@click="addApp(row)"
-								/>
-								<div v-else class="truncate text-base" :class="column.class">
-									{{ formattedValue(column, i) }}
+								<div class="flex items-center">
+									<div v-if="column.prefix" class="mr-2">
+										<component :is="column.prefix(row)" />
+									</div>
+									<Dropdown
+										:options="dropdownItems(row)"
+										right
+										v-if="column.type === 'select'"
+									>
+										<template v-slot="{ open }">
+											<Button
+												v-if="row.source.branch"
+												type="white"
+												icon-right="chevron-down"
+											>
+												<span>{{ row.source.branch }}</span>
+											</Button>
+										</template>
+									</Dropdown>
+									<component
+										v-else-if="column.type === 'Component'"
+										:is="column.component(row)"
+									/>
+									<Badge
+										v-else-if="column.type === 'Badge'"
+										v-bind="formattedValue(column, item, row)"
+									/>
+									<div v-else class="truncate text-base" :class="column.class">
+										{{ formattedValue(column, item, row) }}
+									</div>
 								</div>
 							</template>
 						</ListRow>
@@ -113,11 +125,7 @@
 			</div>
 		</template>
 	</Dialog>
-	<NewAppDialog
-		:benchName="benchName"
-		v-model="showNewAppDialog"
-		@app-add="$emit('appAdd')"
-	/>
+	<NewAppDialog v-if="showNewAppDialog" @app-added="addAppFromGithub" />
 </template>
 
 <script>
@@ -128,14 +136,17 @@ import {
 	ListRow,
 	ListRows,
 	ListRowItem,
-	TextInput
+	TextInput,
+	Badge,
+	Button
 } from 'frappe-ui';
 import { toast } from 'vue-sonner';
-import NewAppDialog from './NewAppDialog.vue';
+import { h } from 'vue';
+import NewAppDialog from '../NewAppDialog.vue';
 
 export default {
 	name: 'AddAppDialog',
-	props: ['benchName'],
+	props: ['groupName', 'groupVersion'],
 	components: {
 		ListView,
 		ListHeader,
@@ -146,31 +157,87 @@ export default {
 		TextInput,
 		NewAppDialog
 	},
-	emits: ['appAdd'],
+	emits: ['appAdd', 'new-app'],
 	data() {
 		return {
 			searchQuery: '',
 			showNewAppDialog: false,
 			selectedAppSources: [],
 			showDialog: true,
-			columns: [
+			addedApps: []
+		};
+	},
+	resources: {
+		addApp: {
+			url: 'press.api.bench.add_app',
+			onSuccess() {
+				this.$emit('appAdd');
+			},
+			onError(e) {
+				toast.error(e.messages.length ? e.messages.join('\n') : e.message);
+			}
+		},
+		installableApps() {
+			return {
+				url: 'press.api.bench.all_apps',
+				params: {
+					name: this.groupName
+				},
+				transform(data) {
+					return data.map(app => {
+						app.compatible = app.sources.length > 0;
+						app.source = app.sources.length > 0 ? app.sources[0] : {};
+						return app;
+					});
+				},
+				auto: true,
+				cache: 'benchInstallableApps',
+				initialData: []
+			};
+		}
+	},
+	computed: {
+		rows() {
+			return this.$resources.installableApps.data;
+		},
+		columns() {
+			return [
 				{
 					label: 'Title',
 					key: 'title',
-					class: 'font-medium'
+					class: 'font-medium',
+					prefix(row) {
+						return row.image
+							? h('img', {
+									src: row.image,
+									class: 'w-6 h-6 rounded',
+									alt: row.title
+							  })
+							: h(
+									'div',
+									{
+										class:
+											'w-6 h-6 rounded bg-gray-300 text-gray-600 flex items-center justify-center'
+									},
+									row.title[0].toUpperCase()
+							  );
+					}
 				},
 				{
 					label: 'Repository',
-					key: 'source',
+					key: 'repo',
 					class: 'text-gray-600',
+					width: '15rem',
 					format(value, row) {
-						return value.repository_owner + '/' + value.repository;
+						if (!row.sources.length) return value;
+						return `${row.source.repository_owner}/${row.source.repository}`;
 					}
 				},
 				{
 					label: 'Branch',
 					type: 'select',
 					key: 'sources',
+					width: '15rem',
 					format(value, row) {
 						return row.sources.map(s => {
 							return {
@@ -182,43 +249,49 @@ export default {
 				},
 				{
 					label: '',
-					type: 'Button',
-					width: '5rem'
+					type: 'Component',
+					width: '8rem',
+					component: row => {
+						if (row.compatible)
+							return h(Button, {
+								label: 'Add',
+								iconLeft: this.addedApps.includes(row) ? 'check' : 'plus',
+
+								disabled: !row.compatible,
+								class: {
+									'ml-auto': true,
+									'pointer-events-none': this.addedApps.includes(row)
+								},
+								onClick: () => this.addApp(row)
+							});
+						else
+							return h(Badge, {
+								class: 'ml-auto',
+								label: 'Not Compatible',
+								theme: 'red'
+							});
+					}
 				}
-			]
-		};
-	},
-	resources: {
-		addApps: {
-			url: 'press.api.bench.add_app',
-			onSuccess() {
-				this.$emit('appAdd');
-				this.$resources.installableApps.reload();
-			},
-			onError(e) {
-				toast.error(e.messages.length ? e.messages.join('\n') : e.message);
-			}
-		},
-		installableApps() {
-			return {
-				url: 'press.api.bench.installable_apps',
-				params: {
-					name: this.benchName
-				},
-				auto: true,
-				initialData: []
-			};
-		}
-	},
-	computed: {
-		rows() {
-			return this.$resources.installableApps.data;
+			];
 		},
 		filteredRows() {
-			if (!this.searchQuery) return this.rows;
+			let rows = this.rows.sort((a, b) => {
+				// Sort by compatible first, then by total installs
+				if (a.compatible && !b.compatible) {
+					return -1;
+				} else if (!a.compatible && b.compatible) {
+					return 1;
+				} else if (a.total_installs != b.total_installs) {
+					return b.total_installs - a.total_installs;
+				} else {
+					return a.title.localeCompare(b.title);
+				}
+			});
+
+			if (!this.searchQuery) return rows;
 			let query = this.searchQuery.toLowerCase();
 
-			return this.rows.filter(row => {
+			return rows.filter(row => {
 				let values = this.columns.map(column => {
 					let value = row[column.key];
 					if (column.format) {
@@ -236,23 +309,31 @@ export default {
 		},
 		isLoading() {
 			return (
-				this.$resources.addApps.loading ||
+				this.$resources.addApp.loading ||
 				this.$resources.installableApps.loading
 			);
 		}
 	},
 	methods: {
+		addAppFromGithub(app) {
+			app.group = this.groupName;
+			this.$emit('new-app', app);
+		},
 		addApp(row) {
 			if (!this.selectedAppSources.includes(row))
 				this.selectedAppSources.push(row);
 
 			let app = this.selectedAppSources.find(app => app.name === row.name);
 
-			this.$resources.addApps.submit({
-				name: this.benchName,
-				source: app.source.name,
-				app: app.name
-			});
+			this.$resources.addApp
+				.submit({
+					name: this.groupName,
+					source: app.source.name,
+					app: app.name
+				})
+				.then(() => {
+					this.addedApps.push(app);
+				});
 		},
 		dropdownItems(row) {
 			return row.sources.map(source => ({
@@ -272,10 +353,7 @@ export default {
 				return _app;
 			});
 		},
-		formattedValue(column, i) {
-			let row = this.rows[i];
-			let value = row[column.key];
-
+		formattedValue(column, value, row) {
 			let formattedValue = column.format ? column.format(value, row) : value;
 			if (formattedValue == null) {
 				formattedValue = '';

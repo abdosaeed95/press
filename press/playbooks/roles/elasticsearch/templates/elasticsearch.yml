@@ -90,7 +90,7 @@ path.logs: /var/log/elasticsearch
 # This means that users don’t have to provide credentials and can get full access
 # to the cluster. Network connections are also not encrypted.
 #
-# To protect your data, we strongly encourage you to enable the Elasticsearch security features. 
+# To protect your data, we strongly encourage you to enable the Elasticsearch security features.
 # Refer to the following documentation for instructions.
 #
 # https://www.elastic.co/guide/en/elasticsearch/reference/7.16/configuring-stack-security.html

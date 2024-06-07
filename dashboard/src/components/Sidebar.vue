@@ -102,6 +102,7 @@
 				</router-link>
 			</div>
 		</div>
+
 		<SwitchTeamDialog v-model="showTeamSwitcher" />
 	</div>
 </template>
@@ -136,11 +137,6 @@ export default {
 					onClick: () => (window.location.href = '/support')
 				},
 				{
-					label: 'Settings',
-					icon: 'settings',
-					onClick: () => this.$router.push('/settings/profile')
-				},
-				{
 					label: 'Logout',
 					icon: 'log-out',
 					onClick: () => this.$auth.logout()
@@ -159,6 +155,7 @@ export default {
 			}
 		});
 
+		this.$socket.emit('doctype_subscribe', 'Press Notification');
 		this.$socket.on('press_notification', data => {
 			if (data.team === this.$account.team.name) {
 				unreadNotificationsCount.setData(data => data + 1);
@@ -166,6 +163,10 @@ export default {
 		});
 
 		unreadNotificationsCount.fetch();
+	},
+	beforeUnmount() {
+		this.$socket.emit('doctype_unsubscribe', 'Press Notification');
+		this.$socket.off('press_notification');
 	},
 	computed: {
 		unreadNotificationsCount() {

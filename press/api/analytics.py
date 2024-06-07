@@ -2,10 +2,14 @@
 # For license information, please see license.txt
 
 
+from elasticsearch import Elasticsearch
+from elasticsearch_dsl import Search, A
 import frappe
+from pytz import timezone as pytz_timezone
 import requests
 import json
 import sqlparse
+from frappe.utils import flt
 from press.api.site import protected
 from press.press.doctype.site_plan.site_plan import get_plan_config
 from frappe.utils import (
@@ -15,12 +19,13 @@ from frappe.utils import (
 	get_system_timezone,
 )
 from frappe.utils.password import get_decrypted_password
-from datetime import datetime
+from datetime import datetime, timedelta
 from press.agent import Agent
 from press.press.report.binary_log_browser.binary_log_browser import (
 	get_files_in_timespan,
 	convert_user_timezone_to_utc,
 )
+
 
 try:
 	from frappe.utils import convert_utc_to_user_timezone
@@ -49,6 +54,18 @@ def get(name, timezone, duration="7d"):
 	request_duration_by_path_data = get_request_by_path(
 		name, "duration", timezone, timespan, timegrain
 	)
+	average_request_duration_by_path_data = get_request_by_path(
+		name, "average_duration", timezone, timespan, timegrain
+	)
+	background_job_count_by_method_data = get_background_job_by_method(
+		name, "count", timezone, timespan, timegrain
+	)
+	background_job_duration_by_method_data = get_background_job_by_method(
+		name, "duration", timezone, timespan, timegrain
+	)
+	average_background_job_duration_by_method_data = get_background_job_by_method(
+		name, "average_duration", timezone, timespan, timegrain
+	)
 	slow_logs_by_count = get_slow_logs(name, "count", timezone, timespan, timegrain)
 	slow_logs_by_duration = get_slow_logs(name, "duration", timezone, timespan, timegrain)
 	job_data = get_usage(name, "job", timezone, timespan, timegrain)
@@ -64,6 +81,10 @@ def get(name, timezone, duration="7d"):
 		"request_cpu_time": [{"value": r.duration, "date": r.date} for r in request_data],
 		"request_count_by_path": request_count_by_path_data,
 		"request_duration_by_path": request_duration_by_path_data,
+		"average_request_duration_by_path": average_request_duration_by_path_data,
+		"background_job_count_by_method": background_job_count_by_method_data,
+		"background_job_duration_by_method": background_job_duration_by_method_data,
+		"average_background_job_duration_by_method": average_background_job_duration_by_method_data,
 		"slow_logs_by_count": slow_logs_by_count,
 		"slow_logs_by_duration": slow_logs_by_duration,
 		"job_count": [{"value": r.count, "date": r.date} for r in job_data],
@@ -88,6 +109,29 @@ def daily_usage(name, timezone):
 	}
 
 
+def rounded_time(dt=None, round_to=60):
+	"""Round a datetime object to any time lapse in seconds
+	dt : datetime.datetime object, default now.
+	round_to : Closest number of seconds to round to, default 1 minute.
+	ref: https://stackoverflow.com/questions/3463930/how-to-round-the-minute-of-a-datetime-object/10854034#10854034
+	"""
+	if dt is None:
+		dt = datetime.datetime.now()
+	seconds = (dt.replace(tzinfo=None) - dt.min).seconds
+	rounding = (seconds + round_to / 2) // round_to * round_to
+	return dt + timedelta(0, rounding - seconds, -dt.microsecond)
+
+
+def get_rounded_boundaries(timespan: int, timegrain: int, timezone: str = "UTC"):
+	"""
+	Round the start and end time to the nearest interval, because Elasticsearch does this
+	"""
+	end = datetime.now(pytz_timezone(timezone))
+	start = frappe.utils.add_to_date(end, seconds=-timespan)
+
+	return rounded_time(start, timegrain), rounded_time(end, timegrain)
+
+
 def get_uptime(site, timezone, timespan, timegrain):
 	monitor_server = frappe.db.get_single_value("Press Settings", "monitor_server")
 	if not monitor_server:
@@ -96,7 +140,7 @@ def get_uptime(site, timezone, timespan, timegrain):
 	url = f"https://{monitor_server}/prometheus/api/v1/query_range"
 	password = get_decrypted_password("Monitor Server", monitor_server, "grafana_password")
 
-	end = frappe.utils.now_datetime()
+	end = datetime.now(pytz_timezone(timezone))
 	start = frappe.utils.add_to_date(end, seconds=-timespan)
 	query = {
 		"query": (
@@ -116,14 +160,55 @@ def get_uptime(site, timezone, timespan, timegrain):
 		buckets.append(
 			frappe._dict(
 				{
-					"date": convert_utc_to_timezone(
-						datetime.fromtimestamp(timestamp).replace(tzinfo=None), timezone
-					),
+					"date": convert_utc_to_timezone(datetime.fromtimestamp(timestamp), timezone),
 					"value": float(value),
 				}
 			)
 		)
 	return buckets
+
+
+def get_stacked_histogram_chart_result(
+	search: Search,
+	query_type: str,
+	start: datetime,
+	end: datetime,
+	timegrain: int,
+	to_s_divisor: int = 1e6,
+):
+	aggs = search.execute().aggregations
+
+	timegrain = timedelta(seconds=timegrain)
+	labels = [start + i * timegrain for i in range((end - start) // timegrain + 1)]
+	# method_path has buckets of timestamps with method(eg: avg) of that duration
+	datasets = []
+
+	for path_bucket in aggs.method_path.buckets:
+		path_data = frappe._dict(
+			{
+				"path": path_bucket.key,
+				"values": [0] * len(labels),
+				"stack": "path",
+			}
+		)
+		for hist_bucket in path_bucket.histogram_of_method.buckets:
+			label = get_datetime(hist_bucket.key_as_string)
+			if label in labels:
+				path_data["values"][labels.index(label)] = (
+					(flt(hist_bucket.avg_of_duration.value) / to_s_divisor)
+					if query_type == "average_duration"
+					else (
+						flt(hist_bucket.sum_of_duration.value) / to_s_divisor
+						if query_type == "duration"
+						else hist_bucket.doc_count
+						if query_type == "count"
+						else 0
+					)
+				)
+		datasets.append(path_data)
+
+	labels = [label.replace(tzinfo=None) for label in labels]
+	return {"datasets": datasets, "labels": labels}
 
 
 def get_request_by_path(site, query_type, timezone, timespan, timegrain):
@@ -133,199 +218,158 @@ def get_request_by_path(site, query_type, timezone, timespan, timegrain):
 	if not log_server:
 		return {"datasets": [], "labels": []}
 
-	url = f"https://{log_server}/elasticsearch/filebeat-*/_search"
+	url = f"https://{log_server}/elasticsearch"
 	password = get_decrypted_password("Log Server", log_server, "kibana_password")
 
-	count_query = {
-		"aggs": {
-			"method_path": {
-				"terms": {
-					"field": "json.request.path",
-					"order": {"request_count": "desc"},
-					"size": MAX_NO_OF_PATHS,
-				},
-				"aggs": {
-					"request_count": {
-						"filter": {
-							"bool": {
-								"filter": [
-									{"match_phrase": {"json.site": site}},
-									{
-										"range": {
-											"@timestamp": {
-												"gte": f"now-{timespan}s",
-												"lte": "now",
-											}
-										}
-									},
-								],
-								"must_not": [{"match_phrase": {"json.request.path": "/api/method/ping"}}],
-							}
-						}
-					},
-					"histogram_of_method": {
-						"date_histogram": {
-							"field": "@timestamp",
-							"fixed_interval": f"{timegrain}s",
-							"time_zone": timezone,
-						},
-						"aggs": {
-							"request_count": {
-								"filter": {
-									"bool": {
-										"filter": [
-											{"match_phrase": {"json.site": site}},
-											{
-												"range": {
-													"@timestamp": {
-														"gte": f"now-{timespan}s",
-														"lte": "now",
-													}
-												}
-											},
-										],
-										"must_not": [{"match_phrase": {"json.request.path": "/api/method/ping"}}],
-									}
-								}
-							}
-						},
-					},
-				},
-			}
-		},
-		"size": 0,
-		"query": {
-			"bool": {
-				"filter": [
-					{"match_phrase": {"json.site": site}},
-					{"range": {"@timestamp": {"gte": f"now-{timespan}s", "lte": "now"}}},
-				],
-				"must_not": [{"match_phrase": {"json.request.path": "/api/method/ping"}}],
-			}
-		},
-	}
+	start, end = get_rounded_boundaries(timespan, timegrain, timezone)
 
-	duration_query = {
-		"aggs": {
-			"method_path": {
-				"terms": {
-					"field": "json.request.path",
-					"order": {"methods>sum": "desc"},
-					"size": MAX_NO_OF_PATHS,
-				},
-				"aggs": {
-					"methods": {
-						"filter": {
-							"bool": {
-								"filter": [
-									{"match_phrase": {"json.site": site}},
-									{
-										"range": {
-											"@timestamp": {
-												"gte": f"now-{timespan}s",
-												"lte": "now",
-											}
-										}
-									},
-								],
-								"must_not": [{"match_phrase": {"json.request.path": "/api/method/ping"}}],
-							}
-						},
-						"aggs": {
-							"sum": {
-								"sum": {
-									"field": "json.duration",
-								}
-							}
-						},
-					},
-					"histogram_of_method": {
-						"date_histogram": {
-							"field": "@timestamp",
-							"fixed_interval": f"{timegrain}s",
-							"time_zone": timezone,
-						},
-						"aggs": {
-							"methods": {
-								"filter": {
-									"bool": {
-										"filter": [
-											{"match_phrase": {"json.site": site}},
-											{
-												"range": {
-													"@timestamp": {
-														"gte": f"now-{timespan}s",
-														"lte": "now",
-													}
-												}
-											},
-										],
-										"must_not": [{"match_phrase": {"json.request.path": "/api/method/ping"}}],
-									}
-								},
-								"aggs": {
-									"sum": {
-										"sum": {
-											"field": "json.duration",
-										}
-									}
-								},
-							},
-						},
-					},
-				},
+	es = Elasticsearch(url, basic_auth=("frappe", password))
+	search = (
+		Search(using=es, index="filebeat-*")
+		.filter("match_phrase", json__site=site)
+		.filter("match_phrase", json__transaction_type="request")
+		.filter(
+			"range",
+			**{
+				"@timestamp": {
+					"gte": int(start.timestamp() * 1000),
+					"lte": int(end.timestamp() * 1000),
+				}
 			},
-		},
-		"size": 0,
-		"query": {
-			"bool": {
-				"filter": [
-					{"match_phrase": {"json.site": site}},
-					{"range": {"@timestamp": {"gte": f"now-{timespan}s", "lte": "now"}}},
-				],
-				"must_not": [{"match_phrase": {"json.request.path": "/api/method/ping"}}],
-			}
-		},
-	}
+		)
+		.exclude("match_phrase", json__request__path="/api/method/ping")
+		.extra(size=0)
+	)
+
+	histogram_of_method = A(
+		"date_histogram",
+		field="@timestamp",
+		fixed_interval=f"{timegrain}s",
+		time_zone=timezone,
+		min_doc_count=0,
+	)
+	avg_of_duration = A("avg", field="json.duration")
+	sum_of_duration = A("sum", field="json.duration")
 
 	if query_type == "count":
-		query = count_query
-	else:
-		query = duration_query
+		search.aggs.bucket(
+			"method_path",
+			"terms",
+			field="json.request.path",
+			size=MAX_NO_OF_PATHS,
+			order={"path_count": "desc"},
+		).bucket("histogram_of_method", histogram_of_method)
 
-	response = requests.post(url, json=query, auth=("frappe", password)).json()
-
-	if not response["aggregations"]["method_path"]["buckets"]:
-		return {"datasets": [], "labels": []}
-
-	buckets = []
-	labels = [
-		get_datetime(data["key_as_string"]).replace(tzinfo=None)
-		for data in response["aggregations"]["method_path"]["buckets"][0][
-			"histogram_of_method"
-		]["buckets"]
-	]
-	for bucket in response["aggregations"]["method_path"]["buckets"]:
-		buckets.append(
-			frappe._dict(
-				{
-					"path": bucket["key"],
-					"values": [
-						(
-							data["request_count"]["doc_count"]
-							if query_type == "count"
-							else (
-								data["methods"]["sum"]["value"] / 1000000 if query_type == "duration" else 0
-							)
-						)
-						for data in bucket["histogram_of_method"]["buckets"]
-					],
-					"stack": "path",
-				}
-			)
+		search.aggs["method_path"].bucket(
+			"path_count", "value_count", field="json.request.path"
 		)
 
-	return {"datasets": buckets, "labels": labels}
+	elif query_type == "duration":
+		search.aggs.bucket(
+			"method_path",
+			"terms",
+			field="json.request.path",
+			size=MAX_NO_OF_PATHS,
+			order={"outside_sum": "desc"},
+		).bucket("histogram_of_method", histogram_of_method).bucket(
+			"sum_of_duration", sum_of_duration
+		)
+		search.aggs["method_path"].bucket("outside_sum", sum_of_duration)  # for sorting
+
+	elif query_type == "average_duration":
+		search.aggs.bucket(
+			"method_path",
+			"terms",
+			field="json.request.path",
+			size=MAX_NO_OF_PATHS,
+			order={"outside_avg": "desc"},
+		).bucket("histogram_of_method", histogram_of_method).bucket(
+			"avg_of_duration", avg_of_duration
+		)
+
+		search.aggs["method_path"].bucket("outside_avg", avg_of_duration)  # for sorting
+
+	return get_stacked_histogram_chart_result(search, query_type, start, end, timegrain)
+
+
+def get_background_job_by_method(site, query_type, timezone, timespan, timegrain):
+	MAX_NO_OF_PATHS = 10
+
+	log_server = frappe.db.get_single_value("Press Settings", "log_server")
+	if not log_server:
+		return {"datasets": [], "labels": []}
+
+	url = f"https://{log_server}/elasticsearch"
+	password = get_decrypted_password("Log Server", log_server, "kibana_password")
+
+	start, end = get_rounded_boundaries(timespan, timegrain, timezone)
+
+	es = Elasticsearch(url, basic_auth=("frappe", password))
+	search = (
+		Search(using=es, index="filebeat-*")
+		.filter("match_phrase", json__site=site)
+		.filter("match_phrase", json__transaction_type="job")
+		.filter(
+			"range",
+			**{
+				"@timestamp": {
+					"gte": int(start.timestamp() * 1000),
+					"lte": int(end.timestamp() * 1000),
+				}
+			},
+		)
+		.extra(size=0)
+	)
+
+	histogram_of_method = A(
+		"date_histogram",
+		field="@timestamp",
+		fixed_interval=f"{timegrain}s",
+		time_zone=timezone,
+		min_doc_count=0,
+	)
+	avg_of_duration = A("avg", field="json.duration")
+	sum_of_duration = A("sum", field="json.duration")
+
+	if query_type == "count":
+		search.aggs.bucket(
+			"method_path",
+			"terms",
+			field="json.job.method",
+			size=MAX_NO_OF_PATHS,
+			order={"method_count": "desc"},
+		).bucket("histogram_of_method", histogram_of_method)
+
+		search.aggs["method_path"].bucket(
+			"method_count", "value_count", field="json.job.method"
+		)
+
+	elif query_type == "duration":
+		search.aggs.bucket(
+			"method_path",
+			"terms",
+			field="json.job.method",
+			size=MAX_NO_OF_PATHS,
+			order={"outside_sum": "desc"},
+		).bucket("histogram_of_method", histogram_of_method).bucket(
+			"sum_of_duration", sum_of_duration
+		)
+		search.aggs["method_path"].bucket("outside_sum", sum_of_duration)  # for sorting
+
+	elif query_type == "average_duration":
+		search.aggs.bucket(
+			"method_path",
+			"terms",
+			field="json.job.method",
+			size=MAX_NO_OF_PATHS,
+			order={"outside_avg": "desc"},
+		).bucket("histogram_of_method", histogram_of_method).bucket(
+			"avg_of_duration", avg_of_duration
+		)
+
+		search.aggs["method_path"].bucket("outside_avg", avg_of_duration)  # for sorting
+
+	return get_stacked_histogram_chart_result(search, query_type, start, end, timegrain)
 
 
 def get_slow_logs(site, query_type, timezone, timespan, timegrain):
@@ -333,200 +377,77 @@ def get_slow_logs(site, query_type, timezone, timespan, timegrain):
 	MAX_NO_OF_PATHS = 10
 
 	log_server = frappe.db.get_single_value("Press Settings", "log_server")
-	if not log_server:
+	if not log_server or not database_name:
 		return {"datasets": [], "labels": []}
 
-	url = f"https://{log_server}/elasticsearch/filebeat-*/_search"
+	url = f"https://{log_server}/elasticsearch/"
 	password = get_decrypted_password("Log Server", log_server, "kibana_password")
 
-	count_query = {
-		"aggs": {
-			"method_path": {
-				"terms": {
-					"field": "mysql.slowlog.query",
-					"order": {"slowlog_count": "desc"},
-					"size": MAX_NO_OF_PATHS,
-				},
-				"aggs": {
-					"slowlog_count": {
-						"filter": {
-							"bool": {
-								"filter": [
-									{"match_phrase": {"mysql.slowlog.current_user": database_name}},
-									{
-										"range": {
-											"@timestamp": {
-												"gte": f"now-{timespan}s",
-												"lte": "now",
-											}
-										}
-									},
-								],
-							}
-						}
-					},
-					"histogram_of_method": {
-						"date_histogram": {
-							"field": "@timestamp",
-							"fixed_interval": f"{timegrain}s",
-							"time_zone": timezone,
-						},
-						"aggs": {
-							"slowlog_count": {
-								"filter": {
-									"bool": {
-										"filter": [
-											{"match_phrase": {"mysql.slowlog.current_user": database_name}},
-											{
-												"range": {
-													"@timestamp": {
-														"gte": f"now-{timespan}s",
-														"lte": "now",
-													}
-												}
-											},
-										],
-									}
-								}
-							}
-						},
-					},
-				},
-			}
-		},
-		"size": 0,
-		"query": {
-			"bool": {
-				"filter": [
-					{"match_phrase": {"mysql.slowlog.current_user": database_name}},
-					{"range": {"@timestamp": {"gte": f"now-{timespan}s", "lte": "now"}}},
-				],
-			}
-		},
-	}
+	start, end = get_rounded_boundaries(timespan, timegrain, timezone)
 
-	duration_query = {
-		"aggs": {
-			"method_path": {
-				"terms": {
-					"field": "mysql.slowlog.query",
-					"order": {"methods>sum": "desc"},
-					"size": MAX_NO_OF_PATHS,
-				},
-				"aggs": {
-					"methods": {
-						"filter": {
-							"bool": {
-								"filter": [
-									{"match_phrase": {"mysql.slowlog.current_user": database_name}},
-									{
-										"range": {
-											"@timestamp": {
-												"gte": f"now-{timespan}s",
-												"lte": "now",
-											}
-										}
-									},
-								],
-							}
-						},
-						"aggs": {
-							"sum": {
-								"sum": {
-									"field": "event.duration",
-								}
-							}
-						},
-					},
-					"histogram_of_method": {
-						"date_histogram": {
-							"field": "@timestamp",
-							"fixed_interval": f"{timegrain}s",
-							"time_zone": timezone,
-						},
-						"aggs": {
-							"methods": {
-								"filter": {
-									"bool": {
-										"filter": [
-											{"match_phrase": {"mysql.slowlog.current_user": database_name}},
-											{
-												"range": {
-													"@timestamp": {
-														"gte": f"now-{timespan}s",
-														"lte": "now",
-													}
-												}
-											},
-										],
-									}
-								},
-								"aggs": {
-									"sum": {
-										"sum": {
-											"field": "event.duration",
-										}
-									}
-								},
-							},
-						},
-					},
-				},
+	es = Elasticsearch(url, basic_auth=("frappe", password))
+	search = (
+		Search(using=es, index="filebeat-*")
+		.filter("match", mysql__slowlog__current_user=database_name)
+		.filter(
+			"range",
+			**{
+				"@timestamp": {
+					"gte": int(start.timestamp() * 1000),
+					"lte": int(end.timestamp() * 1000),
+				}
 			},
-		},
-		"size": 0,
-		"query": {
-			"bool": {
-				"filter": [
-					{"match_phrase": {"mysql.slowlog.current_user": database_name}},
-					{"range": {"@timestamp": {"gte": f"now-{timespan}s", "lte": "now"}}},
-				],
-			}
-		},
-	}
+		)
+		.exclude(
+			"wildcard", mysql__slowlog__query="SELECT /\*!40001 SQL_NO_CACHE \*/*"  # noqa
+		)
+		.extra(size=0)
+	)
+
+	histogram_of_method = A(
+		"date_histogram",
+		field="@timestamp",
+		fixed_interval=f"{timegrain}s",
+		time_zone=timezone,
+		min_doc_count=0,
+	)
+	sum_of_duration = A("sum", field="event.duration")
 
 	if query_type == "count":
-		query = count_query
-	else:
-		query = duration_query
+		search.aggs.bucket(
+			"method_path",
+			"terms",
+			field="mysql.slowlog.query",
+			size=MAX_NO_OF_PATHS,
+			order={"slowlog_count": "desc"},
+		).bucket("histogram_of_method", histogram_of_method)
 
-	response = requests.post(url, json=query, auth=("frappe", password)).json()
-
-	if not response["aggregations"]["method_path"]["buckets"]:
-		return {"datasets": [], "labels": []}
-
-	buckets = []
-	labels = [
-		get_datetime(data["key_as_string"]).replace(tzinfo=None)
-		for data in response["aggregations"]["method_path"]["buckets"][0][
-			"histogram_of_method"
-		]["buckets"]
-	]
-	for bucket in response["aggregations"]["method_path"]["buckets"]:
-		buckets.append(
-			frappe._dict(
-				{
-					"path": bucket["key"],
-					"values": [
-						(
-							data["slowlog_count"]["doc_count"]
-							if query_type == "count"
-							else (data["methods"]["sum"]["value"] / 1e9 if query_type == "duration" else 0)
-						)
-						for data in bucket["histogram_of_method"]["buckets"]
-					],
-					"stack": "path",
-				}
-			)
+		search.aggs["method_path"].bucket(
+			"slowlog_count",
+			"value_count",
+			field="mysql.slowlog.query",
 		)
+	elif query_type == "duration":
+		search.aggs.bucket(
+			"method_path",
+			"terms",
+			field="mysql.slowlog.query",
+			size=MAX_NO_OF_PATHS,
+			order={"outside_sum": "desc"},
+		).bucket("histogram_of_method", histogram_of_method).bucket(
+			"sum_of_duration", sum_of_duration
+		)
+		search.aggs["method_path"].bucket("outside_sum", sum_of_duration)
 
-	return {"datasets": buckets, "labels": labels}
+	return get_stacked_histogram_chart_result(
+		search, query_type, start, end, timegrain, to_s_divisor=1e9
+	)
 
 
 def get_usage(site, type, timezone, timespan, timegrain):
 	log_server = frappe.db.get_single_value("Press Settings", "log_server")
 	if not log_server:
-		return []
+		return {"datasets": [], "labels": []}
 
 	url = f"https://{log_server}/elasticsearch/filebeat-*/_search"
 	password = get_decrypted_password("Log Server", log_server, "kibana_password")
@@ -856,5 +777,22 @@ def plausible_analytics(name):
 				pageviews = [{"value": d["pageviews"], "date": d["date"]} for d in res]
 				unique_visitors = [{"value": d["visitors"], "date": d["date"]} for d in res]
 				response.update({"pageviews": pageviews, "visitors": unique_visitors})
+
+	response.update(
+		{
+			"weekly_installs": frappe.db.sql(
+				f"""
+		SELECT DATE_FORMAT(sa.creation, '%Y-%m-%d') AS date, COUNT(*) AS value
+		FROM `tabSite Activity` as sa
+		WHERE sa.action = 'Install App'
+		AND sa.creation >= DATE_SUB(CURDATE(), INTERVAL 8 WEEK)
+		AND sa.reason = '{name}'
+		GROUP BY WEEK(sa.creation)
+		ORDER BY date
+		""",
+				as_dict=True,
+			),
+		}
+	)
 
 	return response

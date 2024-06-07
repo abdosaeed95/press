@@ -12,8 +12,41 @@ import subprocess
 import frappe
 from frappe.model.document import Document
 
+from typing import TYPE_CHECKING
+
+from press.utils import log_error
+
+if TYPE_CHECKING:
+	from press.press.doctype.ssh_certificate_authority.ssh_certificate_authority import (
+		SSHCertificateAuthority,
+	)
+
 
 class SSHCertificate(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		certificate_details: DF.Code | None
+		certificate_type: DF.Literal["User", "Host"]
+		group: DF.Link | None
+		key_type: DF.Data | None
+		serial_number: DF.Int
+		ssh_certificate: DF.Code | None
+		ssh_certificate_authority: DF.Link | None
+		ssh_certificate_authority_public_key: DF.Code | None
+		ssh_fingerprint: DF.Data | None
+		ssh_public_key: DF.Code
+		user: DF.Link | None
+		user_ssh_key: DF.Link | None
+		valid_until: DF.Datetime | None
+		validity: DF.Literal["1h", "3h", "6h", "30d"]
+	# end: auto-generated types
+
 	def validate(self):
 		self.validate_public_key()
 		self.validate_existing_certificates()
@@ -52,7 +85,11 @@ class SSHCertificate(Document):
 	def validate_existing_certificates(self):
 		if frappe.get_all(
 			"SSH Certificate",
-			{"user": self.user, "valid_until": [">", frappe.utils.now()], "group": self.group},
+			{
+				"user_ssh_key": self.user_ssh_key,
+				"valid_until": [">", frappe.utils.now()],
+				"group": self.group,
+			},
 		):
 			frappe.throw("A valid certificate already exists.")
 
@@ -69,7 +106,9 @@ class SSHCertificate(Document):
 		self.save()
 
 	def generate_certificate(self):
-		ca = frappe.get_doc("SSH Certificate Authority", self.ssh_certificate_authority)
+		ca: "SSHCertificateAuthority" = frappe.get_doc(
+			"SSH Certificate Authority", self.ssh_certificate_authority
+		)
 		ca.sign(
 			self.user,
 			[self.group],
@@ -80,7 +119,13 @@ class SSHCertificate(Document):
 		self.read_certificate()
 
 	def run(self, command):
-		return subprocess.check_output(shlex.split(command)).decode()
+		try:
+			return subprocess.check_output(
+				shlex.split(command), stderr=subprocess.STDOUT
+			).decode()
+		except subprocess.CalledProcessError as e:
+			log_error("Command failed", output={e.output.decode()}, doc=self)
+			raise
 
 	def extract_certificate_details(self):
 		self.certificate_details = self.run(f"ssh-keygen -Lf {self.certificate_file}")

@@ -1,11 +1,19 @@
 import { createResource } from 'frappe-ui';
 
 export let plans = createResource({
-	url: 'press.api.site.get_plans',
-	cache: 'site.plans'
+	url: 'press.api.site.get_site_plans',
+	cache: 'site.plans',
+	initialData: []
 });
-plans.fetch();
+
+export function fetchPlans() {
+	plans.fetch();
+}
+
+export function getPlans() {
+	return plans.data || [];
+}
 
 export function getPlan(planName) {
-	return (plans.data || []).find(plan => plan.name === planName);
+	return getPlans().find(plan => plan.name === planName);
 }

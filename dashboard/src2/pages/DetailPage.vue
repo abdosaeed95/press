@@ -27,7 +27,10 @@
 		</div>
 	</Header>
 	<div>
-		<TabsWithRouter :tabs="object.detail.tabs">
+		<TabsWithRouter
+			v-if="!$resources.document.get.error && $resources.document.get.fetched"
+			:tabs="object.detail.tabs"
+		>
 			<template #tab-content="{ tab }">
 				<!-- this div is required for some reason -->
 				<div></div>
@@ -38,6 +41,13 @@
 				/>
 			</template>
 		</TabsWithRouter>
+		<div
+			v-else-if="$resources.document.get.error"
+			class="mx-auto mt-60 w-fit rounded border border-dashed px-12 py-8 text-center text-gray-600"
+		>
+			<i-lucide-alert-triangle class="mx-auto mb-4 h-6 w-6 text-red-600" />
+			<ErrorMessage :message="$resources.document.get.error" />
+		</div>
 	</div>
 </template>
 
@@ -48,9 +58,12 @@ import { Breadcrumbs } from 'frappe-ui';
 import { getObject } from '../objects';
 import TabsWithRouter from '../components/TabsWithRouter.vue';
 
+let subscribed = {};
+
 export default {
 	name: 'DetailPage',
 	props: {
+		id: String,
 		objectType: {
 			type: String,
 			required: true
@@ -72,8 +85,34 @@ export default {
 				type: 'document',
 				doctype: this.object.doctype,
 				name: this.name,
-				whitelistedMethods: this.object.whitelistedMethods || {}
+				whitelistedMethods: this.object.whitelistedMethods || {},
+				onError(error) {
+					for (let message of error?.messages || []) {
+						if (message.redirect) {
+							window.location.href = message.redirect;
+							return;
+						}
+					}
+				}
 			};
+		}
+	},
+	mounted() {
+		if (!subscribed[`${this.object.doctype}:${this.name}`]) {
+			this.$socket.emit('doc_subscribe', this.object.doctype, this.name);
+			subscribed[`${this.object.doctype}:${this.name}`] = true;
+		}
+		this.$socket.on('doc_update', data => {
+			if (data.doctype === this.object.doctype && data.name === this.name) {
+				this.$resources.document.reload();
+			}
+		});
+	},
+	beforeUnmount() {
+		let doctype = this.object.doctype;
+		if (subscribed[`${doctype}:${this.name}`]) {
+			this.$socket.emit('doc_unsubscribe', doctype, this.name);
+			subscribed[`${doctype}:${this.name}`] = false;
 		}
 	},
 	computed: {

@@ -18,9 +18,18 @@ ALLOWED_PATHS = [
 	"/api/method/find-my-sites",
 	"/api/method/frappe.core.doctype.communication.email.mark_email_as_seen",
 	"/api/method/frappe.realtime.get_user_info",
+	"/api/method/frappe.realtime.can_subscribe_doc",
+	"/api/method/frappe.realtime.can_subscribe_doctype",
+	"/api/method/frappe.realtime.has_permission",
 	"/api/method/frappe.www.login.login_via_frappe",
+	"/api/method/frappe.integrations.oauth2.authorize",
+	"/api/method/frappe.integrations.oauth2.approve",
+	"/api/method/frappe.integrations.oauth2.get_token",
+	"/api/method/frappe.integrations.oauth2.openid_profile",
+	"/api/method/frappe.integrations.oauth2_logins.login_via_frappe",
 	"/api/method/frappe.website.doctype.web_page_view.web_page_view.make_view_log",
 	"/api/method/get-user-sites-list-for-new-ticket",
+	"/api/method/ping",
 	"/api/method/login",
 	"/api/method/logout",
 	"/api/method/press.press.doctype.razorpay_webhook_log.razorpay_webhook_log.razorpay_webhook_handler",
@@ -37,11 +46,14 @@ ALLOWED_PATHS = [
 	"/api/method/frappe.website.doctype.web_form.web_form.accept",
 	"/api/method/frappe.core.doctype.user.user.test_password_strength",
 	"/api/method/frappe.core.doctype.user.user.update_password",
+	"/api/method/get_central_migration_data",
 ]
 
 ALLOWED_WILDCARD_PATHS = [
 	"/api/method/press.api.",
 	"/api/method/wiki.",
+	"/api/method/frappe.integrations.oauth2_logins.",
+	"/api/method/press.www.marketplace.index.",
 ]
 
 DENIED_WILDCARD_PATHS = [

@@ -12,6 +12,32 @@ from press.utils import poly_get_doctype
 
 
 class AnsiblePlay(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		changed: DF.Int
+		duration: DF.Time | None
+		end: DF.Datetime | None
+		failures: DF.Int
+		ignored: DF.Int
+		ok: DF.Int
+		play: DF.Data
+		playbook: DF.Data
+		rescued: DF.Int
+		server: DF.DynamicLink
+		server_type: DF.Link
+		skipped: DF.Int
+		start: DF.Datetime | None
+		status: DF.Literal["Pending", "Running", "Success", "Failure"]
+		unreachable: DF.Int
+		variables: DF.Code
+	# end: auto-generated types
+
 	dashboard_fields = [
 		"name",
 		"creation",
@@ -30,9 +56,13 @@ class AnsiblePlay(Document):
 		if not server:
 			frappe.throw("Not permitted", frappe.PermissionError)
 
-		servers = frappe.parse_json(server.replace("'", '"'))[1]
+		if server.startswith("["):
+			servers = frappe.parse_json(server.replace("'", '"'))[1]
 
-		for server in servers:
+			for server in servers:
+				doctype = poly_get_doctype(["Server", "Database Server"], server)
+				is_owned_by_team(doctype, server, raise_exception=True)
+		else:
 			doctype = poly_get_doctype(["Server", "Database Server"], server)
 			is_owned_by_team(doctype, server, raise_exception=True)
 

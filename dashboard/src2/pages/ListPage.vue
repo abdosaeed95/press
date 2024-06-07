@@ -8,6 +8,14 @@
 			</Header>
 		</div>
 		<div class="p-5">
+			<AlertAddPaymentMode
+				class="mb-5"
+				v-if="!$team.doc.payment_mode && !$team.doc.parent_team"
+			/>
+			<AlertCardExpired
+				class="mb-5"
+				v-if="isCardExpired && $team.doc.payment_mode == 'Card'"
+			/>
 			<ObjectList :options="listOptions" />
 		</div>
 	</div>
@@ -18,6 +26,8 @@ import Header from '../components/Header.vue';
 import ObjectList from '../components/ObjectList.vue';
 import { Breadcrumbs, Button, Dropdown, TextInput } from 'frappe-ui';
 import { getObject } from '../objects';
+import { defineAsyncComponent } from 'vue';
+import dayjs from '../utils/dayjs';
 
 export default {
 	components: {
@@ -26,7 +36,13 @@ export default {
 		ObjectList,
 		Button,
 		Dropdown,
-		TextInput
+		TextInput,
+		AlertAddPaymentMode: defineAsyncComponent(() =>
+			import('../components/AlertAddPaymentMode.vue')
+		),
+		AlertCardExpired: defineAsyncComponent(() =>
+			import('../components/AlertCardExpired.vue')
+		)
 	},
 	props: {
 		objectType: {
@@ -52,8 +68,20 @@ export default {
 			return {
 				...this.object.list,
 				doctype: this.object.doctype,
-				route: this.getRoute
+				route: this.object.detail ? this.getRoute : null
 			};
+		},
+		isCardExpired() {
+			if (this.$team.doc.payment_method?.expiry_year < dayjs().year()) {
+				return true;
+			} else if (
+				this.$team.doc.payment_method?.expiry_year == dayjs().year() &&
+				this.$team.doc.payment_method?.expiry_month < dayjs().month() + 1
+			) {
+				return true;
+			} else {
+				return false;
+			}
 		}
 	}
 };

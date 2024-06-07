@@ -10,12 +10,15 @@ import frappe
 from frappe.core.utils import find, find_all
 from frappe.model.naming import append_number_if_name_exists
 from frappe.utils import flt, sbool
-
 from press.api.github import branches
 from press.api.site import protected
 from press.press.doctype.agent_job.agent_job import job_detail
+from press.press.doctype.app_patch.app_patch import create_app_patch
 from press.press.doctype.app_source.app_source import AppSource
 from press.press.doctype.cluster.cluster import Cluster
+from press.press.doctype.marketplace_app.marketplace_app import (
+	get_total_installs_by_app,
+)
 from press.press.doctype.release_group.release_group import (
 	ReleaseGroup,
 	new_release_group,
@@ -388,12 +391,35 @@ def apps(name):
 	deployed_apps = unique(deployed_apps)
 	updates = deploy_information(name)
 
+	latest_bench = frappe.get_all(
+		"Bench",
+		filters={"group": group.name, "status": "Active"},
+		order_by="creation desc",
+		limit=1,
+		pluck="name",
+	)
+	if latest_bench:
+		latest_bench = latest_bench[0]
+	else:
+		latest_bench = None
+
+	latest_deployed_apps = frappe.get_all(
+		"Bench",
+		filters={"name": latest_bench},
+		fields=["`tabBench App`.app", "`tabBench App`.hash"],
+	)
+
 	for app in group.apps:
 		source = frappe.get_doc("App Source", app.source)
 		app = frappe.get_doc("App", app.app)
 		update_available = updates["update_available"] and find(
 			updates.apps, lambda x: x["app"] == app.name and x["update_available"]
 		)
+
+		latest_deployed_app = find(latest_deployed_apps, lambda x: x.app == app.name)
+		hash = latest_deployed_app.hash if latest_deployed_app else None
+		tag = get_app_tag(source.repository, source.repository_owner, hash)
+
 		apps.append(
 			{
 				"name": app.name,
@@ -403,6 +429,8 @@ def apps(name):
 				"repository_url": source.repository_url,
 				"repository": source.repository,
 				"repository_owner": source.repository_owner,
+				"tag": tag,
+				"hash": hash,
 				"deployed": app.name in deployed_apps,
 				"update_available": bool(update_available),
 				"last_github_poll_failed": source.last_github_poll_failed,
@@ -424,6 +452,57 @@ def installable_apps(name):
 
 @frappe.whitelist()
 @protected("Release Group")
+def all_apps(name):
+	"""Return all apps in the marketplace that are not installed in the release group for adding new apps"""
+
+	release_group = frappe.get_doc("Release Group", name)
+	installed_apps = [app.app for app in release_group.apps]
+	marketplace_apps = frappe.get_all(
+		"Marketplace App",
+		filters={"status": "Published", "app": ("not in", installed_apps)},
+		fields=["name", "title", "image", "app"],
+	)
+
+	AppSource = frappe.qb.DocType("App Source")
+	AppSourceVersion = frappe.qb.DocType("App Source Version")
+	marketplace_app_sources = (
+		frappe.qb.from_(AppSource)
+		.left_join(AppSourceVersion)
+		.on(AppSourceVersion.parent == AppSource.name)
+		.select(
+			AppSource.name,
+			AppSource.branch,
+			AppSource.repository,
+			AppSource.repository_owner,
+			AppSource.app,
+			AppSourceVersion.version,
+		)
+		.where(
+			(AppSource.app.isin([app.app for app in marketplace_apps]))
+			& (AppSource.enabled == 1)
+			& (AppSource.public == 1)
+		)
+	).run(as_dict=1)
+
+	total_installs_by_app = get_total_installs_by_app()
+
+	for app in marketplace_apps:
+		app["sources"] = find_all(
+			list(filter(lambda x: x.version == release_group.version, marketplace_app_sources)),
+			lambda x: x.app == app.app,
+		)
+		# for fetching repo details for incompatible apps
+		app_source = find(marketplace_app_sources, lambda x: x.app == app.app)
+		app["repo"] = (
+			f"{app_source.repository_owner}/{app_source.repository}" if app_source else None
+		)
+		app["total_installs"] = total_installs_by_app.get(app["name"], 0)
+
+	return marketplace_apps
+
+
+@frappe.whitelist()
+@protected("Release Group")
 def fetch_latest_app_update(name, app):
 	frappe.get_doc("Release Group", name).fetch_latest_app_update(app)
 
@@ -440,7 +519,7 @@ def add_apps(name, apps):
 	release_group = frappe.get_doc("Release Group", name)
 	for app in apps:
 		app_name, source = app.values()
-		release_group.add_app(frappe._dict(name=source, app=app_name))
+		release_group.append_source(frappe._dict(name=source, app=app_name))
 
 
 @frappe.whitelist()
@@ -630,7 +709,7 @@ def deploy(name, apps):
 		frappe.throw("A deploy for this bench is already in progress")
 
 	candidate = rg.create_deploy_candidate(apps)
-	candidate.deploy_to_production()
+	candidate.schedule_build_and_deploy()
 
 	return candidate.name
 
@@ -907,3 +986,40 @@ def get_title_and_creation(name):
 @protected("Release Group")
 def rename(name, title):
 	return frappe.db.set_value("Release Group", name, "title", title)
+
+
+@frappe.whitelist()
+@protected("App Patch")
+def apply_patch(release_group: str, app: str, patch_config: dict) -> list[str]:
+	return create_app_patch(
+		release_group,
+		app,
+		patch_config,
+	)
+
+
+@frappe.whitelist(allow_guest=True)
+def confirm_bench_transfer(key):
+	cache = frappe.cache.get_value(f"bench_transfer_data:{key}")
+
+	if cache:
+		bench, team_change = cache
+
+		team_change = frappe.get_doc("Team Change", team_change)
+		team_change.transfer_completed = True
+		team_change.save()
+		frappe.db.commit()
+
+		frappe.cache.delete_value(f"bench_transfer_data:{key}")
+
+		frappe.response.type = "redirect"
+		frappe.response.location = f"/dashboard/benches/{bench}"
+	else:
+		from frappe import _
+
+		frappe.respond_as_web_page(
+			_("Not Permitted"),
+			_("The link you are using is invalid or expired."),
+			http_status_code=403,
+			indicator_color="red",
+		)

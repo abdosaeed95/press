@@ -1,10 +1,7 @@
-import HelpIcon from '~icons/lucide/help-circle';
 import { defineAsyncComponent, h } from 'vue';
-import { Button } from 'frappe-ui';
 import ServerActions from '../components/server/ServerActions.vue';
-import { userCurrency, bytes, pricePerDay } from '../utils/format';
+import { planTitle, duration } from '../utils/format';
 import { icon } from '../utils/components';
-import { duration } from '../utils/format';
 import { getTeam } from '../data/team';
 import { tagTab } from './common/tags';
 import router from '../router';
@@ -24,6 +21,7 @@ export default {
 		title: 'Servers',
 		fields: [
 			'title',
+			'database_server',
 			'plan.title as plan_title',
 			'plan.price_usd as price_usd',
 			'plan.price_inr as price_inr',
@@ -36,30 +34,29 @@ export default {
 				label: 'Server',
 				fieldname: 'name',
 				width: 1.5,
+				class: 'font-medium',
 				format(value, row) {
 					return row.title || value;
 				}
 			},
 			{ label: 'Status', fieldname: 'status', type: 'Badge', width: 0.8 },
 			{
-				label: 'Plan',
-				width: 1,
+				label: 'App Server Plan',
 				format(value, row) {
-					let $team = getTeam();
-					if (row.price_usd > 0) {
-						let india = $team.doc.country == 'India';
-						let currencySymbol = $team.doc.currency === 'INR' ? '₹' : '$';
-						return `${currencySymbol}${
-							india ? row.price_inr : row.price_usd
-						} /mo`;
-					}
-					return row.plan_title;
+					return planTitle(row);
+				}
+			},
+			{
+				label: 'Database Server Plan',
+				fieldname: 'db_plan',
+				format(value) {
+					if (!value) return '';
+					return planTitle(value);
 				}
 			},
 			{
 				label: 'Region',
 				fieldname: 'cluster',
-				width: 1,
 				format(value, row) {
 					return row.cluster_title || value;
 				},
@@ -85,237 +82,6 @@ export default {
 			};
 		}
 	},
-	create: {
-		route: '/servers/new',
-		title: 'New Server',
-		optionsResource() {
-			return {
-				url: 'press.api.server.options',
-				auto: true,
-				initialData: {
-					regions: [],
-					app_plans: [],
-					db_plans: []
-				},
-				transform(data) {
-					return {
-						regions: data.regions,
-						app_plans: data.app_plans.map(plan => {
-							return {
-								...plan,
-								features: [
-									{
-										label: 'vCPUs',
-										value: plan.vcpu
-									},
-									{
-										label: 'Memory',
-										value: bytes(plan.memory, 0, 2)
-									},
-									{
-										label: 'Disk',
-										value: bytes(plan.disk, 0, 2)
-									},
-									{
-										label: 'Instance Type',
-										value: plan.instance_type
-									}
-								],
-								disabled:
-									Object.keys(this.$team.doc.billing_details).length === 0
-							};
-						}),
-						db_plans: data.db_plans.map(plan => {
-							return {
-								...plan,
-								features: [
-									{
-										label: 'vCPUs',
-										value: plan.vcpu
-									},
-									{
-										label: 'Memory',
-										value: bytes(plan.memory, 0, 2)
-									},
-									{
-										label: 'Disk',
-										value: bytes(plan.disk, 0, 2)
-									},
-									{
-										label: 'Instance Type',
-										value: plan.instance_type
-									}
-								],
-								disabled:
-									Object.keys(this.$team.doc.billing_details).length === 0
-							};
-						})
-					};
-				}
-			};
-		},
-		primaryAction({ createResource: createServer, vals }) {
-			return {
-				label: 'Create Server',
-				variant: 'solid',
-				onClick() {
-					createServer.submit({
-						server: {
-							title: vals.name,
-							cluster: vals.region,
-							app_plan: vals.app_plan?.name,
-							db_plan: vals.db_plan?.name
-						}
-					});
-				}
-			};
-		},
-		createResource() {
-			return {
-				url: 'press.api.server.new',
-				validate({ server }) {
-					if (!server.title) {
-						return 'Server name is required';
-					} else if (!server.cluster) {
-						return 'Please select a region';
-					} else if (!server.app_plan) {
-						return 'Please select an App Server Plan';
-					} else if (!server.db_plan) {
-						return 'Please select a Database Server Plan';
-					}
-				},
-				onSuccess(server) {
-					router.push({
-						name: 'Server Detail Plays',
-						params: { name: server.server }
-					});
-				}
-			};
-		},
-		options: [
-			{
-				label: 'Select Region',
-				type: 'card',
-				name: 'region',
-				fieldname: 'regions'
-			},
-			{
-				label: 'Select App Server Plan',
-				type: 'plan',
-				name: 'app_plan',
-				fieldname: 'app_plans',
-				labelSlot() {
-					return h(
-						Button,
-						{
-							link: 'https://frappecloud.com/pricing#dedicated',
-							variant: 'ghost'
-						},
-						{
-							prefix: () => h(HelpIcon, { class: 'h-4 w-4 text-gray-700' }),
-							default: () => 'Help'
-						}
-					);
-				},
-				dependsOn: ['region'],
-				filter(plans, vals) {
-					return plans.filter(plan => plan.cluster === vals.region);
-				}
-			},
-			{
-				label: 'Select Database Server Plan',
-				type: 'plan',
-				name: 'db_plan',
-				fieldname: 'db_plans',
-				dependsOn: ['region'],
-				filter(plans, vals) {
-					return plans.filter(plan => plan.cluster === vals.region);
-				}
-			},
-			{
-				label: 'Enter Server Name',
-				type: 'text',
-				name: 'name',
-				fieldname: 'name',
-				dependsOn: ['region', 'app_plan', 'db_plan']
-			}
-		],
-		summary: [
-			{
-				label: 'Region',
-				fieldname: 'region'
-			},
-			{
-				label: 'App Server Plan',
-				fieldname: 'app_plan',
-				format(value) {
-					let $team = getTeam();
-
-					return `<div class="text-gray-900">${userCurrency(
-						$team.doc.currency == 'INR' ? value.price_inr : value.price_usd
-					)}
-					per month
-					<div class="text-gray-600">
-						${value.vcpu} vCPU
-					</div>
-					<div class="text-gray-600">
-						${bytes(value.memory, 0, 2)} RAM
-					</div>
-					<div class="text-gray-600">
-						${bytes(value.disk, 0, 2)} Disk
-					</div></div>`;
-				}
-			},
-			{
-				label: 'Database Server Plan',
-				fieldname: 'db_plan',
-				format(value) {
-					let $team = getTeam();
-
-					return `<div class="text-gray-900">${userCurrency(
-						$team.doc.currency == 'INR' ? value.price_inr : value.price_usd
-					)}
-					per month
-					<div class="text-gray-600">
-						${value.vcpu} vCPU
-					</div>
-					<div class="text-gray-600">
-						${bytes(value.memory, 0, 2)} RAM
-					</div>
-					<div class="text-gray-600">
-						${bytes(value.disk, 0, 2)} Disk
-					</div></div>`;
-				}
-			},
-			{
-				label: 'Server Name',
-				fieldname: 'name'
-			},
-			{
-				label: 'Total',
-				format({ app_plan, db_plan }) {
-					let $team = getTeam();
-
-					return `<div class="text-gray-900">${userCurrency(
-						$team.doc.currency == 'INR'
-							? app_plan.price_inr + db_plan.price_inr
-							: app_plan.price_usd + db_plan.price_usd
-					)} per month
-					<div class="text-gray-600">
-							${userCurrency(
-								pricePerDay(
-									$team.doc.currency == 'INR'
-										? app_plan.price_inr + app_plan.price_inr
-										: db_plan.price_usd + db_plan.price_usd
-								)
-							)}
-							per day
-						</div>
-					</div>`;
-				}
-			}
-		]
-	},
 	detail: {
 		titleField: 'name',
 		route: '/servers/:name',
@@ -323,6 +89,18 @@ export default {
 			return {
 				label: server.doc.status
 			};
+		},
+		breadcrumbs({ documentResource: server }) {
+			return [
+				{
+					label: 'Servers',
+					route: '/servers'
+				},
+				{
+					label: server.doc.title || server.doc.name,
+					route: `/servers/${server.doc.name}`
+				}
+			];
 		},
 		actions({ documentResource: server }) {
 			let $team = getTeam();
@@ -355,7 +133,8 @@ export default {
 						{
 							label: 'Visit Server',
 							icon: icon('external-link'),
-							condition: () => server.doc.status === 'Active',
+							condition: () =>
+								server.doc.status === 'Active' && $team.doc.is_desk_user,
 							onClick() {
 								window.open(`https://${server.doc.name}`, '_blank');
 							}
@@ -387,8 +166,7 @@ export default {
 				),
 				props: server => {
 					return {
-						serverName: server.doc.name,
-						dbServerName: server.doc.database_server
+						serverName: server.doc.name
 					};
 				}
 			},
@@ -418,7 +196,6 @@ export default {
 						{
 							label: 'Version',
 							fieldname: 'version',
-							class: 'text-gray-600',
 							width: 0.5
 						},
 						{
@@ -432,7 +209,6 @@ export default {
 						{
 							label: 'Sites',
 							fieldname: 'site_count',
-							class: 'text-gray-600',
 							width: 0.25
 						}
 					],
@@ -451,7 +227,7 @@ export default {
 							onClick() {
 								router.push({
 									name: 'Server New Bench',
-									params: { name: server.doc.name }
+									params: { server: server.doc.name }
 								});
 							}
 						};
@@ -490,13 +266,11 @@ export default {
 						},
 						{
 							label: 'Job ID',
-							fieldname: 'job_id',
-							class: 'text-gray-600'
+							fieldname: 'job_id'
 						},
 						{
 							label: 'Duration',
 							fieldname: 'duration',
-							class: 'text-gray-600',
 							format(value, row) {
 								if (row.job_id === 0 || !row.end) return;
 								return duration(value);
@@ -523,9 +297,30 @@ export default {
 				type: 'list',
 				list: {
 					doctype: 'Ansible Play',
+					filterControls({ documentResource: server }) {
+						return [
+							{
+								type: 'select',
+								label: 'Server',
+								fieldname: 'server',
+								options: [
+									server.doc.name,
+									server.doc.database_server,
+									server.doc.replication_server
+								].filter(Boolean)
+							}
+						];
+					},
 					filters: server => {
 						return {
-							server: ['in', [server.doc.name, server.doc.database_server]]
+							server: [
+								'in',
+								[
+									server.doc.name,
+									server.doc.database_server,
+									server.doc.replication_server
+								].filter(Boolean)
+							]
 						};
 					},
 					route(row) {
@@ -557,7 +352,6 @@ export default {
 							label: 'Duration',
 							fieldname: 'duration',
 							width: 0.5,
-							class: 'text-gray-600',
 							format(value, row) {
 								if (row.job_id === 0 || !row.end) return;
 								return duration(value);
@@ -574,7 +368,7 @@ export default {
 			},
 			{
 				label: 'Actions',
-				icon: icon('activity'),
+				icon: icon('sliders'),
 				route: 'actions',
 				type: 'Component',
 				component: ServerActions,
@@ -588,12 +382,12 @@ export default {
 	routes: [
 		{
 			name: 'Server Job',
-			path: 'job/:id',
+			path: 'jobs/:id',
 			component: () => import('../pages/JobPage.vue')
 		},
 		{
 			name: 'Server Play',
-			path: 'play/:id',
+			path: 'plays/:id',
 			component: () => import('../pages/PlayPage.vue')
 		}
 	]
