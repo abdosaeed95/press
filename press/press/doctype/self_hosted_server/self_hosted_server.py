@@ -536,6 +536,7 @@ class SelfHostedServer(Document):
 		self.save()
 
 	def get_hostname(self, server_type):
+		return self.hostname
 		symbolic_name = get_symbolic_name(server_type)
 		series = f"{symbolic_name}-{self.cluster}.#####"
 
