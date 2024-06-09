@@ -676,7 +676,7 @@ class DeployCandidate(Document):
 		settings = self._fetch_registry_settings()
 
 		if settings.docker_registry_namespace:
-			namespace = f"{settings.docker_registry_namespace}/{settings.domain}"
+			namespace = f"{settings.docker_registry_namespace}"
 		else:
 			namespace = f"{settings.domain}"
 
@@ -1294,6 +1294,8 @@ class DeployCandidate(Document):
 			command += " --no-cache"
 
 		command += f" --tag {self.docker_image}"
+		## Upload latest image
+		command += f" --tag {self.docker_image.replace(self.docker_image_tag, "latest")}"
 		command += " ."
 		return command
 
