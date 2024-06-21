@@ -1295,8 +1295,8 @@ class DeployCandidate(Document):
 
 		command += f" --tag {self.docker_image}"
 		## Upload latest image
-		latest_iamge = self.docker_image.replace(self.docker_image_tag, "latest")
-		command += f" --tag {latest_iamge}"
+		self.latest_image = self.docker_image.replace(self.docker_image_tag, "latest")
+		command += f" --tag {self.latest_image}"
 		command += " ."
 		return command
 
@@ -1344,7 +1344,16 @@ class DeployCandidate(Document):
 				stream=True,
 				decode=True,
 			)
+			
 			self.upload_step_updater.process(output)
+
+			if self.latest_image:
+				client.images.push(
+					self.docker_image_repository,
+					self.latest_image,
+					stream=True,
+					decode=True,
+				)
 
 		except Exception:
 			self.end("Failure")
