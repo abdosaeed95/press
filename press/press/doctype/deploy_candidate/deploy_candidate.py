@@ -1347,7 +1347,7 @@ class DeployCandidate(Document):
 
 			client.images.push(
 					self.docker_image_repository,
-					self.latest_image,
+					"latest",
 					stream=True,
 					decode=True,
 				)
