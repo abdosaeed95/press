@@ -1344,16 +1344,18 @@ class DeployCandidate(Document):
 				stream=True,
 				decode=True,
 			)
-			
-			self.upload_step_updater.process(output)
 
-			if self.latest_image:
-				client.images.push(
+			client.images.push(
 					self.docker_image_repository,
 					self.latest_image,
 					stream=True,
 					decode=True,
 				)
+			
+			self.upload_step_updater.process(output)
+
+			
+			
 
 		except Exception:
 			self.end("Failure")
