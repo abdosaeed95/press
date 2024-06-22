@@ -322,7 +322,7 @@ def prometheus_query(query, function, timezone, timespan, timegrain):
 	if not monitor_server:
 		return {"datasets": [], "labels": []}
 
-	url = f"https://{monitor_server}/metrics/prometheus/api/v1/query_range"
+	url = f"https://{monitor_server}/prometheus/api/v1/query_range"
 	password = get_decrypted_password("Monitor Server", monitor_server, "grafana_password")
 
 	end = datetime.utcnow().replace(tzinfo=tz.utc)
