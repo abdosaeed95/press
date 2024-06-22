@@ -1338,25 +1338,26 @@ class DeployCandidate(Document):
 				username=settings.docker_registry_username,
 				password=settings.docker_registry_password,
 			)
+			
+			# Push the specified image tag
 			output = client.images.push(
 				self.docker_image_repository,
 				self.docker_image_tag,
 				stream=True,
 				decode=True,
 			)
-
-			client.images.push(
-					self.docker_image_repository,
-					"latest",
-					stream=True,
-					decode=True,
-				)
-			
 			self.upload_step_updater.process(output)
+			
+			# Push the latest image tag
+			latest_output = client.images.push(
+				self.docker_image_repository,
+				"latest",
+				stream=True,
+				decode=True,
+			)
+			self.upload_step_updater.process(latest_output)
 
 			
-			
-
 		except Exception:
 			self.end("Failure")
 			log_error("Push Docker Image Failed", doc=self)
