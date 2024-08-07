@@ -219,7 +219,7 @@ COPY --chown=frappe:frappe common_site_config.json /home/frappe/frappe-bench/sit
 {% for app in doc.apps %}
 {% if app.app != "frappe" %}
 #Add support for monorepo
-# COPY --chown=frappe:frappe apps/{{ app.app }} /home/frappe/frappe-bench/apps/{{ app.app }}
+COPY --chown=frappe:frappe apps/{{ app.app }} /home/frappe/frappe-bench/apps/{{ app.app }}
 
 # # Setup requirements and build the app
 RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 \
@@ -237,6 +237,7 @@ RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 \
 # Pull app updates from mounted repository
 {% for app in doc.apps %}
 {% if app.pullable_release %}
+
 RUN --mount=type=bind,source=app_updates/{{ app.app }},target=/home/frappe/context/app_updates/{{ app.app }} \
   cd /home/frappe/frappe-bench/apps/{{ app.app }} \
   && git reset --hard \
