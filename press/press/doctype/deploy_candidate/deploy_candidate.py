@@ -1295,7 +1295,7 @@ class DeployCandidate(Document):
 
 		command += f" --tag {self.docker_image}"
 		## Upload latest image
-		self.latest_image = self.docker_image.replace(self.docker_image_tag, "latest")
+		## self.latest_image = self.docker_image.replace(self.docker_image_tag, "latest")
 		command += f" --tag {self.latest_image}"
 		command += " ."
 		return command
