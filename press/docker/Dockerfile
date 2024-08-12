@@ -234,8 +234,8 @@ COPY --chown=frappe:frappe common_site_config.json /home/frappe/frappe-bench/sit
 # {% endif %}
 # {% endfor %}
 
-# {% for app in doc.apps %}
-# {% if app.app != "frappe" %}
+{% for app in doc.apps %}
+{% if app.app != "frappe" %}
 
 WORKDIR /home/frappe/context/apps/{{ app.app }}
 
