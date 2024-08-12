@@ -218,20 +218,20 @@ COPY --chown=frappe:frappe common_site_config.json /home/frappe/frappe-bench/sit
 
 {% for app in doc.apps %}
 {% if app.app != "frappe" %}
-# Add support for monorepo
+#Add support for monorepo
 COPY --chown=frappe:frappe apps/{{ app.app }} /home/frappe/frappe-bench/apps/{{ app.app }}
 
-# Setup requirements and build the app
+# # Setup requirements and build the app
 RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 \
   bash -c "\
-  cd /home/frappe/frappe-bench/apps/{{ app.app }} && \
-  /home/frappe/frappe-bench/env/bin/python -m pip install --quiet --upgrade -e . && \
-  git submodule update --init --recursive && \
-  yarn install --check-files && \
+  cd /home/frappe/frappe-bench/apps/{{ app.app }} ; \
+  /home/frappe/frappe-bench/env/bin/python -m pip install --quiet --upgrade -e /home/frappe/frappe-bench/apps/{{ app.app }} ; \
+  git submodule update --init --recursive ; \
+  yarn install --check-files ; \
   bench build --app {{ app.app }}" \
   `#stage-apps-{{ app.app }}`
+  
 {% endif %}
-{% endfor %}
 {% endfor %}
 
 
@@ -249,6 +249,9 @@ RUN --mount=type=bind,source=app_updates/{{ app.app }},target=/home/frappe/conte
   `#stage-pull-{{ app.app }}`
 {% endif %}
 {% endfor %}
+
+
+
 
 COPY --chown=frappe:frappe config /home/frappe/frappe-bench/config
 COPY --chown=frappe:frappe apps.txt /home/frappe/frappe-bench/sites/apps.txt
