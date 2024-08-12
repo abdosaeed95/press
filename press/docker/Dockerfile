@@ -218,19 +218,20 @@ COPY --chown=frappe:frappe common_site_config.json /home/frappe/frappe-bench/sit
 
 {% for app in doc.apps %}
 {% if app.app != "frappe" %}
-#Add support for monorepo
+# Add support for monorepo
 COPY --chown=frappe:frappe apps/{{ app.app }} /home/frappe/frappe-bench/apps/{{ app.app }}
 
-# # Setup requirements and build the app
+# Setup requirements and build the app
 RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 \
-  bash -c "cd /home/frappe/frappe-bench/apps/{{ app.app }} \
-  && /home/frappe/frappe-bench/env/bin/python -m pip install --quiet --upgrade -e /home/frappe/frappe-bench/apps/{{ app.app }} \
-  && git submodule update --init --recursive \
-  && yarn install --check-files \
-  && bench build --app {{ app.app }}" \
+  bash -c "\
+  cd /home/frappe/frappe-bench/apps/{{ app.app }} && \
+  /home/frappe/frappe-bench/env/bin/python -m pip install --quiet --upgrade -e . && \
+  git submodule update --init --recursive && \
+  yarn install --check-files && \
+  bench build --app {{ app.app }}" \
   `#stage-apps-{{ app.app }}`
-  
 {% endif %}
+{% endfor %}
 {% endfor %}
 
 
@@ -258,6 +259,8 @@ RUN mkdir -p {{ m.destination }} && \
   chown -R frappe:frappe {{ m.destination }} \
   `#stage-mounts-create`
 {% endfor %}
+
+
 
 ENV FRAPPE_HARD_LINK_ASSETS True
 
