@@ -237,11 +237,11 @@ COPY --chown=frappe:frappe common_site_config.json /home/frappe/frappe-bench/sit
 {% for app in doc.apps %}
 {% if app.app != "frappe" %}
 
-WORKDIR /home/frappe/context/apps/{{ app.app }}
+# WORKDIR /home/frappe/context/apps/{{ app.app }}
 
-RUN git submodule update --init --recursive
+# RUN git submodule update --init --recursive
 
-WORKDIR /home/frappe/frappe-bench
+# WORKDIR /home/frappe/frappe-bench
 
 RUN --mount=type=cache,sharing=locked,target=/home/frappe/.cache,uid=1000,gid=1000 \
   --mount=type=bind,source=apps/{{ app.app }},target=/home/frappe/context/apps/{{ app.app }} \
