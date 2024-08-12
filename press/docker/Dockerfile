@@ -224,10 +224,7 @@ COPY --chown=frappe:frappe apps/{{ app.app }} /home/frappe/frappe-bench/apps/{{ 
 # # Setup requirements and build the app
 RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 \
   bash -c "cd /home/frappe/frappe-bench/apps/{{ app.app }} \
-  && /home/frappe/frappe-bench/env/bin/python -m pip install --quiet --upgrade -e /home/frappe/frappe-bench/apps/{{ app.app }} \
-  && git submodule update --init --recursive \
-  && yarn install --check-files \
-  && bench build" \
+  && git submodule update --init --recursive" \
   `#stage-apps-{{ app.app }}`
   
 {% endif %}
@@ -249,7 +246,11 @@ RUN --mount=type=bind,source=app_updates/{{ app.app }},target=/home/frappe/conte
 {% endif %}
 {% endfor %}
 
+WORKDIR /home/frappe/frappe-bench 
 
+RUN bench setup requirements `#stage-all-apps`
+
+RUN bench build `#stage-buil`
 
 
 COPY --chown=frappe:frappe config /home/frappe/frappe-bench/config
