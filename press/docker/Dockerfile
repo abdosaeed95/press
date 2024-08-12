@@ -236,7 +236,7 @@ COPY --chown=frappe:frappe common_site_config.json /home/frappe/frappe-bench/sit
 
 {% for app in doc.apps %}
 {% if app.app != "frappe" %}
-
+RUN git config --global --add safe.directory /home/frappe/context/apps/{{ app.app }}/.git
 # WORKDIR /home/frappe/context/apps/{{ app.app }}
 
 # RUN git submodule update --init --recursive
