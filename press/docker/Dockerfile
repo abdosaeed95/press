@@ -248,9 +248,9 @@ RUN --mount=type=bind,source=app_updates/{{ app.app }},target=/home/frappe/conte
 
 WORKDIR /home/frappe/frappe-bench 
 
-RUN bench setup requirements `#stage-all-apps`
+RUN bench setup requirements `#stage-Setup-Requirements`
 
-RUN bench build `#stage-buil`
+RUN bench build `#stage-Build-Assets`
 
 
 COPY --chown=frappe:frappe config /home/frappe/frappe-bench/config
