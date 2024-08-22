@@ -234,7 +234,7 @@ RUN --mount=type=cache,sharing=locked,target=/home/frappe/.cache,uid=1000,gid=10
     RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 \
     bash -c "cd /home/frappe/frappe-bench/apps/{{ app.app }} \
     && git submodule update --init --recursive \
-    && yarn cache clean && cd dashboard && yarn install \
+    &&  cd dashboard && yarn cache clean && yarn install \
     && NODE_ENV=production yarn run build" \
     `#stage-apps-fodista-frontend`
   {% endif %}
