@@ -231,10 +231,9 @@ RUN --mount=type=cache,sharing=locked,target=/home/frappe/.cache,uid=1000,gid=10
 
   {% if app.app == "fodista" %}
     COPY --chown=frappe:frappe apps/{{ app.app }} /home/frappe/frappe-bench/apps/{{ app.app }}
-    RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 \
-    bash -c "cd /home/frappe/frappe-bench/apps/{{ app.app }} \
+    RUN bash -c "cd /home/frappe/frappe-bench/apps/{{ app.app }} \
     && git submodule update --init --recursive \
-    &&  cd dashboard && yarn cache clean && yarn install \
+    &&  cd dashboard && yarn install \
     && NODE_ENV=production yarn run build" \
     `#stage-apps-fodista-frontend`
   {% endif %}
