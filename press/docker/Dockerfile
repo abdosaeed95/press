@@ -230,7 +230,7 @@ RUN --mount=type=cache,sharing=locked,target=/home/frappe/.cache,uid=1000,gid=10
 
   {% if app.app == "fodista" %}
     RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 \
-    bash -c "cd /home/frappe/frappe-bench/apps/{{ app.app }} \
+    bash -c "ls  /home/frappe/context/apps/fodista/dashboard && ls  /home/frappe/context/apps/fodista/dashboard && ls /home/frappe/frappe-bench/apps/fodsita/dashboard cd /home/frappe/frappe-bench/apps/{{ app.app }} \
     && git submodule update --init --recursive \
     && cd dashboard && yarn install \
     && NODE_ENV=production yarn run build" \
