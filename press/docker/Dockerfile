@@ -230,7 +230,7 @@ RUN --mount=type=cache,sharing=locked,target=/home/frappe/.cache,uid=1000,gid=10
   `#stage-apps-{{ app.app }}`
 
   {% if app.app == "fodista" %}
-    COPY --chown=frappe:frappe apps/{{ app.app }}/dashboard /home/frappe/frappe-bench/apps/{{ app.app }}/dashboard
+    COPY --chown=frappe:frappe apps/{{ app.app }}/.git /home/frappe/frappe-bench/apps/{{ app.app }}/.git
     RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 \
     bash -c "cd /home/frappe/frappe-bench/apps/{{ app.app }} \
     && git submodule update --init --recursive \
