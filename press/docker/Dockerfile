@@ -220,22 +220,33 @@ COPY --chown=frappe:frappe common_site_config.json /home/frappe/frappe-bench/sit
 
 RUN git config --global --add safe.directory /home/frappe/context/apps/{{ app.app }}/.git
 
-RUN --mount=type=cache,sharing=locked,target=/home/frappe/.cache,uid=1000,gid=1000 \
-  --mount=type=bind,source=apps/{{ app.app }},target=/home/frappe/context/apps/{{ app.app }} \
-  bench get-app file:///home/frappe/context/apps/{{ app.app }} \
-    {% if app.use_cached %}
-    # Bench get-app flags to use get-app cache
-    --cache-key {{ app.hash }} {% if doc.compress_app_cache %}--compress-artifacts{% endif %} \
-    {% endif %}
-  `#stage-apps-{{ app.app }}`
+
 
   {% if app.app == "fodista" %}
-    COPY --chown=frappe:frappe apps/{{ app.app }} /home/frappe/frappe-bench/apps/{{ app.app }}
-    RUN bash -c "cd /home/frappe/frappe-bench/apps/{{ app.app }} \
+    RUN --mount=type=cache,sharing=locked,target=/home/frappe/.cache,uid=1000,gid=1000 \
+    --mount=type=bind,source=apps/{{ app.app }},target=/home/frappe/context/apps/{{ app.app }} \
+    bash -c "\
+    bench get-app file:///home/frappe/context/apps/{{ app.app }} \
+      {% if app.use_cached %} \
+      --cache-key {{ app.hash }} {% if doc.compress_app_cache %}--compress-artifacts{% endif %} \
+      {% endif %} \
+    && cp -r /home/frappe/context/apps/{{ app.app }} /home/frappe/frappe-bench/apps/{{ app.app }} \
+    && cd /home/frappe/frappe-bench/apps/{{ app.app }} \
     && git submodule update --init --recursive \
-    &&  cd dashboard && yarn install \
+    && cd dashboard && yarn install \
     && NODE_ENV=production yarn run build" \
-    `#stage-apps-fodista-frontend`
+    `#stage-apps-{{ app.app }}`
+
+    {% else %}
+
+    RUN --mount=type=cache,sharing=locked,target=/home/frappe/.cache,uid=1000,gid=1000 \
+    --mount=type=bind,source=apps/{{ app.app }},target=/home/frappe/context/apps/{{ app.app }} \
+    bench get-app file:///home/frappe/context/apps/{{ app.app }} \
+      {% if app.use_cached %}
+      # Bench get-app flags to use get-app cache
+      --cache-key {{ app.hash }} {% if doc.compress_app_cache %}--compress-artifacts{% endif %} \
+      {% endif %}
+    `#stage-apps-{{ app.app }}`
   {% endif %}
 
 {% endif %}
