@@ -217,7 +217,7 @@ COPY --chown=frappe:frappe common_site_config.json /home/frappe/frappe-bench/sit
 # Install other apps
 {% for app in doc.apps %}
 {% if app.app != "frappe" %}
-RUN git config --global --add safe.directory /home/frappe/context/apps/{{ app.app }}/.git
+
 
 RUN --mount=type=cache,sharing=locked,target=/home/frappe/.cache,uid=1000,gid=1000 \
   --mount=type=bind,source=apps/{{ app.app }},target=/home/frappe/context/apps/{{ app.app }} \
@@ -229,8 +229,9 @@ RUN --mount=type=cache,sharing=locked,target=/home/frappe/.cache,uid=1000,gid=10
   `#stage-apps-{{ app.app }}`
 
   {% if app.app == "fodista" %}
+    COPY --chown=frappe:frappe apps/{{ app.app }} /home/frappe/frappe-bench/apps/{{ app.app }}
     RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 \
-    bash -c "ls /home/frappe/frappe-bench/apps/fodsita/dashboard && cd /home/frappe/frappe-bench/apps/{{ app.app }} \
+    bash -c "cd /home/frappe/frappe-bench/apps/{{ app.app }} \
     && git submodule update --init --recursive \
     && cd dashboard && yarn install \
     && NODE_ENV=production yarn run build" \
