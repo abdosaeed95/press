@@ -233,7 +233,7 @@ RUN git config --global --add safe.directory /home/frappe/context/apps/{{ app.ap
     && git -C /home/frappe/frappe-bench/apps/{{ app.app }} submodule update --init --recursive \
     && bash -c "cd /home/frappe/frappe-bench/apps/{{ app.app }}/dashboard && yarn cache clean && yarn install \
     && NODE_ENV=production yarn run build" \
-    && bench build --app fodista
+    && bench build --app fodista \
     `#stage-apps-{{ app.app }}`
   
   {% else %}
