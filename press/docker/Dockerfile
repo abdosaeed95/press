@@ -239,7 +239,7 @@ RUN git config --global --add safe.directory /home/frappe/context/apps/{{ app.ap
       && yarn cache clean \
       && yarn install \
       && NODE_ENV=production yarn run build \
-      && bench build --app {{ app.app }} \
+      && bench build --app {{ app.app }} --production \
       `#stage-apps-Build-{{ app.app }}`
   
   {% else %}
