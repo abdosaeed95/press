@@ -224,15 +224,23 @@ RUN git config --global --add safe.directory /home/frappe/context/apps/{{ app.ap
 
   {% if app.app == "fodista" %}
   RUN --mount=type=cache,sharing=locked,target=/home/frappe/.cache,uid=1000,gid=1000 \
-  --mount=type=bind,source=apps/{{ app.app }},target=/home/frappe/context/apps/{{ app.app }} \
-  bash -c "bench get-app file:///home/frappe/context/apps/{{ app.app }} --skip-assets \
-  && cp -r /home/frappe/context/apps/{{ app.app }}/.git /home/frappe/frappe-bench/apps/{{ app.app }}/.git \
-  && git -C /home/frappe/frappe-bench/apps/{{ app.app }} submodule update --init --recursive \
-  && cd /home/frappe/frappe-bench/apps/{{ app.app }}/dashboard && yarn cache clean && yarn install \
-  && NODE_ENV=production yarn run build \
-  && bench build --app {{ app.app }}" \
-  `#stage-apps-{{ app.app }}`
+    --mount=type=bind,source=apps/{{ app.app }},target=/home/frappe/context/apps/{{ app.app }} \
+    bash -c "bench get-app file:///home/frappe/context/apps/{{ app.app }} --skip-assets" \
+    `#stage-apps-{{ app.app }}`
 
+  # Step 2: Copy the .git folder after bench get-app is executed
+  COPY --chown=frappe:frappe apps/{{ app.app }}/.git /home/frappe/frappe-bench/apps/{{ app.app }}/.git
+
+  # Step 3: Submodule Update and Build with Caching
+  RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 \
+      --mount=type=cache,target=/home/frappe/frappe-bench/apps/{{ app.app }}/node_modules,uid=1000,gid=1000 \
+      git -C /home/frappe/frappe-bench/apps/{{ app.app }} submodule update --init --recursive \
+      && cd /home/frappe/frappe-bench/apps/{{ app.app }}/dashboard \
+      && yarn cache clean \
+      && yarn install \
+      && NODE_ENV=production yarn run build \
+      && bench build --app {{ app.app }} \
+      `#stage-apps-Build-{{ app.app }}`
   
   {% else %}
 
