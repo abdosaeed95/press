@@ -236,7 +236,7 @@ RUN git config --global --add safe.directory /home/frappe/context/apps/{{ app.ap
       --mount=type=cache,target=/home/frappe/frappe-bench/apps/{{ app.app }}/node_modules,uid=1000,gid=1000 \
       git -C /home/frappe/frappe-bench/apps/{{ app.app }} submodule update --init --recursive \
       && cd /home/frappe/frappe-bench/apps/{{ app.app }}/dashboard && yarn install && NODE_ENV=production yarn run build \
-      && bench build --app {{ app.app }} --production \
+      && bench build --app {{ app.app }} \
       `#stage-apps-Build-{{ app.app }}`
   
   {% else %}
