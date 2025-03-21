@@ -135,25 +135,29 @@ class FIFO(BackupRotationScheme):
 
 class GFS(BackupRotationScheme):
 	"""
-	Represents Grandfather-father-son backup rotation scheme.
+	Grandfather-Father-Son backup scheme with hourly, daily, weekly, monthly, and yearly retention.
 
-	Daily backups are kept for specified number of days.
-	Weekly backups are kept for 4 weeks.
-	Monthly backups are kept for a year.
-	Yearly backups are kept for a decade.
+	- Hourly backups are kept for the last 24 hours.
+	- Daily backups are kept for the last 7 days.
+	- Weekly backups are kept for 4 weeks.
+	- Monthly backups are kept for a year.
+	- Yearly backups are kept for a decade.
 	"""
 
-	daily = 7  # no. of daily backups to keep
-	weekly_backup_day = 1  # days of the week (1-7) (SUN-SAT)
-	monthly_backup_day = 1  # days of the month (1-31)
-	yearly_backup_day = 1  # days of the year (1-366)
+	hourly = 12  # number of hourly backups to keep
+	daily = 7    # number of daily backups to keep
+	weekly_backup_day = 1   # Sunday (SQL: 1)
+	monthly_backup_day = 1  # 1st of each month
+	yearly_backup_day = 1   # Jan 1st (DAYOFYEAR: 1)
 
 	def expire_offsite_backups(self) -> List[str]:
-		today = frappe.utils.getdate()
-		oldest_daily = today - timedelta(days=self.daily)
-		oldest_weekly = today - timedelta(weeks=4)
-		oldest_monthly = today - timedelta(days=366)
-		oldest_yearly = today - timedelta(days=3653)
+		now = frappe.utils.get_datetime()
+		oldest_hourly = now - timedelta(hours=self.hourly)
+		oldest_daily = now - timedelta(days=self.daily)
+		oldest_weekly = now - timedelta(weeks=4)
+		oldest_monthly = now - timedelta(days=366)
+		oldest_yearly = now - timedelta(days=3653)
+
 		to_be_expired_backups = frappe.db.sql(
 			f"""
 			SELECT name from `tabSite Backup`
@@ -162,16 +166,14 @@ class GFS(BackupRotationScheme):
 				status="Success" and
 				files_availability="Available" and
 				offsite=True and
-				creation < "{oldest_daily}" and
+				creation < "{oldest_hourly}" and
+				(DATE(creation) < "{oldest_daily.date()}") and
 				(DAYOFWEEK(creation) != {self.weekly_backup_day} or creation < "{oldest_weekly}") and
 				(DAYOFMONTH(creation) != {self.monthly_backup_day} or creation < "{oldest_monthly}") and
 				(DAYOFYEAR(creation) != {self.yearly_backup_day} or creation < "{oldest_yearly}")
 			""",
 			as_dict=True,
 		)
-		# XXX: DAYOFWEEK in sql gives 1-7 for SUN-SAT in sql
-		# datetime.weekday() in python gives 0-6 for MON-SUN
-		# datetime.isoweekday() in python gives 1-7 for MON-SUN
 
 		return self._expire_and_get_remote_files(to_be_expired_backups)
 
