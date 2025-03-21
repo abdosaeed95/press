@@ -195,6 +195,7 @@ scheduler_events = {
 		"press.press.doctype.agent_job.agent_job.update_job_step_status",
 		"press.press.doctype.bench.bench.archive_obsolete_benches",
 		"press.press.doctype.site.backups.schedule_for_sites_with_backup_time",
+		"press.press.doctype.site.backups.cleanup_offsite",
 	],
 	"hourly_long": [
 		"press.press.doctype.release_group.release_group.prune_servers_without_sites",
@@ -223,7 +224,6 @@ scheduler_events = {
 			"press.press.doctype.incident.incident.resolve_incidents",
 		],
 		"0 4 * * *": [
-			"press.press.doctype.site.backups.cleanup_offsite",
 			"press.press.cleanup.unlink_remote_files_from_site",
 		],
 		"0 3 * * *": [
