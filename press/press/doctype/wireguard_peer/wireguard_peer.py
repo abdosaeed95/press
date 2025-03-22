@@ -123,7 +123,7 @@ class WireguardPeer(Document):
 							{
 								"public_key": proxy.get_password("wireguard_public_key"),
 								"allowed_ips": self.wireguard_network,
-								"peer_ip": proxy.name,
+								"peer_ip": proxy.ip,
 							}
 						]
 					),
@@ -170,9 +170,9 @@ class WireguardPeer(Document):
 			"peers": [
 				{
 					"public_key": proxy.get_password("wireguard_public_key"),
-					"endpoint": proxy.name + ":" + str(proxy.wireguard_port),
+					"endpoint": proxy.ip + ":" + str(proxy.wireguard_port),
 					"allowed_ips": self.wireguard_network,
-					"peer_ip": proxy.name,
+					"peer_ip": proxy.ip,
 				}
 			],
 		}
