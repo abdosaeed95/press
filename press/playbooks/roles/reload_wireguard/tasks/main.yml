@@ -7,7 +7,14 @@
     group: root
     mode: 0600
 
-- name: Reload Wireguard with systemd
+- name: Stop WireGuard
   systemd:
     name: wg-quick@wg0
-    state: reloaded
+    state: stopped
+    enabled: true
+
+- name: Start WireGuard
+  systemd:
+    name: wg-quick@wg0
+    state: started
+    enabled: true
