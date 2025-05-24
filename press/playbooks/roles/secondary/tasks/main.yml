@@ -10,6 +10,7 @@
 
 - name: Add Primary to Known Hosts
   shell: ssh-keyscan {{ primary_private_ip }} >> /root/.ssh/known_hosts
+  ignore_errors: true
 
 - name: Create Directory for RSync
   file:
