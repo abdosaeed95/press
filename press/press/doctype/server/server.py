@@ -357,7 +357,11 @@ class BaseServer(Document, TagHelpers):
 		try:
 			ansible = Ansible(
 				playbook="update_agent.yml",
-				variables={"agent_repository_url": self.get_agent_repository_url()},
+				variables={
+					"agent_repository_url": self.get_agent_repository_url(),
+					"agent_repository_branch_or_commit_ref": "upstream/master",
+					"agent_update_args": "",
+				},
 				server=self,
 				user=self.ssh_user or "root",
 				port=self.ssh_port or 22,
