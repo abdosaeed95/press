@@ -359,7 +359,7 @@ class BaseServer(Document, TagHelpers):
 				playbook="update_agent.yml",
 				variables={
 					"agent_repository_url": self.get_agent_repository_url(),
-					"agent_repository_branch_or_commit_ref": "upstream/master",
+					"agent_repository_branch_or_commit_ref": frappe.db.get_value("Press Settings", "Press Settings", "custom_agent_commit"),
 					"agent_update_args": "",
 				},
 				server=self,
