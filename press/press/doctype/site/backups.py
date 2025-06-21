@@ -185,32 +185,32 @@ class GFS(BackupRotationScheme):
 	monthly_backup_day = 1  # 1st of each month
 	yearly_backup_day = 1   # Jan 1st (DAYOFYEAR: 1)
 
-  def get_backups_due_for_expiry(self, backup_type: BACKUP_TYPES) -> list[str]:
-    now = frappe.utils.get_datetime()
-    oldest_hourly = now - timedelta(hours=self.hourly)
-    oldest_daily = now - timedelta(days=self.daily)
-    oldest_weekly = now - timedelta(weeks=4)
-    oldest_monthly = now - timedelta(days=366)
-    oldest_yearly = now - timedelta(days=3653)
+	def get_backups_due_for_expiry(self, backup_type: BACKUP_TYPES) -> list[str]:
+		now = frappe.utils.get_datetime()
+		oldest_hourly = now - timedelta(hours=self.hourly)
+		oldest_daily = now - timedelta(days=self.daily)
+		oldest_weekly = now - timedelta(weeks=4)
+		oldest_monthly = now - timedelta(days=366)
+		oldest_yearly = now - timedelta(days=3653)
 
-    backups = frappe.db.sql(
-      f"""
-      SELECT name FROM `tabSite Backup`
-      WHERE
-        site IN (SELECT name FROM tabSite WHERE status != "Archived") AND
-        status = "Success" AND
-        files_availability = "Available" AND
-        offsite = {backup_type == "Logical"} AND
-        physical = {backup_type == "Physical"} AND
-        creation < "{oldest_hourly}" AND
-        (DATE(creation) < "{oldest_daily.date()}") AND
-        (DAYOFWEEK(creation) != {self.weekly_backup_day} OR creation < "{oldest_weekly}") AND
-        (DAYOFMONTH(creation) != {self.monthly_backup_day} OR creation < "{oldest_monthly}") AND
-        (DAYOFYEAR(creation) != {self.yearly_backup_day} OR creation < "{oldest_yearly}")
-      """,
-      as_dict=True,
-    )
-    return [backup["name"] for backup in backups]
+		backups = frappe.db.sql(
+		f"""
+		SELECT name FROM `tabSite Backup`
+		WHERE
+			site IN (SELECT name FROM tabSite WHERE status != "Archived") AND
+			status = "Success" AND
+			files_availability = "Available" AND
+			offsite = {backup_type == "Logical"} AND
+			physical = {backup_type == "Physical"} AND
+			creation < "{oldest_hourly}" AND
+			(DATE(creation) < "{oldest_daily.date()}") AND
+			(DAYOFWEEK(creation) != {self.weekly_backup_day} OR creation < "{oldest_weekly}") AND
+			(DAYOFMONTH(creation) != {self.monthly_backup_day} OR creation < "{oldest_monthly}") AND
+			(DAYOFYEAR(creation) != {self.yearly_backup_day} OR creation < "{oldest_yearly}")
+		""",
+		as_dict=True,
+		)
+		return [backup["name"] for backup in backups]
 
 
 
