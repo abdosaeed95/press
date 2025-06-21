@@ -1,24 +1,20 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2020, Frappe and Contributors
 # See license.txt
+from __future__ import annotations
 
-
-import json
-from typing import Callable, Literal
-from contextlib import contextmanager
-import frappe
 import unittest
-from unittest.mock import patch, Mock
+from contextlib import contextmanager
+from typing import Callable, Literal
+from unittest.mock import Mock, patch
 
+import frappe
+import responses
 from frappe.model.naming import make_autoname
+
+from press.agent import Agent
 from press.press.doctype.agent_job.agent_job import AgentJob, lock_doc_updated_by_job
 from press.press.doctype.site.test_site import create_test_bench, create_test_site
-
 from press.press.doctype.team.test_team import create_test_press_admin_team
-from press.agent import Agent
-
-import responses
-
 from press.utils.test import foreground_enqueue, foreground_enqueue_doc
 
 
@@ -30,10 +26,11 @@ def fn_appender(before_insert: Callable, prepare_agent_responses: Callable):
 	return new_before_insert
 
 
-before_insert: Callable = lambda self: None
+def before_insert(self):
+	return None
 
 
-def fake_agent_job_req(
+def fake_agent_job_req(  # noqa: C901
 	job_type: str,
 	status: Literal["Success", "Pending", "Running", "Failure"],
 	data: dict,
@@ -55,9 +52,7 @@ def fake_agent_job_req(
 			return
 		job_id = int(make_autoname(".#"))
 		if steps:
-			needed_steps = frappe.get_all(
-				"Agent Job Type Step", {"parent": job_type}, pluck="step_name"
-			)
+			needed_steps = frappe.get_all("Agent Job Type Step", {"parent": job_type}, pluck="step_name")
 			for step in needed_steps:
 				if not any(step == s["name"] for s in steps):
 					steps.append(
@@ -93,7 +88,7 @@ def fake_agent_job_req(
 		# TODO: make the next url regex for multiple job ids #
 		responses.add(
 			responses.GET,
-			f"https://{self.server}:443/agent/jobs/{str(job_id)}",
+			f"https://{self.server}:443/agent/jobs/{job_id!s}",
 			# TODO:  populate steps with data from agent job type #
 			json={
 				"data": data,
@@ -137,8 +132,8 @@ def fake_agent_job_req(
 def fake_agent_job(
 	job_type: str,
 	status: Literal["Success", "Pending", "Running", "Failure"] = "Success",
-	data: dict = None,
-	steps: list[dict] = None,
+	data: dict | None = None,
+	steps: list[dict] | None = None,
 ):
 	"""Fakes agent job request and response. Also polls the job.
 
@@ -155,14 +150,10 @@ def fake_agent_job(
 	), patch(
 		"press.press.doctype.agent_job.agent_job.frappe.enqueue",
 		new=foreground_enqueue,
-	), patch(
-		"press.press.doctype.agent_job.agent_job.frappe.db.commit", new=Mock()
-	), patch(
+	), patch("press.press.doctype.agent_job.agent_job.frappe.db.commit", new=Mock()), patch(
 		"press.press.doctype.agent_job.agent_job.frappe.db.rollback", new=Mock()
 	):
-		frappe.local.role_permissions = (
-			{}
-		)  # due to bug in FF related to only_if_creator docperm
+		frappe.local.role_permissions = {}  # due to bug in FF related to only_if_creator docperm
 		yield
 		global before_insert
 		before_insert = lambda self: None  # noqa
@@ -184,9 +175,9 @@ class TestAgentJob(unittest.TestCase):
 	def test_suspend_sites_issues_reload_in_bulk(self, mock_reload_nginx):
 		from .agent_job import suspend_sites
 
-		bench1 = create_test_bench()
-		bench2 = create_test_bench()
-		bench3 = create_test_bench()
+		bench1 = create_test_bench().name
+		bench2 = create_test_bench().name
+		bench3 = create_test_bench().name
 
 		frappe.set_user(self.team.user)
 		site1 = create_test_site(bench=bench1)
@@ -197,16 +188,12 @@ class TestAgentJob(unittest.TestCase):
 		site2.db_set("current_disk_usage", 101)
 		frappe.db.set_single_value("Press Settings", "enforce_storage_limits", True)
 		suspend_sites()
-		suspend_jobs = frappe.get_all(
-			"Agent Job", {"job_type": "Update Site Status"}, ["request_data"]
-		)
-		for job in suspend_jobs:
-			self.assertTrue(json.loads(job.request_data).get("skip_reload"))
+		suspend_jobs = frappe.get_all("Agent Job", {"job_type": "Update Site Status"}, ["request_data"])
 
 		self.assertEqual(len(suspend_jobs), 2)
 		self.assertEqual(
 			mock_reload_nginx.call_count,
-			frappe.db.count("Proxy Server", {"status": "Active"}),
+			0,
 		)
 
 	def test_lock_doc_updated_by_job_respects_hierarchy(self):

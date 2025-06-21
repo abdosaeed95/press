@@ -2,8 +2,8 @@
 # For license information, please see license.txt
 
 import frappe
-from frappe.geo.country_info import get_country_timezone_info
 from frappe.core.utils import find
+from frappe.geo.country_info import get_country_timezone_info
 
 from press.api.account import get_account_request_from_key
 from press.press.doctype.site.erpnext_site import (
@@ -173,4 +173,3 @@ def send_login_link(site):
 	# send link to site owner
 	email = frappe.db.get_value("Site", site, "team")
 	send_link(email)
-	return email

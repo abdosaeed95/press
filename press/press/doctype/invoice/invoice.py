@@ -1,23 +1,24 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2020, Frappe and contributors
 # For license information, please see license.txt
 
+from __future__ import annotations
+
 import frappe
-
 from frappe import _
-from press.utils import log_error
-from frappe.core.utils import find_all
-from frappe.utils import getdate, cint
-from frappe.utils.data import fmt_money
-from press.api.billing import get_stripe
 from frappe.model.document import Document
+from frappe.utils import cint, flt, getdate
+from frappe.utils.data import fmt_money
 
-from press.overrides import get_permission_query_conditions_for_doctype
-from press.utils.billing import get_frappe_io_connection, convert_stripe_money
+from press.api.billing import get_stripe
 from press.api.client import dashboard_whitelist
-
-
-DISCOUNT_MAP = {"Entry": 0, "Bronze": 0.05, "Silver": 0.1, "Gold": 0.15}
+from press.utils import log_error
+from press.utils.billing import (
+	convert_stripe_money,
+	get_frappe_io_connection,
+	get_gateway_details,
+	get_partner_external_connection,
+	is_frappe_auth_disabled,
+)
 
 
 class Invoice(Document):
@@ -28,27 +29,28 @@ class Invoice(Document):
 
 	if TYPE_CHECKING:
 		from frappe.types import DF
+
 		from press.press.doctype.invoice_credit_allocation.invoice_credit_allocation import (
 			InvoiceCreditAllocation,
 		)
 		from press.press.doctype.invoice_discount.invoice_discount import InvoiceDiscount
 		from press.press.doctype.invoice_item.invoice_item import InvoiceItem
-		from press.press.doctype.invoice_transaction_fee.invoice_transaction_fee import (
-			InvoiceTransactionFee,
-		)
+		from press.press.doctype.invoice_transaction_fee.invoice_transaction_fee import InvoiceTransactionFee
 
 		amended_from: DF.Link | None
 		amount_due: DF.Currency
+		amount_due_with_tax: DF.Currency
 		amount_paid: DF.Currency
 		applied_credits: DF.Currency
+		billing_email: DF.Data | None
 		credit_allocations: DF.Table[InvoiceCreditAllocation]
 		currency: DF.Link | None
 		customer_email: DF.Data | None
 		customer_name: DF.Data | None
 		customer_partnership_date: DF.Date | None
+		discount_note: DF.Data | None
 		discounts: DF.Table[InvoiceDiscount]
 		due_date: DF.Date | None
-		ending_balance: DF.Currency
 		exchange_rate: DF.Float
 		frappe_invoice: DF.Data | None
 		frappe_partner_order: DF.Data | None
@@ -58,29 +60,27 @@ class Invoice(Document):
 		invoice_pdf: DF.Attach | None
 		items: DF.Table[InvoiceItem]
 		marketplace: DF.Check
+		mpesa_invoice: DF.Data | None
+		mpesa_invoice_pdf: DF.Attach | None
+		mpesa_merchant_id: DF.Data | None
+		mpesa_payment_record: DF.Data | None
+		mpesa_receipt_number: DF.Data | None
+		mpesa_request_id: DF.Data | None
+		next_payment_attempt_date: DF.Date | None
 		partner_email: DF.Data | None
 		payment_attempt_count: DF.Int
 		payment_attempt_date: DF.Date | None
 		payment_date: DF.Date | None
-		payment_mode: DF.Literal[
-			"", "Card", "Prepaid Credits", "NEFT", "Partner Credits", "Paid By Partner"
-		]
+		payment_mode: DF.Literal["", "Card", "Prepaid Credits", "NEFT", "Partner Credits", "Paid By Partner"]
 		period_end: DF.Date | None
 		period_start: DF.Date | None
 		razorpay_order_id: DF.Data | None
 		razorpay_payment_id: DF.Data | None
 		razorpay_payment_method: DF.Data | None
 		razorpay_payment_record: DF.Link | None
-		starting_balance: DF.Currency
+		refund_reason: DF.Data | None
 		status: DF.Literal[
-			"Draft",
-			"Invoice Created",
-			"Unpaid",
-			"Paid",
-			"Refunded",
-			"Uncollectible",
-			"Collected",
-			"Empty",
+			"Draft", "Invoice Created", "Unpaid", "Paid", "Refunded", "Uncollectible", "Collected", "Empty"
 		]
 		stripe_invoice_id: DF.Data | None
 		stripe_invoice_url: DF.Text | None
@@ -94,10 +94,11 @@ class Invoice(Document):
 		transaction_fee: DF.Currency
 		transaction_fee_details: DF.Table[InvoiceTransactionFee]
 		transaction_net: DF.Currency
-		type: DF.Literal["Subscription", "Prepaid Credits", "Service", "Summary"]
+		type: DF.Literal["Subscription", "Prepaid Credits", "Service", "Summary", "Partnership Fees"]
+		write_off_amount: DF.Float
 	# end: auto-generated types
 
-	dashboard_fields = [
+	dashboard_fields = (
 		"period_start",
 		"period_end",
 		"team",
@@ -119,40 +120,85 @@ class Invoice(Document):
 		"total_discount_amount",
 		"invoice_pdf",
 		"stripe_invoice_url",
-	]
+		"amount_due_with_tax",
+		"mpesa_invoice",
+		"mpesa_invoice_pdf",
+	)
 
 	@staticmethod
 	def get_list_query(query, filters=None, **list_args):
+		StripeWebhookLog = frappe.qb.DocType("Stripe Webhook Log")
+		Invoice = frappe.qb.DocType("Invoice")
+
 		partner_customer = filters.get("partner_customer")
 		if partner_customer:
 			team_name = filters.get("team")
 			due_date = filters.get("due_date")
 			filters.pop("partner_customer")
-			invoice = frappe.qb.DocType("Invoice")
 			query = (
-				frappe.qb.from_(invoice)
-				.select(
-					invoice.name, invoice.total, invoice.amount_due, invoice.status, invoice.due_date
-				)
+				frappe.qb.from_(Invoice)
+				.select(Invoice.name, Invoice.total, Invoice.amount_due, Invoice.status, Invoice.due_date)
 				.where(
-					(invoice.team == team_name)
-					& (invoice.due_date >= due_date[1])
-					& (invoice.type == "Subscription")
+					(Invoice.team == team_name)
+					& (Invoice.due_date >= due_date[1])
+					& (Invoice.type == "Subscription")
 				)
 			)
-		return query
+
+		invoices = (
+			query.select(StripeWebhookLog.name.as_("stripe_payment_failed"))
+			.left_join(StripeWebhookLog)
+			.on(
+				(Invoice.name == StripeWebhookLog.invoice)
+				& (StripeWebhookLog.event_type == "payment_intent.payment_failed")
+			)
+			.groupby(Invoice.name)
+		).run(as_dict=True)
+
+		for invoice in invoices:
+			if stripe_log := invoice.stripe_payment_failed:
+				payload, failed_payment_method = frappe.db.get_value(
+					"Stripe Webhook Log", stripe_log, ["payload", "stripe_payment_method"]
+				)
+				payload = frappe.parse_json(payload)
+				invoice.stripe_payment_error = (
+					payload.get("data", {}).get("object", {}).get("last_payment_error", {}).get("message")
+				)
+				invoice.stripe_payment_failed_card = frappe.db.get_value(
+					"Stripe Payment Method", failed_payment_method, "last_4"
+				)
+
+		return invoices
 
 	def get_doc(self, doc):
 		doc.invoice_pdf = self.invoice_pdf or (self.currency == "USD" and self.get_pdf())
+		currency = frappe.get_value("Team", self.team, "currency")
+		price_field = "price_inr" if currency == "INR" else "price_usd"
+		currency_symbol = "₹" if currency == "INR" else "$"
+
+		for item in doc["items"]:
+			if item.document_type in ("Server", "Database Server"):
+				item.document_name = frappe.get_value(item.document_type, item.document_name, "title")
+				if server_plan := frappe.get_value("Server Plan", item.plan, price_field):
+					item.plan = f"{currency_symbol}{server_plan}"
+				elif server_plan := frappe.get_value("Server Storage Plan", item.plan, price_field):
+					item.plan = f"Storage Add-on {currency_symbol}{server_plan}/GB"
+			elif item.document_type == "Marketplace App":
+				item.document_name = frappe.get_value(item.document_type, item.document_name, "title")
+				item.plan = (
+					f"{currency_symbol}{frappe.get_value('Marketplace App Plan', item.plan, price_field)}"
+				)
 
 	@dashboard_whitelist()
 	def stripe_payment_url(self):
 		if not self.stripe_invoice_id:
 			return
+		frappe.response.location = self.get_stripe_payment_url()
+		frappe.response.type = "redirect"
 
+	def get_stripe_payment_url(self):
 		stripe_link_expired = (
-			self.status == "Unpaid"
-			and frappe.utils.date_diff(frappe.utils.now(), self.due_date) > 30
+			self.status == "Unpaid" and frappe.utils.date_diff(frappe.utils.now(), self.due_date) > 30
 		)
 		if stripe_link_expired:
 			stripe = get_stripe()
@@ -160,26 +206,35 @@ class Invoice(Document):
 			url = stripe_invoice.hosted_invoice_url
 		else:
 			url = self.stripe_invoice_url
-
-		frappe.response.location = url
-		frappe.response.type = "redirect"
+		return url
 
 	def validate(self):
 		self.validate_team()
 		self.validate_dates()
 		self.validate_duplicate()
 		self.validate_items()
-		self.validate_amount()
+		self.calculate_values()
 		self.compute_free_credits()
 
 	def before_submit(self):
 		if self.total > 0 and self.status != "Paid":
 			frappe.throw("Invoice must be Paid to be submitted")
 
+	def calculate_values(self):
+		if self.status == "Paid" and self.docstatus == 1:
+			# don't calculate if already invoice is paid and already submitted
+			return
+		self.calculate_total()
+		self.calculate_discounts()
+		self.calculate_amount_due()
+		self.apply_taxes_if_applicable()
+
 	@frappe.whitelist()
-	def finalize_invoice(self):
+	def finalize_invoice(self):  # noqa: C901
 		if self.type == "Prepaid Credits":
 			return
+
+		self.calculate_values()
 
 		if self.total == 0:
 			self.status = "Empty"
@@ -189,10 +244,8 @@ class Invoice(Document):
 		team = frappe.get_doc("Team", self.team)
 		if not team.enabled:
 			self.add_comment("Info", "Skipping finalize invoice because team is disabled")
+			self.save()
 			return
-
-		if self.partner_email and team.erpnext_partner:
-			self.apply_partner_discount()
 
 		if self.stripe_invoice_id:
 			# if stripe invoice is already created and paid,
@@ -208,52 +261,44 @@ class Invoice(Document):
 
 		# set as unpaid by default
 		self.status = "Unpaid"
-
-		self.amount_due = self.total
-
-		self.apply_credit_balance()
-		if self.amount_due == 0:
-			self.status = "Paid"
-			if self.payment_mode == "Prepaid Credits" and self.stripe_invoice_id:
-				# void an existing stripe invoice if payment was done via credits
-				self.change_stripe_invoice_status("Paid")
-
 		self.update_item_descriptions()
 
-		if self.payment_mode == "Prepaid Credits" and self.amount_due > 0:
-			self.payment_attempt_count += 1
-			self.save()
-			frappe.db.commit()
+		if self.amount_due > 0:
+			self.apply_credit_balance()
 
-			frappe.throw(
-				"Not enough credits for this invoice. Change payment mode to Card to"
-				" pay using Stripe."
-			)
+		if self.amount_due == 0:
+			self.status = "Paid"
 
-		try:
-			self.create_stripe_invoice()
-		except Exception:
-			frappe.db.rollback()
-			self.reload()
-
-			# log the traceback as comment
-			msg = "<pre><code>" + frappe.get_traceback() + "</pre></code>"
-			self.add_comment("Comment", _("Stripe Invoice Creation Failed") + "<br><br>" + msg)
-
-			if not self.stripe_invoice_id:
-				# if stripe invoice was created, find it and set it
-				# so that we avoid scenarios where Stripe Invoice was created but not set in Frappe Cloud
-				stripe_invoice_id = self.find_stripe_invoice()
-				if stripe_invoice_id:
-					self.stripe_invoice_id = stripe_invoice_id
-					self.status = "Invoice Created"
-					self.save()
-
-			frappe.db.commit()
-
-			raise
+		if self.status == "Paid" and self.stripe_invoice_id and self.amount_paid == 0:
+			stripe = get_stripe()
+			invoice = stripe.Invoice.retrieve(self.stripe_invoice_id)
+			payment_intent = stripe.PaymentIntent.retrieve(invoice.payment_intent)
+			if payment_intent.status == "processing":
+				# mark the fc invoice as Paid
+				# if the payment intent is processing, it means the invoice cannot be voided yet
+				# wait for invoice to be updated and then mark it as void if payment failed
+				# or issue a refund if succeeded
+				self.save()  # status is already Paid, so no need to set again
+			else:
+				self.change_stripe_invoice_status("Void")
+				self.add_comment(
+					text=(
+						f"Stripe Invoice {self.stripe_invoice_id} voided because payment is done via credits."
+					)
+				)
 
 		self.save()
+
+		if self.amount_due > 0:
+			if self.payment_mode == "Prepaid Credits":
+				self.add_comment(
+					"Comment",
+					"Not enough credits for this invoice. Change payment mode to Card to pay using Stripe.",
+				)
+			# we shouldn't depend on payment_mode to decide whether to create stripe invoice or not
+			# there should be a separate field in team to decide whether to create automatic invoices or not
+			if self.payment_mode == "Card":
+				self.create_stripe_invoice()
 
 		if self.status == "Paid":
 			self.submit()
@@ -280,13 +325,37 @@ class Invoice(Document):
 		total = 0
 		for item in self.items:
 			total += item.amount
-		return total
+		self.total = flt(total, 2)
+
+	def apply_taxes_if_applicable(self):
+		self.amount_due_with_tax = self.amount_due
+		self.gst = 0
+
+		if self.payment_mode == "Prepaid Credits":
+			return
+
+		if self.currency == "INR" and self.type == "Subscription":
+			gst_rate = frappe.db.get_single_value("Press Settings", "gst_percentage")
+			self.gst = flt(self.amount_due * gst_rate, 2)
+			self.amount_due_with_tax = flt(self.amount_due + self.gst, 2)
+
+	def calculate_amount_due(self):
+		self.amount_due = flt(self.total - self.applied_credits, 2)
+		if self.amount_due < 0 and self.amount_due > -0.1:
+			self.write_off_amount = self.amount_due
+			self.amount_due = 0
+
+		if self.amount_due > 0 and self.amount_due < 0.1:
+			self.write_off_amount = self.amount_due
+			self.amount_due = 0
 
 	def on_submit(self):
 		self.create_invoice_on_frappeio()
+		self.fetch_mpesa_invoice_pdf()
 
 	def on_update_after_submit(self):
 		self.create_invoice_on_frappeio()
+		self.fetch_mpesa_invoice_pdf()
 
 	def after_insert(self):
 		if self.get("amended_from"):
@@ -312,81 +381,99 @@ class Invoice(Document):
 			)
 
 	def create_stripe_invoice(self):
-		if self.payment_mode != "Card":
-			return
-
-		if self.type == "Prepaid Credits":
-			return
-
-		stripe = get_stripe()
-
-		if self.status == "Paid":
-			# void an existing invoice if payment was done via credits
-			if self.stripe_invoice_id:
-				stripe.Invoice.void_invoice(self.stripe_invoice_id)
-				self.add_comment(
-					text=(
-						f"Stripe Invoice {self.stripe_invoice_id} voided because"
-						" payment is done via credits."
-					)
-				)
-			return
-
 		if self.stripe_invoice_id:
-			invoice = stripe.Invoice.retrieve(self.stripe_invoice_id)
+			invoice = self.get_stripe_invoice()
 			stripe_invoice_total = convert_stripe_money(invoice.total)
-			if self.amount_due == stripe_invoice_total:
+			if self.amount_due_with_tax == stripe_invoice_total:
 				# return if an invoice with the same amount is already created
 				return
-			else:
-				# if the amount is changed, void the stripe invoice and create a new one
-				stripe.Invoice.void_invoice(self.stripe_invoice_id)
-				formatted_amount = fmt_money(stripe_invoice_total, currency=self.currency)
-				self.add_comment(
-					text=(
-						f"Stripe Invoice {self.stripe_invoice_id} of amount {formatted_amount} voided."
-					)
-				)
-				self.stripe_invoice_id = ""
-				self.stripe_invoice_url = ""
+			# if the amount is changed, void the stripe invoice and create a new one
+			self.change_stripe_invoice_status("Void")
+			formatted_amount = fmt_money(stripe_invoice_total, currency=self.currency)
+			self.add_comment(
+				text=(f"Stripe Invoice {self.stripe_invoice_id} of amount {formatted_amount} voided.")
+			)
+			self.stripe_invoice_id = ""
+			self.stripe_invoice_url = ""
+			self.save()
 
-		if self.amount_due <= 0:
+		if self.amount_due_with_tax <= 0:
 			return
 
 		customer_id = frappe.db.get_value("Team", self.team, "stripe_customer_id")
-		amount = int(self.amount_due * 100)
-		invoice = stripe.Invoice.create(
-			customer=customer_id,
-			pending_invoice_items_behavior="exclude",
-			collection_method="charge_automatically",
-			auto_advance=True,
-			currency=self.currency.lower(),
-			idempotency_key=f"invoice:{self.name}:amount:{amount}",
-		)
-		stripe.InvoiceItem.create(
-			customer=customer_id,
-			invoice=invoice["id"],
-			description=self.get_stripe_invoice_item_description(),
-			amount=amount,
-			currency=self.currency.lower(),
-			idempotency_key=f"invoiceitem:{self.name}:amount:{amount}",
-		)
-		self.stripe_invoice_id = invoice["id"]
-		self.status = "Invoice Created"
-		self.save()
+		amount = int(self.amount_due_with_tax * 100)
+		self._make_stripe_invoice(customer_id, amount)
 
-	def find_stripe_invoice(self):
+	def mandate_inactive(self, mandate_id):
 		stripe = get_stripe()
-		invoices = stripe.Invoice.list(
-			customer=frappe.db.get_value("Team", self.team, "stripe_customer_id")
+		mandate = stripe.Mandate.retrieve(mandate_id)
+		return mandate.status in ("inactive", "pending")
+
+	def _make_stripe_invoice(self, customer_id, amount):
+		mandate_id = self.get_mandate_id(customer_id)
+		if mandate_id and self.mandate_inactive(mandate_id):
+			frappe.db.set_value("Invoice", self.name, "payment_mode", "Prepaid Credits")
+			self.reload()
+			return None
+		try:
+			stripe = get_stripe()
+			invoice = stripe.Invoice.create(
+				customer=customer_id,
+				pending_invoice_items_behavior="exclude",
+				collection_method="charge_automatically",
+				auto_advance=True,
+				currency=self.currency.lower(),
+				payment_settings={"default_mandate": mandate_id},
+				idempotency_key=f"invoice:{self.name}:amount:{amount}",
+			)
+			stripe.InvoiceItem.create(
+				customer=customer_id,
+				invoice=invoice["id"],
+				description=self.get_stripe_invoice_item_description(),
+				amount=amount,
+				currency=self.currency.lower(),
+				idempotency_key=f"invoiceitem:{self.name}:amount:{amount}",
+			)
+			self.db_set(
+				{
+					"stripe_invoice_id": invoice["id"],
+					"status": "Invoice Created",
+				},
+				commit=True,
+			)
+			self.reload()
+			return invoice
+		except Exception:
+			frappe.db.rollback()
+			self.reload()
+
+			# log the traceback as comment
+			msg = "<pre><code>" + frappe.get_traceback() + "</pre></code>"
+			self.add_comment("Comment", _("Stripe Invoice Creation Failed") + "<br><br>" + msg)
+			frappe.db.commit()
+
+	def get_mandate_id(self, customer_id):
+		mandate_id = frappe.get_value(
+			"Stripe Payment Method", {"team": self.team, "is_default": 1}, "stripe_mandate_id"
 		)
+		if not mandate_id:
+			return ""
+		return mandate_id
+
+	def find_stripe_invoice_if_not_set(self):
+		if self.stripe_invoice_id:
+			return
+		# if stripe invoice was created, find it and set it
+		# so that we avoid scenarios where Stripe Invoice was created but not set in Frappe Cloud
+		stripe = get_stripe()
+		invoices = stripe.Invoice.list(customer=frappe.db.get_value("Team", self.team, "stripe_customer_id"))
 		description = self.get_stripe_invoice_item_description()
 		for invoice in invoices.data:
 			line_items = invoice.lines.data
-			if (
-				line_items and line_items[0].description == description and invoice.status != "void"
-			):
-				return invoice["id"]
+			if line_items and line_items[0].description == description and invoice.status != "void":
+				self.stripe_invoice_id = invoice["id"]
+				self.status = "Invoice Created"
+				self.save()
 
 	def get_stripe_invoice_item_description(self):
 		start = getdate(self.period_start)
@@ -400,74 +487,46 @@ class Invoice(Document):
 		stripe.Invoice.finalize_invoice(self.stripe_invoice_id)
 
 	def validate_duplicate(self):
-		if self.type == "Prepaid Credits":
-			if self.stripe_payment_intent_id and frappe.db.exists(
-				"Invoice",
-				{
-					"stripe_payment_intent_id": self.stripe_payment_intent_id,
-					"type": "Prepaid Credits",
-					"name": ("!=", self.name),
-				},
-			):
+		invoice_exists = frappe.db.exists(
+			"Invoice",
+			{
+				"stripe_payment_intent_id": self.stripe_payment_intent_id,
+				"type": "Prepaid Credits",
+				"name": ("!=", self.name),
+			},
+		)
+		if self.type == "Prepaid Credits" and self.stripe_payment_intent_id and invoice_exists:
+			frappe.throw("Invoice with same Stripe payment intent exists", frappe.DuplicateEntryError)
+
+		if self.type == "Subscription" and self.period_start and self.period_end and self.is_new():
+			query = (
+				f"select `name` from `tabInvoice` where team = '{self.team}' and"
+				f" status = 'Draft' and ('{self.period_start}' between `period_start` and"
+				f" `period_end` or '{self.period_end}' between `period_start` and"
+				" `period_end`)"
+			)
+
+			intersecting_invoices = [x[0] for x in frappe.db.sql(query, as_list=True)]
+
+			if intersecting_invoices:
 				frappe.throw(
-					"Invoice with same Stripe payment intent exists", frappe.DuplicateEntryError
+					f"There are invoices with intersecting periods:{', '.join(intersecting_invoices)}",
+					frappe.DuplicateEntryError,
 				)
-
-		if self.type == "Subscription":
-			if self.period_start and self.period_end and self.is_new():
-				query = (
-					f"select `name` from `tabInvoice` where team = '{self.team}' and"
-					f" status = 'Draft' and ('{self.period_start}' between `period_start` and"
-					f" `period_end` or '{self.period_end}' between `period_start` and"
-					" `period_end`)"
-				)
-
-				intersecting_invoices = [x[0] for x in frappe.db.sql(query, as_list=True)]
-
-				if intersecting_invoices:
-					frappe.throw(
-						f"There are invoices with intersecting periods:{', '.join(intersecting_invoices)}",
-						frappe.DuplicateEntryError,
-					)
 
 	def validate_team(self):
-		team = frappe.get_cached_doc("Team", self.team)
+		team = frappe.get_doc("Team", self.team)
 
 		self.customer_name = team.billing_name or frappe.utils.get_fullname(self.team)
 		self.customer_email = (
-			frappe.db.get_value(
-				"Communication Email", {"parent": team.user, "type": "invoices"}, ["value"]
-			)
+			frappe.db.get_value("Communication Email", {"parent": team.user, "type": "invoices"}, ["value"])
 			or team.user
 		)
 		self.currency = team.currency
 		if not self.payment_mode:
 			self.payment_mode = team.payment_mode
 		if not self.currency:
-			frappe.throw(
-				f"Cannot create Invoice because Currency is not set in Team {self.team}"
-			)
-
-		# To prevent copying of team level discounts again
-		self.remove_previous_team_discounts()
-
-		for invoice_discount in team.discounts:
-			self.append(
-				"discounts",
-				{
-					"discount_type": invoice_discount.discount_type,
-					"based_on": invoice_discount.based_on,
-					"percent": invoice_discount.percent,
-					"amount": invoice_discount.amount,
-					"via_team": True,
-				},
-			)
-
-	def remove_previous_team_discounts(self):
-		team_discounts = find_all(self.discounts, lambda x: x.via_team)
-
-		for discount in team_discounts:
-			self.remove(discount)
+			frappe.throw(f"Cannot create Invoice because Currency is not set in Team {self.team}")
 
 	def validate_dates(self):
 		if not self.period_start:
@@ -482,11 +541,23 @@ class Invoice(Document):
 
 	def update_item_descriptions(self):
 		for item in self.items:
-			if not item.description and item.document_type == "Site" and item.plan:
-				site_name = item.document_name.split(".archived")[0]
-				plan = frappe.get_cached_value("Site Plan", item.plan, "plan_title")
+			if not item.description:
 				how_many_days = f"{cint(item.quantity)} day{'s' if item.quantity > 1 else ''}"
-				item.description = f"{site_name} active for {how_many_days} on {plan} plan"
+				if item.document_type == "Site" and item.plan:
+					site_name = item.document_name.split(".archived")[0]
+					plan = frappe.get_cached_value("Site Plan", item.plan, "plan_title")
+					item.description = f"{site_name} active for {how_many_days} on {plan} plan"
+				elif item.document_type in ["Server", "Database Server"]:
+					server_title = frappe.get_cached_value(item.document_type, item.document_name, "title")
+					if item.plan == "Add-on Storage plan":
+						item.description = f"{server_title} Storage Add-on for {how_many_days}"
+					else:
+						item.description = f"{server_title} active for {how_many_days}"
+				elif item.document_type == "Marketplace App":
+					app_title = frappe.get_cached_value("Marketplace App", item.document_name, "title")
+					item.description = f"Marketplace app {app_title} active for {how_many_days}"
+				else:
+					item.description = "Prepaid Credits"
 
 	def add_usage_record(self, usage_record):
 		if self.type != "Subscription":
@@ -568,77 +639,31 @@ class Invoice(Document):
 			if row.quantity == 0:
 				items_to_remove.append(row)
 			else:
-				row.amount = row.quantity * row.rate
+				row.amount = flt((row.quantity * row.rate), 2)
 
 		for item in items_to_remove:
 			self.remove(item)
 
-	def validate_amount(self):
-		# Already Submitted
-		if self.docstatus == 1:
-			return
-
-		total = self.calculate_total()
-		self.total_before_discount = total
-		self.total = total
-		self.set_total_and_discount()
-
 	def compute_free_credits(self):
-		self.free_credits = sum(
-			[d.amount for d in self.credit_allocations if d.source == "Free Credits"]
-		)
+		self.free_credits = sum([d.amount for d in self.credit_allocations if d.source == "Free Credits"])
 
-	def apply_partner_discount(self):
-		if self.flags.on_partner_conversion:
-			return
-
-		# check if discount is already added
-		if self.discounts:
-			return
-
-		discount_note = (
-			"Flat Partner Discount"
-			if self.payment_mode == "Partner Credits"
-			else "New Partner Discount"
-		)
-
-		team = frappe.get_cached_doc("Team", self.team)
-		partner_level, legacy_contract = team.get_partner_level()
-		# give 10% discount for partners
-		discount_percent = 0.1 if legacy_contract == 1 else DISCOUNT_MAP.get(partner_level)
-
-		total_partner_discount = 0
+	def calculate_discounts(self):
 		for item in self.items:
-			if item.document_type in ("Site", "Server", "Database Server"):
-				item.discount = item.amount * discount_percent
-				total_partner_discount += item.discount
+			if item.discount_percentage:
+				item.discount = flt(item.amount * (item.discount_percentage / 100), 2)
 
-		if total_partner_discount > 0:
-			self.append(
-				"discounts",
-				{
-					"discount_type": "Flat On Total",
-					"based_on": "Amount",
-					"percent": discount_percent,
-					"amount": total_partner_discount,
-					"note": discount_note,
-					"via_team": False,
-				},
-			)
+		self.total_discount_amount = sum([item.discount for item in self.items]) + sum(
+			[d.amount for d in self.discounts]
+		)
 
-		self.save()
-		self.reload()
+		npo_discount_applicable = frappe.db.get_value("Team", self.team, "apply_npo_discount")
+		if npo_discount_applicable:
+			npo_discount = frappe.db.get_single_value("Press Settings", "npo_discount")
+			if npo_discount:
+				self.total_discount_amount += flt(self.total * (npo_discount / 100), 2)
 
-	def set_total_and_discount(self):
-		if not self.discounts:
-			return
-		total_discount_amount = 0
-
-		for invoice_discount in self.discounts:
-			total_discount_amount += invoice_discount.amount
-
-		self.total_discount_amount = total_discount_amount
-		self.total = self.total_before_discount - total_discount_amount
+		self.total_before_discount = self.total
+		self.total = flt(self.total_before_discount - self.total_discount_amount, 2)
 
 	def on_cancel(self):
 		# make reverse entries for credit allocations
@@ -656,8 +681,8 @@ class Invoice(Document):
 			doc.submit()
 
 	def apply_credit_balance(self):
-		# cancel applied credits to re-apply available credits
-		self.cancel_applied_credits()
+		# previously we used to cancel and re-apply credits, but it messed up the balance transaction history
+		# so now we only do append-only operation while applying credits
 
 		balance = frappe.get_cached_doc("Team", self.team).get_balance()
 		if balance <= 0:
@@ -678,7 +703,7 @@ class Invoice(Document):
 		unallocated_balances.reverse()
 
 		total_allocated = 0
-		due = self.total
+		due = self.amount_due
 		for balance in unallocated_balances:
 			if due == 0:
 				break
@@ -710,30 +735,8 @@ class Invoice(Document):
 		).insert()
 		balance_transaction.submit()
 
-		self.applied_credits = total_allocated
-		self.amount_due = self.total - self.applied_credits
-
-	def cancel_applied_credits(self):
-		for row in self.credit_allocations:
-			doc = frappe.get_doc(
-				doctype="Balance Transaction",
-				type="Adjustment",
-				source=row.source,
-				team=self.team,
-				amount=row.amount,
-				description=(
-					f"Reverse amount {row.get_formatted('amount')} of {row.transaction}"
-					f" from invoice {self.name}"
-				),
-			).insert()
-			doc.submit()
-			self.applied_credits -= row.amount
-
-		self.clear_credit_allocation_table()
-		self.save()
-
-	def clear_credit_allocation_table(self):
-		self.set("credit_allocations", [])
+		self.applied_credits = sum(row.amount for row in self.credit_allocations)
+		self.calculate_values()
 
 	def create_next(self):
 		# the next invoice's period starts after this invoice ends
@@ -748,10 +751,10 @@ class Invoice(Document):
 			},  # Adding type 'Subscription' to ensure no other type messes with this
 		)
 
-		if not already_exists:
-			return frappe.get_doc(
-				doctype="Invoice", team=self.team, period_start=next_start
-			).insert()
+		if already_exists:
+			return None
+
+		return frappe.get_doc(doctype="Invoice", team=self.team, period_start=next_start).insert()
 
 	def get_pdf(self):
 		print_format = self.meta.default_print_format
@@ -760,21 +763,25 @@ class Invoice(Document):
 		)
 
 	@frappe.whitelist()
-	def create_invoice_on_frappeio(self):
+	def create_invoice_on_frappeio(self):  # noqa: C901
 		if self.flags.skip_frappe_invoice:
-			return
+			return None
 		if self.status != "Paid":
-			return
+			return None
 		if self.amount_paid == 0:
-			return
-		if self.frappe_invoice or self.frappe_partner_order:
-			return
+			return None
+		if self.frappe_invoice or self.frappe_partner_order or self.mpesa_receipt_number:
+			return None
+
+		if is_frappe_auth_disabled():
+			return None
 
 		try:
 			team = frappe.get_doc("Team", self.team)
-			address = (
-				frappe.get_doc("Address", team.billing_address) if team.billing_address else None
-			)
+			address = frappe.get_doc("Address", team.billing_address) if team.billing_address else None
+			if not address:
+				# don't create invoice if address is not set
+				return None
 			client = self.get_frappeio_connection()
 			response = client.session.post(
 				f"{client.url}/api/method/create-fc-invoice",
@@ -808,9 +815,7 @@ class Invoice(Document):
 				)
 		except Exception:
 			traceback = "<pre><code>" + frappe.get_traceback() + "</pre></code>"
-			self.add_comment(
-				text="Failed to create invoice on frappe.io" + "<br><br>" + traceback
-			)
+			self.add_comment(text="Failed to create invoice on frappe.io" + "<br><br>" + traceback)
 
 			log_error(
 				"Frappe.io Invoice Creation Error",
@@ -821,6 +826,9 @@ class Invoice(Document):
 	def fetch_invoice_pdf(self):
 		if self.frappe_invoice:
 			from urllib.parse import urlencode
+
+			if is_frappe_auth_disabled():
+				return
 
 			client = self.get_frappeio_connection()
 			print_format = frappe.db.get_single_value("Press Settings", "print_format")
@@ -879,9 +887,11 @@ class Invoice(Document):
 					},
 				)
 			self.save()
-			return True
 
 	def update_razorpay_transaction_details(self, payment):
+		if not (payment["fee"] or payment["tax"]):
+			return
+
 		self.transaction_amount = convert_stripe_money(payment["amount"])
 		self.transaction_net = convert_stripe_money(payment["amount"] - payment["fee"])
 		self.transaction_fee = convert_stripe_money(payment["fee"])
@@ -912,6 +922,47 @@ class Invoice(Document):
 		self.save()
 
 	@frappe.whitelist()
+	def fetch_mpesa_invoice_pdf(self):
+		if not (self.mpesa_payment_record and self.mpesa_invoice):
+			return
+		gateway_info = get_gateway_details(self.mpesa_payment_record)
+		client = get_partner_external_connection(gateway_info[0])
+		try:
+			print_format = gateway_info[1]
+			from urllib.parse import urlencode
+
+			params = urlencode(
+				{
+					"doctype": "Sales Invoice",
+					"name": self.mpesa_invoice,
+					"format": print_format,
+					"no_letterhead": 0,
+				}
+			)
+			url = f"{client.url}/api/method/frappe.utils.print_format.download_pdf?{params}"
+
+			with client.session.get(url, headers=client.headers, stream=True) as r:
+				r.raise_for_status()
+				file_doc = frappe.get_doc(
+					{
+						"doctype": "File",
+						"attached_to_doctype": "Invoice",
+						"attached_to_name": self.name,
+						"attached_to_field": "mpesa_invoice_pdf",
+						"folder": "Home/Attachments",
+						"file_name": self.mpesa_invoice + ".pdf",
+						"is_private": 1,
+						"content": r.content,
+					}
+				)
+				file_doc.save(ignore_permissions=True)
+				self.mpesa_invoice_pdf = file_doc.file_url
+				self.save(ignore_permissions=True)
+
+		except Exception as e:
+			frappe.log_error(str(e), "Error fetching Sales Invoice PDF on external site")
+
+	@frappe.whitelist()
 	def refund(self, reason):
 		stripe = get_stripe()
 		charge = None
@@ -923,47 +974,13 @@ class Invoice(Document):
 			charge = payment_intent["charges"]["data"][0]["id"]
 
 		if not charge:
-			frappe.throw(
-				"Cannot refund payment because Stripe Charge not found for this invoice"
-			)
+			frappe.throw("Cannot refund payment because Stripe Charge not found for this invoice")
 
 		stripe.Refund.create(charge=charge)
 		self.status = "Refunded"
+		self.refund_reason = reason
 		self.save()
 		self.add_comment(text=f"Refund reason: {reason}")
-
-	def consume_credits_and_mark_as_paid(self, reason=None):
-		if self.amount_due <= 0:
-			frappe.throw("Amount due is less than or equal to 0")
-
-		team = frappe.get_doc("Team", self.team)
-		available_credits = team.get_balance()
-		if available_credits < self.amount_due:
-			available = frappe.utils.fmt_money(available_credits, 2, self.currency)
-			frappe.throw(
-				f"Available credits ({available}) is less than amount due"
-				f" ({self.get_formatted('amount_due')})"
-			)
-
-		remark = "Manually consuming credits and marking the unpaid invoice as paid."
-		if reason:
-			remark += f" Reason: {reason}"
-
-		self.change_stripe_invoice_status("Paid")
-
-		# negative value to reduce balance by amount
-		amount = self.amount_due * -1
-		balance_transaction = team.allocate_credit_amount(
-			amount, source="", remark=f"{remark}, Ref: Invoice {self.name}"
-		)
-
-		self.add_comment(
-			text=(
-				"Manually consuming credits and marking the unpaid invoice as paid."
-				f" {frappe.utils.get_link_to_form('Balance Transaction', balance_transaction.name)}"
-			)
-		)
-		self.db_set("status", "Paid")
 
 	@frappe.whitelist()
 	def change_stripe_invoice_status(self, status):
@@ -984,6 +1001,12 @@ class Invoice(Document):
 
 		# Also send back the updated payment link
 		return self.stripe_invoice_url
+
+	def get_stripe_invoice(self):
+		if not self.stripe_invoice_id:
+			return None
+		stripe = get_stripe()
+		return stripe.Invoice.retrieve(self.stripe_invoice_id)
 
 
 def finalize_draft_invoices():
@@ -1070,8 +1093,85 @@ def finalize_draft_invoice(invoice):
 		log_error("Invoice creation for next month failed", invoice=invoice.name)
 
 
-get_permission_query_conditions = get_permission_query_conditions_for_doctype("Invoice")
-
-
 def calculate_gst(amount):
 	return amount * 0.18
+
+
+def get_permission_query_conditions(user):
+	from press.utils import get_current_team
+
+	if not user:
+		user = frappe.session.user
+
+	user_type = frappe.db.get_value("User", user, "user_type", cache=True)
+	if user_type == "System User":
+		return ""
+
+	team = get_current_team()
+
+	return f"(`tabInvoice`.`team` = {frappe.db.escape(team)})"
+
+
+def has_permission(doc, ptype, user):
+	from press.utils import get_current_team, has_role
+
+	if not user:
+		user = frappe.session.user
+
+	user_type = frappe.db.get_value("User", user, "user_type", cache=True)
+	if user_type == "System User":
+		return True
+
+	if ptype == "create":
+		return True
+
+	if has_role("Press Support Agent", user) and ptype == "read":
+		return True
+
+	team = get_current_team(True)
+	team_members = [
+		d.user for d in frappe.db.get_all("Team Member", {"parenttype": "Team", "parent": doc.team}, ["user"])
+	]
+	if doc.team == team.name or team.user in team_members:
+		return True
+	return False
+
+
+# M-pesa external site for webhook
+def create_sales_invoice_on_external_site(transaction_response):
+	client = get_partner_external_connection()
+	try:
+		# Define the necessary data for the Sales Invoice creation
+		data = {
+			"customer": transaction_response.get("team"),
+			"posting_date": frappe.utils.nowdate(),
+			"due_date": frappe.utils.add_days(frappe.utils.nowdate(), 30),
+			"items": [
+				{
+					"item_code": "Frappe Cloud Payment",
+					"qty": 1,
+					"rate": transaction_response.get("Amount"),
+					"description": "Payment for Mpesa transaction",
+				}
+			],
+			"paid_amount": transaction_response.get("Amount"),
+			"status": "Paid",
+		}
+
+		# Post to the external site's sales invoice creation API
+		response = client.session.post(
+			f"{client.url}/api/method/frappe.client.insert",
+			headers=client.headers,
+			json={"doc": data},
+		)
+
+		if response.ok:
+			res = response.json()
+			sales_invoice = res.get("message")
+			if sales_invoice:
+				frappe.msgprint(_("Sales Invoice created successfully on external site."))
+				return sales_invoice
+		else:
+			frappe.throw(_("Failed to create Sales Invoice on external site."))
+	except Exception as e:
+		frappe.log_error(str(e), "Error creating Sales Invoice on external site")

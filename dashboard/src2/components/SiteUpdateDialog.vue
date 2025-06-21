@@ -2,8 +2,8 @@
 	<Dialog
 		v-model="show"
 		:options="{
-			title: 'Updates Available',
-			size: '2xl'
+			title: dialogTitle,
+			size: '2xl',
 		}"
 	>
 		<template #body-content>
@@ -32,28 +32,21 @@
 		</template>
 		<template #actions>
 			<Button
+				v-if="existingUpdate"
+				class="w-full"
+				variant="solid"
+				label="Edit Update"
+				@click="editUpdate"
+			/>
+			<Button
+				v-else
 				class="w-full"
 				variant="solid"
 				:loading="$site.scheduleUpdate.loading"
 				:label="`Update ${
 					scheduledTime ? `at ${scheduledTimeInLocal}` : 'Now'
 				}`"
-				@click="
-					$site.scheduleUpdate.submit(
-						{
-							skip_failing_patches: skipFailingPatches,
-							skip_backups: skipBackups,
-							scheduled_time: scheduledTimeInIST
-						},
-						{
-							onSuccess: () => {
-								$site.reload();
-								show = false;
-								$router.push({ name: 'Site Detail Updates' });
-							}
-						}
-					)
-				"
+				@click="scheduleUpdate"
 			/>
 		</template>
 	</Dialog>
@@ -63,30 +56,45 @@ import { getCachedDocumentResource } from 'frappe-ui';
 import DateTimeControl from './DateTimeControl.vue';
 import GenericList from './GenericList.vue';
 import dayjs, { dayjsIST } from '../utils/dayjs';
+import { toast } from 'vue-sonner';
 
 export default {
 	name: 'SiteUpdateDialog',
-	props: ['site'],
+	props: {
+		site: {
+			type: String,
+			required: true,
+		},
+		existingUpdate: String,
+	},
 	components: {
 		GenericList,
-		DateTimeControl
+		DateTimeControl,
 	},
 	data() {
 		return {
 			show: true,
 			skipFailingPatches: false,
 			scheduledTime: '',
-			skipBackups: false
+			skipBackups: false,
 		};
 	},
-	methods: {
-		twoseconds() {
-			return new Promise(resolve => {
-				setTimeout(() => {
-					resolve();
-				}, 2000);
-			});
-		}
+	resources: {
+		siteUpdate() {
+			return {
+				// for some reason, type: document won't work after the first time
+				// TODO: investigate why
+				url: 'press.api.client.get',
+				params: {
+					doctype: 'Site Update',
+					name: this.existingUpdate,
+				},
+				auto: !!this.existingUpdate,
+				onSuccess: (doc) => {
+					this.initializeValues(doc);
+				},
+			};
+		},
 	},
 	computed: {
 		scheduledTimeInIST() {
@@ -99,7 +107,7 @@ export default {
 		listOptions() {
 			return {
 				data: this.updatableApps.filter(
-					app => app.current_hash !== app.next_hash
+					(app) => app.current_hash !== app.next_hash,
 				),
 				columns: [
 					{
@@ -107,7 +115,7 @@ export default {
 						fieldname: 'app',
 						format(value, row) {
 							return row.title || value;
-						}
+						},
 					},
 					{
 						label: 'Current Version',
@@ -127,19 +135,19 @@ export default {
 							if (row.current_hash) {
 								return `${row.repository_url}/commit/${row.current_hash}`;
 							}
-						}
+						},
 					},
 					{
 						label: 'Next Version',
 						type: 'Badge',
 						format(value, row) {
 							return row.will_branch_change
-								? row.next_branch
+								? row.branch
 								: row.next_tag || row.next_hash.slice(0, 7);
 						},
 						link(value, row) {
 							if (row.will_branch_change) {
-								return `${row.repository_url}/tree/${row.next_branch}`;
+								return `${row.repository_url}/tree/${row.branch}`;
 							}
 							if (row.next_tag) {
 								return `${row.repository_url}/releases/tag/${row.next_tag}`;
@@ -147,23 +155,77 @@ export default {
 							if (row.next_hash) {
 								return `${row.repository_url}/commit/${row.next_hash}`;
 							}
-						}
-					}
-				]
+						},
+					},
+				],
 			};
 		},
 		updatableApps() {
 			if (!this.$site.doc.update_information.update_available) return [];
 			let installedApps = this.$site.doc.update_information.installed_apps.map(
-				d => d.app
+				(d) => d.app,
 			);
-			return this.$site.doc.update_information.apps.filter(app =>
-				installedApps.includes(app.app)
+			return this.$site.doc.update_information.apps.filter((app) =>
+				installedApps.includes(app.app),
 			);
 		},
 		$site() {
 			return getCachedDocumentResource('Site', this.site);
-		}
-	}
+		},
+		siteUpdate() {
+			return this.$resources.siteUpdate;
+		},
+		dialogTitle() {
+			if (this.existingUpdate) return 'Edit Scheduled Update';
+			else return 'Updates Available';
+		},
+	},
+	methods: {
+		scheduleUpdate() {
+			this.$site.scheduleUpdate.submit(
+				{
+					skip_failing_patches: this.skipFailingPatches,
+					skip_backups: this.skipBackups,
+					scheduled_time: this.scheduledTimeInIST,
+				},
+				{
+					onSuccess: () => {
+						this.$site.reload();
+						this.show = false;
+						this.$router.push({ name: 'Site Detail Updates' });
+					},
+				},
+			);
+		},
+		editUpdate() {
+			toast.promise(
+				this.$site.editScheduledUpdate.submit({
+					name: this.existingUpdate,
+					skip_failing_patches: this.skipFailingPatches,
+					skip_backups: this.skipBackups,
+					scheduled_time: this.scheduledTimeInIST,
+				}),
+				{
+					loading: 'Editing scheduled update...',
+					success: () => {
+						this.show = false;
+						this.$site.reload();
+						this.siteUpdate.reload();
+						return 'Scheduled update edited successfully';
+					},
+					error: (err) => {
+						return err.messages.length
+							? err.messages[0]
+							: err.message || 'Failed to edit scheduled update';
+					},
+				},
+			);
+		},
+		initializeValues(doc) {
+			this.skipFailingPatches = doc.skipped_failing_patches;
+			this.skipBackups = doc.skipped_backups;
+			this.scheduledTime = dayjs(doc.scheduled_time).format('YYYY-MM-DDTHH:mm');
+		},
+	},
 };
 </script>

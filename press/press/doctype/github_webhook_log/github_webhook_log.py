@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2020, Frappe and contributors
 # For license information, please see license.txt
-
+from __future__ import annotations
 
 import hashlib
 import hmac
@@ -12,6 +11,7 @@ import frappe
 from frappe.model.document import Document
 from frappe.query_builder import Interval
 from frappe.query_builder.functions import Now
+
 from press.utils import log_error
 
 if TYPE_CHECKING:
@@ -38,7 +38,7 @@ class GitHubWebhookLog(Document):
 		tag: DF.Data | None
 	# end: auto-generated types
 
-	def validate(self):
+	def validate(self):  # noqa: C901
 		secret = frappe.db.get_single_value("Press Settings", "github_webhook_secret")
 		digest = hmac.HMAC(secret.encode(), self.payload.encode(), hashlib.sha1)
 		if not hmac.compare_digest(digest.hexdigest(), self.signature):
@@ -65,6 +65,8 @@ class GitHubWebhookLog(Document):
 				self.tag = payload.ref
 			elif self.git_reference_type == "branch":
 				self.branch = payload.ref
+		elif self.event == "release":
+			self.tag = payload.release.tag_name
 
 		self.payload = json.dumps(payload, indent=4, sort_keys=True)
 
@@ -80,7 +82,7 @@ class GitHubWebhookLog(Document):
 	def handle_push_event(self):
 		payload = self.get_parsed_payload()
 		if self.git_reference_type == "branch":
-			self.create_app_release(payload)
+			self.create_app_releases(payload)
 		elif self.git_reference_type == "tag":
 			self.create_app_tag(payload)
 
@@ -148,37 +150,27 @@ class GitHubWebhookLog(Document):
 	def get_parsed_payload(self):
 		return frappe.parse_json(self.payload)
 
-	def create_app_release(self, payload):
-		source = frappe.get_value(
+	def create_app_releases(self, payload):
+		sources = frappe.db.get_all(
 			"App Source",
-			{
+			filters={
 				"branch": self.branch,
 				"repository": self.repository,
 				"repository_owner": self.repository_owner,
+				"enabled": 1,
 			},
-			["name", "app"],
-			as_dict=True,
+			fields=["name", "app"],
 		)
 
 		commit = payload.get("head_commit", {})
-		if not source or not commit or not commit.get("id"):
+		if len(sources) == 0 or not commit or not commit.get("id"):
 			return
 
-		release = frappe.get_doc(
-			{
-				"doctype": "App Release",
-				"app": source.app,
-				"source": source.name,
-				"hash": commit.get("id"),
-				"message": commit.get("message", "MESSAGE NOT FOUND"),
-				"author": commit.get("author", {}).get("name", "AUTHOR NOT FOUND"),
-			}
-		)
-
-		try:
-			release.insert(ignore_permissions=True)
-		except Exception:
-			log_error("App Release Creation Error", payload=payload, doc=self)
+		for source in sources:
+			try:
+				create_app_release(source.name, source.app, commit)
+			except Exception:
+				log_error("App Release Creation Error", payload=payload, doc=self)
 
 	def create_app_tag(self, payload):
 		commit = payload.get("head_commit", {})
@@ -208,12 +200,12 @@ class GitHubWebhookLog(Document):
 		frappe.db.delete(table, filters=(table.creation < (Now() - Interval(days=days))))
 
 
-def set_uninstalled(owner: str, repository: Optional[str] = None):
+def set_uninstalled(owner: str, repository: str | None = None):
 	for name in get_sources(owner, repository):
 		frappe.db.set_value("App Source", name, "uninstalled", True)
 
 
-def get_sources(owner: str, repository: Optional[str] = None) -> "list[str]":
+def get_sources(owner: str, repository: str | None = None) -> "list[str]":
 	filters = {"repository_owner": owner}
 	if repository:
 		filters["repository"] = repository
@@ -241,3 +233,17 @@ def get_repository_details_from_payload(payload: dict):
 		owner = payload.get("installation", {}).get("account", {}).get("login")
 
 	return dict(name=repo, owner=owner)
+
+
+def create_app_release(source: str, app: str, commit: dict):
+	release = frappe.get_doc(
+		{
+			"doctype": "App Release",
+			"app": app,
+			"source": source,
+			"hash": commit.get("id"),
+			"message": commit.get("message", "MESSAGE NOT FOUND"),
+			"author": commit.get("author", {}).get("name", "AUTHOR NOT FOUND"),
+		}
+	)
+	release.insert(ignore_permissions=True)

@@ -1,17 +1,18 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2020, Frappe and contributors
 # For license information, please see license.txt
 
-
-from typing import List
-
-from frappe.query_builder.functions import Coalesce, Count
-from press.press.doctype.site_plan.site_plan import SitePlan
+from __future__ import annotations
 
 import frappe
+import rq
 from frappe.model.document import Document
-from press.utils import log_error
+from frappe.query_builder.functions import Coalesce, Count
+from frappe.utils import cint, flt
+
 from press.overrides import get_permission_query_conditions_for_doctype
+from press.press.doctype.site_plan.site_plan import SitePlan
+from press.utils import log_error
+from press.utils.jobs import has_job_timeout_exceeded
 
 
 class Subscription(Document):
@@ -23,6 +24,7 @@ class Subscription(Document):
 	if TYPE_CHECKING:
 		from frappe.types import DF
 
+		additional_storage: DF.Data | None
 		document_name: DF.DynamicLink
 		document_type: DF.Link
 		enabled: DF.Check
@@ -30,26 +32,25 @@ class Subscription(Document):
 		marketplace_app_subscription: DF.Link | None
 		plan: DF.DynamicLink
 		plan_type: DF.Link
+		secret_key: DF.Data | None
 		site: DF.Link | None
 		team: DF.Link
 	# end: auto-generated types
 
-	dashboard_fields = [
+	dashboard_fields = (
 		"site",
 		"enabled",
 		"document_type",
 		"document_name",
 		"team",
-	]
+	)
 
 	@staticmethod
 	def get_list_query(query, **list_args):
 		Subscription = frappe.qb.DocType("Subscription")
 		UsageRecord = frappe.qb.DocType("Usage Record")
 		Plan = frappe.qb.DocType("Marketplace App Plan")
-		price_field = (
-			Plan.price_inr if frappe.local.team().currency == "INR" else Plan.price_usd
-		)
+		price_field = Plan.price_inr if frappe.local.team().currency == "INR" else Plan.price_usd
 		filters = list_args.get("filters", {})
 
 		query = (
@@ -81,16 +82,24 @@ class Subscription(Document):
 
 		return query.run(as_dict=True)
 
+	def before_validate(self):
+		if not self.secret_key and self.document_type == "Marketplace App":
+			self.secret_key = frappe.utils.generate_hash(length=40)
+			if not frappe.db.exists("Site Config Key", {"key": f"sk_{self.document_name}"}):
+				frappe.get_doc(
+					doctype="Site Config Key", internal=True, key=f"sk_{self.document_name}"
+				).insert(ignore_permissions=True)
+
 	def validate(self):
 		self.validate_duplicate()
 
 	def on_update(self):
+		if self.plan_type == "Server Storage Plan":
+			return
+
 		doc = self.get_subscribed_document()
 		plan_field = doc.meta.get_field("plan")
-		if not (
-			plan_field
-			and plan_field.options in ["Site Plan", "Server Plan", "Marketplace App Plan"]
-		):
+		if not (plan_field and plan_field.options in ["Site Plan", "Server Plan", "Marketplace App Plan"]):
 			return
 
 		if self.enabled and doc.plan != self.plan:
@@ -105,7 +114,7 @@ class Subscription(Document):
 			return
 		try:
 			self.enabled = True
-			self.save()
+			self.save(ignore_permissions=True)
 		except Exception:
 			frappe.log_error(title="Enable Subscription Error")
 
@@ -114,18 +123,18 @@ class Subscription(Document):
 			return
 		try:
 			self.enabled = False
-			self.save()
+			self.save(ignore_permissions=True)
 		except Exception:
 			frappe.log_error(title="Disable Subscription Error")
 
 	@frappe.whitelist()
-	def create_usage_record(self):
+	def create_usage_record(self, date: DF.Date | None = None):
 		cannot_charge = not self.can_charge_for_subscription()
 		if cannot_charge:
-			return
+			return None
 
-		if self.is_usage_record_created():
-			return
+		if self.is_usage_record_created(date):
+			return None
 
 		team = frappe.get_cached_doc("Team", self.team)
 
@@ -139,7 +148,13 @@ class Subscription(Document):
 			team.create_upcoming_invoice()
 
 		plan = frappe.get_cached_doc(self.plan_type, self.plan)
-		amount = plan.get_price_for_interval(self.interval, team.currency)
+
+		if self.additional_storage:
+			price = plan.price_inr if team.currency == "INR" else plan.price_usd
+			price_per_day = price / plan.period  # no rounding off to avoid discrepancies
+			amount = flt((price_per_day * cint(self.additional_storage)), 2)
+		else:
+			amount = plan.get_price_for_interval(self.interval, team.currency)
 
 		usage_record = frappe.get_doc(
 			doctype="Usage Record",
@@ -149,13 +164,12 @@ class Subscription(Document):
 			plan_type=self.plan_type,
 			plan=plan.name,
 			amount=amount,
+			date=date,
 			subscription=self.name,
 			interval=self.interval,
 			site=(
 				self.site
-				or frappe.get_value(
-					"Marketplace App Subscription", self.marketplace_app_subscription, "site"
-				)
+				or frappe.get_value("Marketplace App Subscription", self.marketplace_app_subscription, "site")
 			)
 			if self.document_type == "Marketplace App"
 			else None,
@@ -174,7 +188,7 @@ class Subscription(Document):
 
 		return True
 
-	def is_usage_record_created(self):
+	def is_usage_record_created(self, date=None):
 		filters = {
 			"team": self.team,
 			"document_type": self.document_type,
@@ -185,7 +199,8 @@ class Subscription(Document):
 		}
 
 		if self.interval == "Daily":
-			filters.update({"date": frappe.utils.today()})
+			date = date or frappe.utils.today()
+			filters.update({"date": date})
 
 		if self.interval == "Monthly":
 			date = frappe.utils.getdate()
@@ -203,6 +218,7 @@ class Subscription(Document):
 			"team": self.team,
 			"document_type": self.document_type,
 			"document_name": self.document_name,
+			"plan_type": self.plan_type,
 		}
 		if self.document_type == "Marketplace App":
 			filters.update({"marketplace_app_subscription": self.marketplace_app_subscription})
@@ -212,6 +228,7 @@ class Subscription(Document):
 			filters,
 			pluck="name",
 			limit=1,
+			ignore_ifnull=True,
 		)
 		if results:
 			link = frappe.utils.get_link_to_form("Subscription", results[0])
@@ -223,7 +240,7 @@ class Subscription(Document):
 		return self._subscribed_document
 
 	@classmethod
-	def get_sites_without_offsite_backups(cls) -> List[str]:
+	def get_sites_without_offsite_backups(cls) -> list[str]:
 		plans = SitePlan.get_ones_without_offsite_backups()
 		return frappe.get_all(
 			"Subscription",
@@ -237,6 +254,7 @@ def create_usage_records():
 	Creates daily usage records for paid Subscriptions
 	"""
 	free_sites = sites_with_free_hosting()
+	settings = frappe.get_single("Press Settings")
 	subscriptions = frappe.db.get_all(
 		"Subscription",
 		filters={
@@ -247,14 +265,23 @@ def create_usage_records():
 		},
 		pluck="name",
 		order_by=None,
-		limit=2000,
+		limit=settings.usage_record_creation_batch_size or 500,
 		ignore_ifnull=True,
+		debug=True,
 	)
 	for name in subscriptions:
+		if has_job_timeout_exceeded():
+			return
 		subscription = frappe.get_cached_doc("Subscription", name)
 		try:
 			subscription.create_usage_record()
 			frappe.db.commit()
+		except rq.timeouts.JobTimeoutException:
+			# This job took too long to execute
+			# We need to rollback the transaction
+			# Try again in the next job
+			frappe.db.rollback()
+			return
 		except Exception:
 			frappe.db.rollback()
 			log_error(title="Create Usage Record Error", name=name)
@@ -266,7 +293,13 @@ def paid_plans():
 		"price_inr": (">", 0),
 		"enabled": 1,
 	}
-	doctypes = ["Site Plan", "Marketplace App Plan", "Server Plan"]
+	doctypes = [
+		"Site Plan",
+		"Marketplace App Plan",
+		"Server Plan",
+		"Server Storage Plan",
+		"Cluster Plan",
+	]
 	for doctype in doctypes:
 		paid_plans += frappe.get_all(doctype, filter, pluck="name", ignore_ifnull=True)
 
@@ -275,9 +308,7 @@ def paid_plans():
 
 def sites_with_free_hosting():
 	# sites marked as free
-	free_teams = frappe.get_all(
-		"Team", filters={"free_account": True, "enabled": True}, pluck="name"
-	)
+	free_teams = frappe.get_all("Team", filters={"free_account": True, "enabled": True}, pluck="name")
 	free_team_sites = frappe.get_all(
 		"Site",
 		{"status": ("not in", ("Archived", "Suspended")), "team": ("in", free_teams)},
@@ -304,7 +335,14 @@ def created_usage_records(free_sites, date=None):
 		filters={
 			"document_type": (
 				"in",
-				("Site", "Server", "Database Server", "Self Hosted Server", "Marketplace App"),
+				(
+					"Site",
+					"Server",
+					"Database Server",
+					"Self Hosted Server",
+					"Marketplace App",
+					"Cluster",
+				),
 			),
 			"date": date,
 			"document_name": ("not in", free_sites),
@@ -315,6 +353,4 @@ def created_usage_records(free_sites, date=None):
 	)
 
 
-get_permission_query_conditions = get_permission_query_conditions_for_doctype(
-	"Subscription"
-)
+get_permission_query_conditions = get_permission_query_conditions_for_doctype("Subscription")

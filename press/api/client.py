@@ -1,20 +1,24 @@
 # Copyright (c) 2023, Frappe Technologies Pvt. Ltd. and Contributors
 # MIT License. See license.txt
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import inspect
+import typing
 
 import frappe
-from frappe import is_whitelisted
 from frappe.client import set_value as _set_value
-from frappe.handler import get_attr
 from frappe.handler import run_doc_method as _run_doc_method
 from frappe.model import child_table_fields, default_fields
 from frappe.model.base_document import get_controller
 from frappe.utils import cstr
 from pypika.queries import QueryBuilder
+
+from press.exceptions import TeamHeaderNotInRequestError
 from press.utils import has_role
+
+if typing.TYPE_CHECKING:
+	from frappe.model.meta import Meta
 
 ALLOWED_DOCTYPES = [
 	"Site",
@@ -23,13 +27,14 @@ ALLOWED_DOCTYPES = [
 	"Site Backup",
 	"Site Activity",
 	"Site Config",
-	"Site Config Key",
 	"Site Plan",
 	"Site Update",
+	"Site Group Deploy",
 	"Invoice",
 	"Balance Transaction",
 	"Stripe Payment Method",
 	"Bench",
+	"Bench App",
 	"Bench Dependency Version",
 	"Release Group",
 	"Release Group App",
@@ -39,7 +44,7 @@ ALLOWED_DOCTYPES = [
 	"Press Role",
 	"Press Role Permission",
 	"Team",
-	"SaaS Product Site Request",
+	"Product Trial Request",
 	"Deploy Candidate",
 	"Deploy Candidate Difference",
 	"Deploy Candidate Difference App",
@@ -53,7 +58,6 @@ ALLOWED_DOCTYPES = [
 	"Release Group Variable",
 	"Resource Tag",
 	"Press Tag",
-	"User",
 	"Partner Approval Request",
 	"Marketplace App",
 	"Subscription",
@@ -62,14 +66,27 @@ ALLOWED_DOCTYPES = [
 	"App Release",
 	"Payout Order",
 	"App Patch",
-	"SaaS Product",
+	"Product Trial",
 	"Press Notification",
 	"User SSH Key",
 	"Frappe Version",
+	"Dashboard Banner",
+	"App Release Approval Request",
+	"Press Webhook",
+	"SQL Playground Log",
+	"Site Database User",
+	"Press Settings",
+	"Mpesa Payment Record",
+	"Partner Certificate",
+	"Partner Payment Payout",
+	"Deploy Candidate Build",
+	"Account Request",
 ]
 
 ALLOWED_DOCTYPES_FOR_SUPPORT = [
 	"Site",
+	"Bench",
+	"Release Group",
 ]
 
 whitelisted_methods = set()
@@ -77,22 +94,20 @@ whitelisted_methods = set()
 
 @frappe.whitelist()
 def get_list(
-	doctype,
-	fields=None,
-	filters=None,
-	order_by=None,
-	start=0,
-	limit=20,
-	parent=None,
-	debug=False,
+	doctype: str,
+	fields: list | None = None,
+	filters: dict | None = None,
+	order_by: str | None = None,
+	start: int = 0,
+	limit: int = 20,
+	parent: str | None = None,
+	debug: bool = False,
 ):
-	from press.press.doctype.press_role.press_role import check_role_permissions
-
 	if filters is None:
 		filters = {}
 
-	# team doctype doesn't have a team field to filter by
-	if doctype == "Team":
+	# these doctypes doesn't have a team field to filter by but are used in get or run_doc_method
+	if doctype in ["Team", "User SSH Key"]:
 		return []
 
 	check_permissions(doctype)
@@ -104,46 +119,22 @@ def get_list(
 		frappe.throw("parenttype and parent are required to get child records")
 
 	apply_team_filter = not (
-		filters.get("skip_team_filter_for_system_user") and frappe.local.system_user()
+		filters.get("skip_team_filter_for_system_user_and_support_agent")
+		and (frappe.local.system_user() or has_role("Press Support Agent"))
 	)
 	if apply_team_filter and meta.has_field("team"):
 		valid_filters.team = frappe.local.team().name
 
-	query = frappe.qb.get_query(
+	query = get_list_query(
 		doctype,
-		filters=valid_filters,
-		fields=valid_fields,
-		offset=start,
-		limit=limit,
-		order_by=order_by,
+		meta,
+		filters,
+		valid_filters,
+		valid_fields,
+		start,
+		limit,
+		order_by,
 	)
-
-	if meta.istable:
-		parentmeta = frappe.get_meta(filters.get("parenttype"))
-		if parentmeta.has_field("team"):
-			ParentDocType = frappe.qb.DocType(filters.get("parenttype"))
-			ChildDocType = frappe.qb.DocType(doctype)
-			query = (
-				query.join(ParentDocType)
-				.on(ParentDocType.name == ChildDocType.parent)
-				.where(ParentDocType.team == frappe.local.team().name)
-			)
-
-	if roles := check_role_permissions(doctype):
-		PressRolePermission = frappe.qb.DocType("Press Role Permission")
-		QueriedDocType = frappe.qb.DocType(doctype)
-
-		field = doctype.lower().replace(" ", "_")
-
-		query = (
-			query.join(PressRolePermission)
-			.on(
-				PressRolePermission[field]
-				== QueriedDocType.name & PressRolePermission.role.isin(roles)
-			)
-			.distinct()
-		)
-
 	filters = frappe._dict(filters or {})
 	list_args = dict(
 		fields=fields,
@@ -157,10 +148,56 @@ def get_list(
 	query = apply_custom_filters(doctype, query, **list_args)
 	if isinstance(query, QueryBuilder):
 		return query.run(as_dict=1, debug=debug)
-	elif isinstance(query, list):
+
+	if isinstance(query, list):
 		return query
-	elif query is None:
-		return []
+
+	return []
+
+
+def get_list_query(
+	doctype: str,
+	meta: "Meta",
+	filters: dict,
+	valid_filters: frappe._dict,
+	valid_fields: list | None,
+	start: int,
+	limit: int,
+	order_by: str | None,
+):
+	from press.press.doctype.press_role.press_role import check_role_permissions
+
+	query = frappe.qb.get_query(
+		doctype,
+		filters=valid_filters,
+		fields=valid_fields,
+		offset=start,
+		limit=limit,
+		order_by=order_by,
+	)
+
+	if meta.istable and frappe.get_meta(filters.get("parenttype")).has_field("team"):
+		ParentDocType = frappe.qb.DocType(filters.get("parenttype"))
+		ChildDocType = frappe.qb.DocType(doctype)
+
+		query = (
+			query.join(ParentDocType)
+			.on(ParentDocType.name == ChildDocType.parent)
+			.where(ParentDocType.team == frappe.local.team().name)
+		)
+
+	if roles := check_role_permissions(doctype):
+		PressRolePermission = frappe.qb.DocType("Press Role Permission")
+		QueriedDocType = frappe.qb.DocType(doctype)
+
+		field = doctype.lower().replace(" ", "_")
+		query = (
+			query.join(PressRolePermission)
+			.on(PressRolePermission[field] == QueriedDocType.name & PressRolePermission.role.isin(roles))
+			.distinct()
+		)
+
+	return query
 
 
 @frappe.whitelist()
@@ -176,17 +213,18 @@ def get(doctype, name):
 			return controller.on_not_found(name)
 		raise
 
-	if not (
-		frappe.local.system_user() or has_role("Press Support Agent")
-	) and frappe.get_meta(doctype).has_field("team"):
-		if doc.team != frappe.local.team().name:
-			raise_not_permitted()
+	if (
+		not (frappe.local.system_user() or has_role("Press Support Agent"))
+		and frappe.get_meta(doctype).has_field("team")
+		and doc.team != frappe.local.team().name
+	):
+		raise_not_permitted()
 
 	check_role_permissions(doctype, name)
 
-	fields = list(default_fields)
+	fields = tuple(default_fields)
 	if hasattr(doc, "dashboard_fields"):
-		fields += doc.dashboard_fields
+		fields += tuple(doc.dashboard_fields)
 
 	_doc = frappe._dict()
 	for fieldname in fields:
@@ -210,16 +248,13 @@ def insert(doc=None):
 	doc = frappe._dict(doc)
 	if frappe.is_table(doc.doctype):
 		if not (doc.parenttype and doc.parent and doc.parentfield):
-			frappe.throw(
-				frappe._("Parenttype, Parent and Parentfield are required to insert a child record")
-			)
+			frappe.throw(frappe._("Parenttype, Parent and Parentfield are required to insert a child record"))
 
 		# inserting a child record
 		parent = frappe.get_doc(doc.parenttype, doc.parent)
 
-		if frappe.get_meta(parent.doctype).has_field("team"):
-			if parent.team != frappe.local.team().name:
-				raise_not_permitted()
+		if frappe.get_meta(parent.doctype).has_field("team") and parent.team != frappe.local.team().name:
+			raise_not_permitted()
 
 		parent.append(doc.parentfield, doc)
 		parent.save()
@@ -239,19 +274,22 @@ def insert(doc=None):
 
 
 @frappe.whitelist(methods=["POST", "PUT"])
-def set_value(doctype, name, fieldname, value=None):
+def set_value(doctype: str, name: str, fieldname: dict | str, value: str | None = None):
 	check_permissions(doctype)
 	check_document_access(doctype, name)
 
-	for field in fieldname.keys():
+	for field in fieldname:
 		# fields mentioned in dashboard_fields are allowed to be set via set_value
 		is_allowed_field(doctype, field)
 
-	return _set_value(doctype, name, fieldname, value)
+	_set_value(doctype, name, fieldname, value)
+
+	# frappe set_value returns just the doc and not press's overriden `get_doc`
+	return get(doctype, name)
 
 
 @frappe.whitelist(methods=["DELETE", "POST"])
-def delete(doctype, name):
+def delete(doctype: str, name: str):
 	method = "delete"
 
 	check_permissions(doctype)
@@ -262,17 +300,28 @@ def delete(doctype, name):
 
 
 @frappe.whitelist()
-def run_doc_method(dt, dn, method, args=None):
+def run_doc_method(dt: str, dn: str, method: str, args: dict | None = None):
 	check_permissions(dt)
 	check_document_access(dt, dn)
 	check_dashboard_actions(dt, dn, method)
 
-	_run_doc_method(dt=dt, dn=dn, method=method, args=args)
+	_run_doc_method(
+		dt=dt,
+		dn=dn,
+		method=method,
+		args=fix_args(method, args),
+	)
 	frappe.response.docs = [get(dt, dn)]
 
 
 @frappe.whitelist()
-def search_link(doctype, query=None, filters=None, order_by=None, page_length=None):
+def search_link(
+	doctype: str,
+	query: str | None = None,
+	filters: dict | None = None,
+	order_by: str | None = None,
+	page_length: int | None = None,
+):
 	check_permissions(doctype)
 	if doctype == "Team" and not frappe.local.system_user():
 		raise_not_permitted()
@@ -280,12 +329,16 @@ def search_link(doctype, query=None, filters=None, order_by=None, page_length=No
 	meta = frappe.get_meta(doctype)
 	DocType = frappe.qb.DocType(doctype)
 	valid_filters = validate_filters(doctype, filters)
-	q = frappe.qb.get_query(
+	valid_fields = validate_fields(doctype, ["name", meta.title_field or "name"])
+	q = get_list_query(
 		doctype,
-		filters=valid_filters,
-		offset=0,
-		limit=page_length or 10,
-		order_by=order_by or "modified desc",
+		meta,
+		filters,
+		valid_filters,
+		valid_fields,
+		0,
+		page_length or 10,
+		order_by or "modified desc",
 	)
 	q = q.select(DocType.name.as_("value"))
 	if meta.title_field:
@@ -339,35 +392,13 @@ def check_dashboard_actions(doctype, name, method):
 		raise_not_permitted()
 
 
-@frappe.whitelist()
-def run_doctype_method(doctype, method, **kwargs):
-	check_permissions(doctype)
-
-	from frappe.modules.utils import get_doctype_module, get_module_name
-
-	module = get_doctype_module(doctype)
-	method_path = get_module_name(doctype, module, "", "." + method)
-
-	try:
-		_function = get_attr(method_path)
-	except Exception as e:
-		frappe.throw(
-			frappe._("Failed to get method for command {0} with {1}").format(method_path, e)
-		)
-
-	is_whitelisted(_function)
-
-	return frappe.call(_function, **kwargs)
-
-
 def apply_custom_filters(doctype, query, **list_args):
 	"""Apply custom filters to query"""
 	controller = get_controller(doctype)
 	if hasattr(controller, "get_list_query"):
 		if inspect.getfullargspec(controller.get_list_query).varkw:
 			return controller.get_list_query(query, **list_args)
-		else:
-			return controller.get_list_query(query)
+		return controller.get_list_query(query)
 
 	return query
 
@@ -404,15 +435,18 @@ def is_allowed_field(doctype, field):
 		return False
 
 	controller = get_controller(doctype)
-	dashboard_fields = getattr(controller, "dashboard_fields", [])
+	dashboard_fields = getattr(controller, "dashboard_fields", ())
 
 	if field in dashboard_fields:
 		return True
-	elif "." in field and is_allowed_linked_field(doctype, field):
+
+	if "." in field and is_allowed_linked_field(doctype, field):
 		return True
-	elif isinstance(field, dict) and is_allowed_table_field(doctype, field):
+
+	if isinstance(field, dict) and is_allowed_table_field(doctype, field):
 		return True
-	elif field in [*default_fields, *child_table_fields]:
+
+	if field in [*default_fields, *child_table_fields]:
 		return True
 
 	return False
@@ -454,7 +488,8 @@ def check_permissions(doctype):
 
 	if not hasattr(frappe.local, "team") or not frappe.local.team():
 		frappe.throw(
-			"current_team is not set. Use X-PRESS-TEAM header in the request to set it."
+			"current_team is not set. Use X-PRESS-TEAM header in the request to set it.",
+			TeamHeaderNotInRequestError,
 		)
 
 	return True
@@ -479,9 +514,7 @@ def dashboard_whitelist(allow_guest=False, xss_safe=False, methods=None):
 	def wrapper(func):
 		global whitelisted_methods
 
-		decorated_func = frappe.whitelist(
-			allow_guest=allow_guest, xss_safe=xss_safe, methods=methods
-		)(func)
+		decorated_func = frappe.whitelist(allow_guest=allow_guest, xss_safe=xss_safe, methods=methods)(func)
 
 		def inner(*args, **kwargs):
 			return decorated_func(*args, **kwargs)
@@ -490,3 +523,20 @@ def dashboard_whitelist(allow_guest=False, xss_safe=False, methods=None):
 		return decorated_func
 
 	return wrapper
+
+
+def fix_args(method, args):
+	# This is a fixer function. Certain callers of `run_doc_method`
+	# pass duplicates of the passed kwargs in the `args` arg.
+	#
+	# This causes "got multiple values for argument 'method'"
+	if not isinstance(args, dict):
+		return args
+
+	# Even if it doesn't match it'll probably throw
+	# down the call stack, but in that case it's unexpected
+	# behavior and so it's better to error-out.
+	if args.get("method") == method:
+		del args["method"]
+
+	return args

@@ -4,8 +4,8 @@
 			<FBreadcrumbs
 				:items="[
 					{
-						label: 'Install App'
-					}
+						label: 'Create Site',
+					},
 				]"
 			/>
 		</Header>
@@ -30,59 +30,40 @@
 					</div>
 				</div>
 
-				<div v-if="!options.is_app_featured && !options.private_groups.length">
-					<div
-						class="flex items-center space-x-2 rounded border border-gray-200 bg-gray-100 p-4 text-base text-gray-700"
-					>
-						<i-lucide-alert-circle class="inline-block h-5 w-5" />
-						<p>
-							This app isn't available in our public benches.<br />
-							Read below documentation to add it to your own bench.
-						</p>
-					</div>
-				</div>
-				<div v-else class="space-y-12">
-					<div v-if="plans.length">
-						<div class="flex items-center justify-between">
+				<div class="space-y-12">
+					<div v-if="$team.doc.onboarding.site_created">
+						<div v-if="plans.length">
+							<div class="flex items-center justify-between">
+								<h2 class="text-base font-medium leading-6 text-gray-900">
+									Select Plan
+								</h2>
+							</div>
+							<div class="mt-2">
+								<PlansCards v-model="selectedPlan" :plans="plans" />
+							</div>
+						</div>
+
+						<div v-if="options.private_groups.length">
 							<h2 class="text-base font-medium leading-6 text-gray-900">
-								Select Plan
+								Select Bench Group
+								<span class="text-sm text-gray-500"> (Optional) </span>
 							</h2>
-						</div>
-						<div class="mt-2">
-							<PlansCards v-model="selectedPlan" :plans="plans" />
-						</div>
-					</div>
-
-					<div v-if="options.private_groups.length">
-						<h2 class="text-base font-medium leading-6 text-gray-900">
-							Select Bench
-							<span
-								v-if="options.is_app_featured"
-								class="text-sm text-gray-500"
-							>
-								(Optional)
-							</span>
-						</h2>
-						<div class="mt-2 w-full space-y-2">
-							<FormControl
-								type="autocomplete"
-								:options="
-									options.private_groups.map(b => ({
-										label: b.title,
-										value: b.name
-									}))
-								"
-								v-model="selectedGroup"
-							/>
+							<div class="mt-2 w-full space-y-2">
+								<FormControl
+									type="autocomplete"
+									:options="
+										options.private_groups.map((b) => ({
+											label: b.title,
+											value: b.name,
+										}))
+									"
+									v-model="selectedGroup"
+								/>
+							</div>
 						</div>
 					</div>
 
-					<div
-						v-if="
-							options.is_app_featured ||
-							(!options.is_app_featured && selectedGroup)
-						"
-					>
+					<div>
 						<h2 class="text-base font-medium leading-6 text-gray-900">
 							Select Region
 						</h2>
@@ -96,7 +77,7 @@
 										cluster === c.name
 											? 'border-gray-900 ring-1 ring-gray-900 hover:bg-gray-100'
 											: 'bg-white text-gray-900  hover:bg-gray-50',
-										'flex w-full items-center rounded border p-3 text-left text-base text-gray-900'
+										'flex w-full items-center rounded border p-3 text-left text-base text-gray-900',
 									]"
 								>
 									<div class="flex w-full items-center justify-between">
@@ -119,8 +100,8 @@
 						</h2>
 						<div class="mt-2 items-center">
 							<div class="col-span-2 flex w-full">
-								<TextInput
-									class="flex-1 rounded-r-none"
+								<input
+									class="dark:[color-scheme:dark] z-10 h-7 w-full flex-1 rounded rounded-r-none border border-[--surface-gray-2] bg-surface-gray-2 py-1.5 pl-2 pr-2 text-base text-ink-gray-8 placeholder-ink-gray-4 transition-colors hover:border-outline-gray-modals hover:bg-surface-gray-3 focus:border-outline-gray-4 focus:bg-surface-white focus:shadow-sm focus:ring-0 focus-visible:ring-2 focus-visible:ring-outline-gray-3"
 									placeholder="Subdomain"
 									v-model="subdomain"
 								/>
@@ -130,18 +111,18 @@
 									.{{ options.domain }}
 								</div>
 							</div>
-							<div
-								v-if="$resources.subdomainExists.loading"
-								class="text-base text-gray-600"
-							>
-								Checking...
-							</div>
 						</div>
 
 						<div class="mt-1">
 							<ErrorMessage :message="$resources.subdomainExists.error" />
+							<div
+								v-if="$resources.subdomainExists.loading"
+								class="text-sm text-gray-600"
+							>
+								Checking...
+							</div>
 							<template
-								v-if="
+								v-else-if="
 									!$resources.subdomainExists.error &&
 									$resources.subdomainExists.data != null
 								"
@@ -171,7 +152,9 @@
 						<Button
 							class="w-full"
 							variant="solid"
-							:disabled="!agreedToRegionConsent"
+							:disabled="
+								!agreedToRegionConsent || !$resources.subdomainExists.data
+							"
 							@click="$resources.newSite.submit()"
 							:loading="$resources.newSite.loading"
 						>
@@ -181,7 +164,8 @@
 				</div>
 				<div class="flex space-x-1">
 					<div class="text-sm text-gray-600">
-						Want to install <b>{{ appDoc.title }}</b> on an existing Site/Bench?
+						Want to install <b>{{ appDoc.title }}</b> on an existing Site or
+						Bench Group?
 					</div>
 					<a
 						class="text-sm underline"
@@ -197,28 +181,29 @@
 </template>
 
 <script>
-import { Breadcrumbs, TextInput } from 'frappe-ui';
-import { getDocResource } from '../utils/resource';
+import { Breadcrumbs, debounce } from 'frappe-ui';
 import Header from '../components/Header.vue';
 import PlansCards from '../components/PlansCards.vue';
+import { DashboardError } from '../utils/error';
+import { validateSubdomain } from '../utils/site';
 
 export default {
 	name: 'InstallApp',
 	props: {
 		app: {
 			type: String,
-			required: true
-		}
+			required: true,
+		},
 	},
 	pageMeta() {
 		return {
-			title: `Install ${this.appDoc.title} - Frappe Cloud`
+			title: `Install ${this.appDoc.title} - Frappe Cloud`,
 		};
 	},
 	components: {
 		FBreadcrumbs: Breadcrumbs,
 		PlansCards,
-		Header
+		Header,
 	},
 	data() {
 		return {
@@ -227,27 +212,52 @@ export default {
 			cluster: null,
 			selectedPlan: null,
 			selectedGroup: null,
-			agreedToRegionConsent: false
+			agreedToRegionConsent: false,
+			sitePlan: null,
+			trial: false,
 		};
 	},
+	watch: {
+		subdomain: {
+			handler: debounce(function (value) {
+				let invalidMessage = validateSubdomain(value);
+				this.$resources.subdomainExists.error = invalidMessage;
+				if (!invalidMessage) {
+					this.$resources.subdomainExists.submit();
+				}
+			}, 500),
+		},
+	},
 	resources: {
+		app() {
+			return {
+				url: 'press.api.marketplace.get',
+				params: {
+					app: this.app,
+				},
+				auto: true,
+			};
+		},
 		installAppOptions() {
 			return {
 				url: 'press.api.marketplace.get_install_app_options',
 				auto: true,
 				params: {
-					marketplace_app: this.app
+					marketplace_app: this.app,
 				},
 				initialData: {
 					domain: '',
 					plans: [],
 					clusters: [],
-					is_app_featured: false,
-					private_groups: []
+					private_groups: [],
 				},
-				async onSuccess() {
-					this.cluster = await this.getClosestCluster();
-				}
+				onSuccess() {
+					this.cluster =
+						this.$resources.installAppOptions.data?.closest_cluster;
+					if (this.$resources.installAppOptions.data?.plans.length > 0) {
+						this.selectedPlan = this.$resources.installAppOptions.data.plans[0];
+					}
+				},
 			};
 		},
 		subdomainExists() {
@@ -255,118 +265,105 @@ export default {
 				url: 'press.api.site.exists',
 				makeParams() {
 					return {
-						domain: this.$resources.options.domain,
-						subdomain: this.subdomain
+						domain: this.$resources.installAppOptions.data?.domain,
+						subdomain: this.subdomain,
 					};
 				},
 				validate() {
-					return validateSubdomain(this.subdomain);
+					let error = validateSubdomain(this.subdomain);
+					if (error) {
+						throw new DashboardError(error);
+					}
 				},
 				transform(data) {
 					return !Boolean(data);
-				}
+				},
+			};
+		},
+		getTrialPlan() {
+			return {
+				url: 'press.api.site.get_trial_plan',
+				auto: true,
 			};
 		},
 		newSite() {
 			if (!this.options) return;
 
 			return {
-				url: 'press.api.client.insert',
+				url: 'press.api.marketplace.create_site_for_app',
 				makeParams() {
+					this.sitePlan = this.selectedGroup
+						? this.options.private_site_plan
+						: this.options.public_site_plan;
+
+					if (!this.$team.doc.onboarding.site_created) {
+						this.sitePlan = this.trialPlan;
+						this.trial = true;
+					}
 					return {
-						doc: {
-							doctype: 'Site',
-							team: this.$team.doc.name,
-							subdomain: this.subdomain,
-							apps: [{ app: 'frappe' }, { app: this.app }],
-							app_plans: this.selectedPlan
-								? {
-										[this.app]: this.selectedPlan
-								  }
-								: null,
-							cluster: this.cluster,
-							bench: this.regions.find(r => r.name === this.cluster).bench,
-							group: this.selectedGroup?.value,
-							subscription_plan: this.selectedGroup
-								? this.options.private_site_plan
-								: this.options.public_site_plan,
-							domain: this.options.domain
-						}
+						subdomain: this.subdomain,
+						site_plan: this.sitePlan,
+						apps: [
+							{
+								app: 'frappe',
+							},
+							{
+								app: this.app,
+								plan: this.selectedPlan?.name,
+							},
+						],
+						cluster: this.cluster,
+						group: this.selectedGroup?.value,
+						trial: this.trial,
 					};
 				},
 				validate() {
+					if (
+						!this.$team.doc.payment_mode &&
+						(this.$team.doc.onboarding.site_created ||
+							!this.appDoc.show_for_new_site)
+					) {
+						throw new DashboardError('Please add a valid payment mode');
+					}
 					if (!this.selectedPlan && this.plans.length > 0) {
-						return 'Please select a plan';
+						throw new DashboardError('Please select a plan');
 					}
 					if (!this.subdomain) {
-						return 'Please enter a subdomain';
+						throw new DashboardError('Please enter a subdomain');
 					}
 					if (!this.agreedToRegionConsent) {
-						return 'Please agree to the above consent to create site';
+						throw new DashboardError(
+							'Please agree to the above consent to create site',
+						);
 					}
 				},
-				onSuccess: site => {
-					this.$router.push({
-						name: 'Site Detail Jobs',
-						params: { name: site.name }
-					});
-				}
+				onSuccess: (doc) => {
+					if (doc.doctype === 'Site') {
+						this.$router.push({
+							name: 'Site Jobs',
+							params: { name: doc.name },
+						});
+					} else if (doc.doctype === 'Site Group Deploy') {
+						this.$router.push({
+							name: 'CreateSiteForMarketplaceApp',
+							params: { app: this.app },
+							query: { siteGroupDeployName: doc.name },
+						});
+					}
+				},
 			};
-		}
-	},
-	methods: {
-		async getClosestCluster() {
-			if (this.closestCluster) return this.closestCluster;
-			let proxyServers = this.options.clusters
-				.flatMap(c => c.proxy_server || [])
-				.map(server => server.name);
-
-			if (proxyServers.length > 0) {
-				this.findingClosestServer = true;
-				let promises = proxyServers.map(server => this.getPingTime(server));
-				let results = await Promise.allSettled(promises);
-				let fastestServer = results.reduce((a, b) =>
-					a.value.pingTime < b.value.pingTime ? a : b
-				);
-				let closestServer = fastestServer.value.server;
-				let closestCluster = this.options.clusters.find(
-					c => c.proxy_server?.name === closestServer
-				);
-				if (!this.closestCluster) {
-					this.closestCluster = closestCluster.name;
-				}
-				this.findingClosestServer = false;
-			} else if (proxyServers.length === 1) {
-				this.closestCluster = this.options.clusters[0].name;
-			}
-			return this.closestCluster;
 		},
-		async getPingTime(server) {
-			let pingTime = 999999;
-			try {
-				let t1 = new Date().getTime();
-				let r = await fetch(`https://${server}`);
-				let t2 = new Date().getTime();
-				pingTime = t2 - t1;
-			} catch (error) {
-				console.warn(error);
-			}
-			return { server, pingTime };
-		}
 	},
 	computed: {
 		appDoc() {
-			let doc = getDocResource({
-				doctype: 'Marketplace App',
-				name: this.app
-			});
-			return doc.doc || {};
+			return this.$resources.app.data || {};
 		},
 		options() {
 			return this.$resources.installAppOptions.data;
 		},
 		plans() {
-			return this.options.plans.map(plan => ({
+			if (!this.$resources?.installAppOptions) return [];
+			return this.options.plans.map((plan) => ({
 				...plan,
 				label:
 					plan.price_inr === 0 || plan.price_usd === 0
@@ -374,13 +371,13 @@ export default {
 						: `${this.$format.userCurrency(
 								this.$team.doc.currency === 'INR'
 									? plan.price_inr
-									: plan.price_usd
-						  )}/mo`,
+									: plan.price_usd,
+							)}/mo`,
 				sublabel: ' ',
-				features: plan.features.map(f => ({
+				features: plan.features.map((f) => ({
 					value: f,
-					icon: 'check-circle'
-				}))
+					icon: 'check-circle',
+				})),
 			}));
 		},
 		regions() {
@@ -388,10 +385,13 @@ export default {
 				return this.options.clusters;
 			} else {
 				return this.options.private_groups.find(
-					g => g.name === this.selectedGroup.value
+					(g) => g.name === this.selectedGroup.value,
 				).clusters;
 			}
-		}
-	}
+		},
+		trialPlan() {
+			return this.$resources.getTrialPlan.data;
+		},
+	},
 };
 </script>

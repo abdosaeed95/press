@@ -1,13 +1,12 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2019, Frappe and Contributors
 # See license.txt
 
 import datetime
-from unittest.mock import MagicMock, Mock, patch
+import unittest
+from unittest.mock import MagicMock, Mock, call, patch
 
 import frappe
 import responses
-from frappe.tests.utils import FrappeTestCase
 
 from press.api.site import all
 from press.press.doctype.agent_job.agent_job import AgentJob, poll_pending_jobs
@@ -19,23 +18,30 @@ from press.press.doctype.cluster.test_cluster import create_test_cluster
 from press.press.doctype.deploy_candidate_difference.test_deploy_candidate_difference import (
 	create_test_deploy_candidate_differences,
 )
-from press.press.doctype.site_plan.test_site_plan import create_test_plan
+from press.press.doctype.marketplace_app.test_marketplace_app import (
+	create_test_marketplace_app,
+)
+from press.press.doctype.proxy_server.test_proxy_server import create_test_proxy_server
 from press.press.doctype.release_group.test_release_group import (
 	create_test_release_group,
 )
 from press.press.doctype.remote_file.remote_file import RemoteFile
 from press.press.doctype.remote_file.test_remote_file import create_test_remote_file
+from press.press.doctype.root_domain.test_root_domain import create_test_root_domain
 from press.press.doctype.server.test_server import create_test_server
 from press.press.doctype.site.test_site import create_test_site
+from press.press.doctype.site_plan.test_site_plan import create_test_plan
 from press.press.doctype.team.test_team import create_test_press_admin_team
 
 
-class TestAPISite(FrappeTestCase):
+class TestAPISite(unittest.TestCase):
 	def setUp(self):
 		self.team = create_test_press_admin_team()
 		self.team.allocate_credit_amount(1000, source="Prepaid Credits", remark="Test")
 		self.team.payment_mode = "Prepaid Credits"
 		self.team.save()
+
+		self.domain = frappe.db.get_single_value("Press Settings", "domain")
 
 	def tearDown(self):
 		frappe.db.rollback()
@@ -58,9 +64,7 @@ class TestAPISite(FrappeTestCase):
 		create_test_bench(group=group13, server=server.name)
 		create_test_bench(group=group14, server=server.name)
 		frappe.set_user(self.team.user)
-		private_group = create_test_release_group(
-			[app], public=False, frappe_version="Version 14"
-		)
+		private_group = create_test_release_group([app], public=False, frappe_version="Version 14")
 		create_test_bench(group=private_group, server=server.name)
 
 		options = get_new_site_options()
@@ -74,8 +78,10 @@ class TestAPISite(FrappeTestCase):
 		from press.api.site import new
 
 		app = create_test_app()
-		group = create_test_release_group([app])
-		bench = create_test_bench(group=group)
+		cluster = create_test_cluster("Default", public=True)
+		server = create_test_server(cluster=cluster.name, public=True)
+		group = create_test_release_group([app], servers=[server.name])
+		bench = create_test_bench(group=group, server=server.name)
 		plan = create_test_plan("Site")
 
 		frappe.set_user(self.team.user)
@@ -86,6 +92,7 @@ class TestAPISite(FrappeTestCase):
 				"plan": plan.name,
 				"apps": [app.name],
 				"cluster": bench.cluster,
+				"domain": self.domain,
 			}
 		)
 
@@ -98,6 +105,228 @@ class TestAPISite(FrappeTestCase):
 		self.assertEqual(created_site.team, self.team.name)
 		self.assertEqual(created_site.bench, bench.name)
 		self.assertEqual(created_site.status, "Pending")
+
+	@patch.object(AgentJob, "enqueue_http_request", new=Mock())
+	def test_creating_new_site_with_customized_site_plan_should_allow_only_specified_apps(
+		self,
+	):
+		from press.api.site import new
+
+		frappe_app = create_test_app(name="frappe")
+		allowed_app = create_test_app(name="allowed_app")
+		disallowed_app = create_test_app(name="disallowed_app")
+
+		cluster = create_test_cluster("Default", public=True)
+		root_domain = create_test_root_domain("local.fc.frappe.dev")
+		frappe.db.set_single_value("Press Settings", "domain", root_domain.name)
+
+		n1_server = create_test_proxy_server(cluster=cluster.name, domain=root_domain.name)
+		f1_server = create_test_server(cluster=cluster.name, proxy_server=n1_server.name)
+
+		group = create_test_release_group(
+			[frappe_app, allowed_app, disallowed_app], public=True, frappe_version="Version 15"
+		)
+		group.append(
+			"servers",
+			{
+				"server": f1_server.name,
+			},
+		)
+		group.save()
+		create_test_bench(group=group, server=f1_server.name)
+
+		plan = create_test_plan("Site", allowed_apps=[frappe_app.name, allowed_app.name])
+
+		self.assertRaisesRegex(
+			frappe.exceptions.ValidationError,
+			f"you can't deploy site with {disallowed_app.name} app",
+			new,
+			{
+				"name": "testsite1",
+				"group": group.name,
+				"plan": plan.name,
+				"apps": [frappe_app.name, allowed_app.name, disallowed_app.name],
+				"cluster": cluster.name,
+				"domain": self.domain,
+			},
+		)
+
+	@patch.object(AgentJob, "enqueue_http_request", new=Mock())
+	def test_creating_new_site_with_site_plan_having_no_specified_apps_should_allow_to_install_any_app(
+		self,
+	):
+		from press.api.site import new
+
+		frappe_app = create_test_app(name="frappe")
+		another_app = create_test_app(name="another_app")
+
+		cluster = create_test_cluster("Default", public=True)
+		root_domain = create_test_root_domain("local.fc.frappe.dev")
+		frappe.db.set_single_value("Press Settings", "domain", root_domain.name)
+
+		n1_server = create_test_proxy_server(cluster=cluster.name, domain=root_domain.name)
+		f1_server = create_test_server(cluster=cluster.name, proxy_server=n1_server.name)
+
+		group = create_test_release_group([frappe_app, another_app], public=True, frappe_version="Version 15")
+		group.append(
+			"servers",
+			{
+				"server": f1_server.name,
+			},
+		)
+		group.save()
+		create_test_bench(group=group, server=f1_server.name)
+
+		plan = create_test_plan("Site", allowed_apps=[])
+
+		site = new(
+			{
+				"name": "testsite",
+				"group": group.name,
+				"plan": plan.name,
+				"apps": [frappe_app.name, another_app.name],
+				"cluster": cluster.name,
+				"domain": self.domain,
+			}
+		)
+		self.assertEqual(site["site"], "testsite.fc.dev")
+
+	@patch.object(AgentJob, "enqueue_http_request", new=Mock())
+	def test_creating_new_site_with_specified_release_groups_should_deploy_site_on_some_bench_which_is_configured_in_site_plan(
+		self,
+	):
+		from press.api.site import new
+
+		cluster = create_test_cluster("Default", public=True)
+		root_domain = create_test_root_domain("local.fc.frappe.dev")
+		frappe.db.set_single_value("Press Settings", "domain", root_domain.name)
+
+		frappe_app = create_test_app(name="frappe")
+
+		n1_server = create_test_proxy_server(cluster=cluster.name, domain=root_domain.name)
+		f1_server = create_test_server(cluster=cluster.name, proxy_server=n1_server.name)
+		n2_server = create_test_proxy_server(cluster=cluster.name, domain=root_domain.name)
+		f2_server = create_test_server(cluster=cluster.name, proxy_server=n2_server.name)
+
+		rg1 = create_test_release_group([frappe_app], public=True, frappe_version="Version 15")
+		rg1.append(
+			"servers",
+			{
+				"server": f1_server.name,
+			},
+		)
+		rg1.save()
+		create_test_bench(group=rg1, server=f1_server.name)
+
+		rg2 = create_test_release_group([frappe_app], public=True, frappe_version="Version 15")
+		rg2.append(
+			"servers",
+			{
+				"server": f2_server.name,
+			},
+		)
+		rg2.save()
+		rg2_bench = create_test_bench(group=rg2, server=f2_server.name)
+
+		plan = create_test_plan("Site", allowed_apps=[], release_groups=[rg2.name])
+
+		"""
+		Try to deploy the site in rg1
+		But, due to restrictions on Site Plan, it should deploy on rg2
+		"""
+
+		site_name = new(
+			{
+				"name": "testsite1",
+				"group": rg1.name,
+				"plan": plan.name,
+				"apps": [frappe_app.name],
+				"cluster": cluster.name,
+				"domain": self.domain,
+			}
+		)["site"]
+		site = frappe.get_doc("Site", site_name)
+
+		self.assertEqual(site.group, rg2.name)
+		self.assertEqual(site.bench, rg2_bench.name)
+
+	@patch.object(AgentJob, "enqueue_http_request", new=Mock())
+	def test_creating_new_site_with_no_specified_release_group_should_deploy_site_on_some_bench_which_is_not_used_for_customized_site_plan(
+		self,
+	):
+		from press.api.site import new
+
+		cluster = create_test_cluster("Default", public=True)
+		root_domain = create_test_root_domain("local.fc.frappe.dev")
+		frappe.db.set_single_value("Press Settings", "domain", root_domain.name)
+
+		frappe_app = create_test_app(name="frappe")
+
+		n1_server = create_test_proxy_server(cluster=cluster.name, domain=root_domain.name)
+		f1_server = create_test_server(cluster=cluster.name, proxy_server=n1_server.name)
+		n2_server = create_test_proxy_server(cluster=cluster.name, domain=root_domain.name)
+		f2_server = create_test_server(cluster=cluster.name, proxy_server=n2_server.name)
+
+		rg1 = create_test_release_group([frappe_app], public=True, frappe_version="Version 15")
+		rg1.append(
+			"servers",
+			{
+				"server": f1_server.name,
+			},
+		)
+		rg1.save()
+		rg1_bench = create_test_bench(group=rg1, server=f1_server.name)
+
+		rg2 = create_test_release_group([frappe_app], public=True, frappe_version="Version 15")
+		rg2.append(
+			"servers",
+			{
+				"server": f2_server.name,
+			},
+		)
+		rg2.save()
+		create_test_bench(group=rg2, server=f2_server.name)
+
+		plan = create_test_plan("Site", allowed_apps=[], release_groups=[], plan_title="Unlimited Plan")
+		create_test_plan("Site", allowed_apps=[], release_groups=[rg2.name], plan_title="Tiny Plan")
+
+		"""
+		Try to deploy the site in rg1
+		It should deploy on rg1 benches
+		"""
+
+		site_name = new(
+			{
+				"name": "testsite1",
+				"group": rg1.name,
+				"plan": plan.name,
+				"apps": [frappe_app.name],
+				"cluster": cluster.name,
+				"domain": self.domain,
+			}
+		)["site"]
+		site = frappe.get_doc("Site", site_name)
+
+		self.assertEqual(site.group, rg1.name)
+		self.assertEqual(site.bench, rg1_bench.name)
+
+		"""
+		Try to deploy the site in rg2
+		It should raise error
+		"""
+		self.assertRaisesRegex(
+			frappe.exceptions.ValidationError,
+			f"Site can't be deployed on this release group {rg2.name} due to restrictions",
+			new,
+			{
+				"name": "testsite2",
+				"group": rg2.name,
+				"plan": plan.name,
+				"apps": [frappe_app.name],
+				"cluster": cluster.name,
+				"domain": self.domain,
+			},
+		)
 
 	@patch.object(AgentJob, "enqueue_http_request", new=Mock())
 	def test_get_fn_returns_site_details(self):
@@ -175,9 +404,7 @@ class TestAPISite(FrappeTestCase):
 
 		self.assertNotEqual(self.bench1, self.bench2)
 		# No need to create app release differences as it'll get autofilled by geo.json
-		create_test_deploy_candidate_differences(
-			self.bench2.candidate
-		)  # for site update to be available
+		create_test_deploy_candidate_differences(self.bench2.candidate)  # for site update to be available
 
 	@patch.object(AgentJob, "enqueue_http_request", new=Mock())
 	def test_check_for_updates_shows_update_available_when_site_update_available(self):
@@ -229,9 +456,7 @@ class TestAPISite(FrappeTestCase):
 		bench = create_test_bench(group=group)
 
 		group2 = create_test_release_group([app1, app3])
-		create_test_bench(
-			group=group2, server=bench.server
-		)  # app3 shouldn't show in available_apps
+		create_test_bench(group=group2, server=bench.server)  # app3 shouldn't show in available_apps
 
 		frappe.set_user(self.team.user)
 		site = create_test_site(bench=bench.name, apps=[app1.name])
@@ -381,6 +606,59 @@ insights 0.8.3	    HEAD
 
 	@patch.object(RemoteFile, "exists", new=Mock(return_value=True))
 	@patch.object(RemoteFile, "download_link", new="http://test.com")
+	@patch("press.press.doctype.site.site.marketplace_app_hook")
+	def test_restore_job_runs_marketplace_hooks_for_apps_found_in_backup(
+		self, mock_marketplace_app_hook: Mock
+	):
+		from press.api.site import restore
+
+		app = create_test_app()
+		app2 = create_test_app("erpnext", "ERPNext")
+		create_test_marketplace_app("erpnext")
+		app3 = create_test_app("insights", "Insights")
+		create_test_marketplace_app("insights")
+		group = create_test_release_group([app, app2, app3])
+		bench = create_test_bench(group=group)
+
+		frappe.set_user(self.team.user)
+		site = create_test_site(bench=bench.name, apps=[app.name, app2.name])
+		database = create_test_remote_file(site.name).name
+		public = create_test_remote_file(site.name).name
+		private = create_test_remote_file(site.name).name
+
+		self.assertEqual(len(site.apps), 2)
+		self.assertEqual(site.apps[0].app, "frappe")
+		self.assertEqual(site.apps[1].app, "erpnext")
+		self.assertEqual(site.status, "Active")
+
+		with fake_agent_job(
+			"Restore Site",
+			"Success",
+			data=frappe._dict(
+				output="""frappe	15.0.0-dev HEAD
+insights 0.8.3	    HEAD
+"""
+			),
+		):
+			restore(
+				site.name,
+				{
+					"database": database,
+					"public": public,
+					"private": private,
+				},
+			)
+			poll_pending_jobs()
+
+		mock_marketplace_app_hook.assert_has_calls(
+			[
+				call(app="insights", site=site, op="install"),
+				call(app="erpnext", site=site, op="uninstall"),
+			]
+		)
+
+	@patch.object(RemoteFile, "exists", new=Mock(return_value=True))
+	@patch.object(RemoteFile, "download_link", new="http://test.com")
 	def test_new_site_from_backup_job_updates_apps_table_with_output_from_job(self):
 		from press.api.site import new
 
@@ -419,6 +697,7 @@ erpnext 0.8.3	    HEAD
 						"private": private,
 					},
 					"cluster": "Default",
+					"domain": self.domain,
 				}
 			)
 			poll_pending_jobs()
@@ -429,7 +708,7 @@ erpnext 0.8.3	    HEAD
 		self.assertEqual(site.apps[1].app, "erpnext")
 		self.assertEqual(site.status, "Active")
 
-	def test_site_change_group(self):
+	def test_change_group_changes_group_and_bench_of_site(self):
 		from press.api.site import change_group, change_group_options
 		from press.press.doctype.site_update.site_update import process_update_site_job_update
 
@@ -437,13 +716,13 @@ erpnext 0.8.3	    HEAD
 		server = create_test_server()
 		group1 = create_test_release_group([app])
 		group2 = create_test_release_group([app])
-		bench1 = create_test_bench(group=group1, server=server)
-		bench2 = create_test_bench(group=group2, server=server)
-		site = create_test_site(bench=bench1.name)
-
-		self.assertEqual(
-			change_group_options(site.name), [{"name": group2.name, "title": group2.title}]
+		bench1 = create_test_bench(group=group1, server=server.name)
+		bench2 = create_test_bench(group=group2, server=server.name)
+		site = create_test_site(
+			bench=bench1.name, team=self.team.name, plan=create_test_plan("Site", private_benches=True).name
 		)
+
+		self.assertEqual(change_group_options(site.name), [{"name": group2.name, "title": group2.title}])
 
 		with fake_agent_job(
 			"Update Site Migrate",
@@ -473,9 +752,7 @@ erpnext 0.8.3	    HEAD
 		new=Mock(),
 	)
 	@patch("press.press.doctype.site.site.create_dns_record", new=Mock())
-	@patch(
-		"press.press.doctype.site_migration.site_migration.frappe.db.commit", new=MagicMock
-	)
+	@patch("press.press.doctype.site_migration.site_migration.frappe.db.commit", new=MagicMock)
 	def test_site_change_region(self):
 		from press.api.site import change_region, change_region_options
 
@@ -509,11 +786,7 @@ erpnext 0.8.3	    HEAD
 
 		self.assertEqual(
 			options["regions"],
-			[
-				frappe.get_value(
-					"Cluster", seoul_server.cluster, ["name", "title", "image"], as_dict=True
-				)
-			],
+			[frappe.get_value("Cluster", seoul_server.cluster, ["name", "title", "image"], as_dict=True)],
 		)
 		self.assertEqual(options["current_region"], tokyo_server.cluster)
 
@@ -530,8 +803,8 @@ erpnext 0.8.3	    HEAD
 		site.reload()
 		self.assertEqual(site.cluster, seoul_server.cluster)
 
-	def test_site_version_upgrade(self):
-		from press.api.site import version_upgrade, get_private_groups_for_upgrade
+	def test_version_upgrade_api_upgrades_site(self):
+		from press.api.site import get_private_groups_for_upgrade, version_upgrade
 		from press.press.doctype.site_update.site_update import process_update_site_job_update
 
 		app = create_test_app()
@@ -541,7 +814,7 @@ erpnext 0.8.3	    HEAD
 		v14_group.append(
 			"servers",
 			{
-				"server": server,
+				"server": server.name,
 			},
 		)
 		v14_group.save()
@@ -550,13 +823,13 @@ erpnext 0.8.3	    HEAD
 		v15_group.append(
 			"servers",
 			{
-				"server": server,
+				"server": server.name,
 			},
 		)
 		v15_group.save()
 
-		v14_bench = create_test_bench(group=v14_group, server=server)
-		create_test_bench(group=v15_group, server=server)
+		v14_bench = create_test_bench(group=v14_group, server=server.name)
+		create_test_bench(group=v15_group, server=server.name)
 		site = create_test_site(bench=v14_bench.name)
 
 		self.assertEqual(
@@ -592,9 +865,7 @@ erpnext 0.8.3	    HEAD
 		"press.press.doctype.agent_job.agent_job.process_site_migration_job_update",
 		new=Mock(),
 	)
-	@patch(
-		"press.press.doctype.site_migration.site_migration.frappe.db.commit", new=MagicMock
-	)
+	@patch("press.press.doctype.site_migration.site_migration.frappe.db.commit", new=MagicMock)
 	def test_site_change_server(self):
 		from press.api.site import (
 			change_server,
@@ -611,7 +882,7 @@ erpnext 0.8.3	    HEAD
 		group.append(
 			"servers",
 			{
-				"server": server,
+				"server": server.name,
 			},
 		)
 		group.save()
@@ -623,7 +894,7 @@ erpnext 0.8.3	    HEAD
 		group.append(
 			"servers",
 			{
-				"server": other_server,
+				"server": other_server.name,
 			},
 		)
 		group.save()
@@ -661,7 +932,7 @@ erpnext 0.8.3	    HEAD
 		pass
 
 
-class TestAPISiteList(FrappeTestCase):
+class TestAPISiteList(unittest.TestCase):
 	def setUp(self):
 		from press.press.doctype.press_tag.test_press_tag import create_and_add_test_tag
 		from press.press.doctype.site.test_site import create_test_site
@@ -747,21 +1018,13 @@ class TestAPISiteList(FrappeTestCase):
 		frappe.db.rollback()
 
 	def test_list_all_sites(self):
-		self.assertCountEqual(
-			all(), [self.broken_site_dict, self.trial_site_dict, self.tagged_site_dict]
-		)
+		self.assertCountEqual(all(), [self.broken_site_dict, self.trial_site_dict, self.tagged_site_dict])
 
 	def test_list_broken_sites(self):
-		self.assertEqual(
-			all(site_filter={"status": "Broken", "tag": ""}), [self.broken_site_dict]
-		)
+		self.assertEqual(all(site_filter={"status": "Broken", "tag": ""}), [self.broken_site_dict])
 
 	def test_list_trial_sites(self):
-		self.assertEqual(
-			all(site_filter={"status": "Trial", "tag": ""}), [self.trial_site_dict]
-		)
+		self.assertEqual(all(site_filter={"status": "Trial", "tag": ""}), [self.trial_site_dict])
 
 	def test_list_tagged_sites(self):
-		self.assertEqual(
-			all(site_filter={"status": "", "tag": "test_tag"}), [self.tagged_site_dict]
-		)
+		self.assertEqual(all(site_filter={"status": "", "tag": "test_tag"}), [self.tagged_site_dict])

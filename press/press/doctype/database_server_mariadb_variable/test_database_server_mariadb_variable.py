@@ -41,7 +41,7 @@ class TestDatabaseServerMariaDBVariable(FrappeTestCase):
 			{
 				"mariadb_variable": "innodb_buffer_pool_size",
 				"value_int": 1000,
-				"value_bool": True,
+				"value_str": str(1000 * 1024),
 			},
 		)
 		with self.assertRaises(frappe.ValidationError):
@@ -63,7 +63,7 @@ class TestDatabaseServerMariaDBVariable(FrappeTestCase):
 			"mariadb_system_variables",
 			{
 				"mariadb_variable": "innodb_buffer_pool_size",
-				"value_bool": 1000,  # seeing if only value is checked and not the field
+				"value_str": "1000",  # seeing if only value is checked and not the field
 			},
 		)
 		with self.assertRaises(frappe.ValidationError):
@@ -79,7 +79,7 @@ class TestDatabaseServerMariaDBVariable(FrappeTestCase):
 			server.save()
 
 	def test_only_skippable_variables_can_be_skipped(self):
-		"""Test that only bool variables can be skipped"""
+		"""Test that only skippable variables can be skipped"""
 		server = create_test_database_server()
 		server.append(
 			"mariadb_system_variables",
@@ -208,9 +208,7 @@ class TestDatabaseServerMariaDBVariable(FrappeTestCase):
 		"press.press.doctype.database_server.database_server.frappe.enqueue_doc",
 		wraps=foreground_enqueue_doc,
 	)
-	def test_multiple_playbooks_triggered_for_multiple_variables(
-		self, mock_enqueue_doc, Mock_Ansible
-	):
+	def test_multiple_playbooks_triggered_for_multiple_variables(self, mock_enqueue_doc, Mock_Ansible):
 		server = create_test_database_server()
 		server.append(
 			"mariadb_system_variables",
@@ -314,9 +312,7 @@ class TestDatabaseServerMariaDBVariable(FrappeTestCase):
 		self.assertEqual(2, Mock_Ansible.call_count)
 		for call in Mock_Ansible.call_args_list:
 			args, kwargs = call
-			self.assertIn(
-				kwargs["variables"]["variable"], ["innodb_buffer_pool_size", "log_bin"]
-			)
+			self.assertIn(kwargs["variables"]["variable"], ["innodb_buffer_pool_size", "log_bin"])
 
 	@patch(
 		"press.press.doctype.database_server.database_server.frappe.enqueue_doc",
@@ -350,43 +346,28 @@ class TestDatabaseServerMariaDBVariable(FrappeTestCase):
 			"press.press.doctype.database_server_mariadb_variable.database_server_mariadb_variable.Ansible",
 			wraps=Ansible,
 		) as Mock_Ansible:
-			server.add_mariadb_variable("tmp_disk_table_size", "value_int", 10241)
-
-		Mock_Ansible.assert_called_once()
+			server.add_or_update_mariadb_variable("tmp_disk_table_size", "value_int", value=10241)
+			Mock_Ansible.assert_called_once()
 
 		server.reload()
 		self.assertEqual(1, len(server.mariadb_system_variables))
-		self.assertEqual(
-			"tmp_disk_table_size", server.mariadb_system_variables[0].mariadb_variable
-		)
+		self.assertEqual("tmp_disk_table_size", server.mariadb_system_variables[0].mariadb_variable)
 		self.assertEqual(10241, server.mariadb_system_variables[0].value_int)
 
 		with patch(
 			"press.press.doctype.database_server_mariadb_variable.database_server_mariadb_variable.Ansible",
 			wraps=Ansible,
 		) as Mock_Ansible:
-			server.add_mariadb_variable("tmp_disk_table_size", "value_int", 10242)
-
-		Mock_Ansible.assert_called_once()
+			server.add_or_update_mariadb_variable("tmp_disk_table_size", "value_int", value=10242)
+			Mock_Ansible.assert_called_once()
 
 		self.assertEqual(1, len(server.mariadb_system_variables))
-		self.assertEqual(
-			"tmp_disk_table_size", server.mariadb_system_variables[0].mariadb_variable
-		)
+		self.assertEqual("tmp_disk_table_size", server.mariadb_system_variables[0].mariadb_variable)
 		self.assertEqual(10242, server.mariadb_system_variables[0].value_int)
 
 		with patch(
 			"press.press.doctype.database_server_mariadb_variable.database_server_mariadb_variable.Ansible",
 			wraps=Ansible,
 		) as Mock_Ansible:
-			server.add_mariadb_variable("tmp_disk_table_size", "value_int", 10242)  # no change
-		Mock_Ansible.assert_not_called()
-
-		with patch(
-			"press.press.doctype.database_server_mariadb_variable.database_server_mariadb_variable.Ansible",
-			wraps=Ansible,
-		) as Mock_Ansible:
-			server.add_mariadb_variable(
-				"tmp_disk_table_size", "value_int", 10242, persist=False
-			)  # no change
-		Mock_Ansible.assert_called_once()
+			server.add_or_update_mariadb_variable("tmp_disk_table_size", "value_int", 10242)  # no change
+			Mock_Ansible.assert_not_called()

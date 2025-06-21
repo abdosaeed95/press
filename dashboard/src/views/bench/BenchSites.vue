@@ -359,7 +359,7 @@ export default {
 				{
 					label: 'Visit Site',
 					onClick: () => {
-						window.open(`https://${site.name}`, '_blank');
+						window.open(`https://${site.name}/apps`, '_blank');
 					}
 				},
 				{
@@ -405,7 +405,7 @@ export default {
 					label: 'View Logs',
 					onClick: () => {
 						this.$router.push(
-							`/benches/${this.bench.name}/logs/${this.versions[i].name}/`
+							`/groups/${this.bench.name}/logs/${this.versions[i].name}/`
 						);
 					},
 					condition: () => this.versions[i].status === 'Active'

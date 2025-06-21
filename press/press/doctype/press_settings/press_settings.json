@@ -8,27 +8,35 @@
   "domain",
   "cluster",
   "trial_sites_count",
+  "press_trial_plan",
   "column_break_2",
   "bench_configuration",
   "billing_tab",
+  "free_credits_usd",
+  "free_credits_inr",
+  "column_break_cpry",
+  "micro_debit_charge_usd",
+  "micro_debit_charge_inr",
+  "column_break_wrqp",
+  "usage_record_creation_batch_size",
   "invoicing_section",
   "invoicing_column",
   "gst_percentage",
+  "npo_discount",
   "column_break_qfwx",
   "print_format",
   "stripe_settings_section",
-  "stripe_inr_plan_id",
   "stripe_publishable_key",
+  "stripe_secret_key",
+  "column_break_26",
   "create_stripe_plans",
   "stripe_product_id",
   "stripe_usd_plan_id",
+  "stripe_inr_plan_id",
+  "column_break_yhwz",
   "create_stripe_webhook",
   "stripe_webhook_endpoint_id",
   "stripe_webhook_secret",
-  "column_break_26",
-  "stripe_secret_key",
-  "free_credits_inr",
-  "free_credits_usd",
   "ngrok_auth_token",
   "razorpay_settings_section",
   "razorpay_key_id",
@@ -41,6 +49,7 @@
   "erpnext_api_secret",
   "column_break_38",
   "frappeio_authentication_section",
+  "disable_frappe_auth",
   "frappe_url",
   "frappeio_api_key",
   "column_break_39",
@@ -61,6 +70,10 @@
   "backup_offset",
   "column_break_48",
   "backup_limit",
+  "max_failed_backup_attempts_in_a_day",
+  "physical_backups_section",
+  "disable_physical_backup",
+  "max_concurrent_physical_restorations",
   "docker_tab",
   "section_break_59",
   "docker_registry_url",
@@ -72,13 +85,15 @@
   "suspend_builds",
   "clone_directory",
   "build_directory",
-  "remote_build_server",
+  "build_server",
+  "minimum_rebuild_memory",
   "column_break_66",
   "code_server",
   "code_server_password",
   "use_app_cache",
   "compress_app_cache",
   "use_delta_builds",
+  "use_agent_job_callbacks",
   "auto_update_section",
   "auto_update_queue_size",
   "remote_files_section",
@@ -136,20 +151,28 @@
   "aws_access_key_id",
   "column_break_agig",
   "aws_secret_access_key",
+  "hetzner_section",
+  "hetzner_api_token",
   "twilio_section",
   "twilio_account_sid",
   "twilio_api_key_sid",
   "twilio_api_key_secret",
   "column_break_kxuj",
   "twilio_phone_number",
+  "spamd_section",
+  "enable_spam_check",
+  "spamd_endpoint",
+  "column_break_xhfy",
+  "spamd_api_key",
+  "spamd_api_secret",
   "marketplace_tab",
   "marketplace_settings_section",
   "max_allowed_screenshots",
-  "allow_developer_account",
   "threshold",
   "commission",
   "usd_rate",
   "app_include_script",
+  "github_pat_token",
   "plausible_column",
   "plausible_url",
   "plausible_site_id",
@@ -160,6 +183,7 @@
   "agent_sentry_dsn",
   "column_break_105",
   "agent_github_access_token",
+  "branch",
   "lets_encrypt_section",
   "certbot_directory",
   "webroot_directory",
@@ -169,14 +193,21 @@
   "use_staging_ca",
   "ssh_section",
   "ssh_certificate_authority",
+  "bench_section",
+  "redis_cache_size",
   "monitoring_section",
   "monitor_server",
   "monitor_token",
   "press_monitoring_password",
-  "column_break_100",
+  "send_telegram_notifications",
+  "column_break_jlzi",
   "log_server",
   "telegram_alert_chat_id",
   "telegram_alerts_chat_group",
+  "send_email_notifications",
+  "email_recipients",
+  "section_break_nloq",
+  "servers_using_alternative_http_port_for_communication",
   "feature_flags_tab",
   "verify_cards_with_micro_charge",
   "enable_google_oauth",
@@ -184,11 +215,21 @@
   "column_break_rdlr",
   "disable_auto_retry",
   "disable_agent_job_deduplication",
-  "code_spaces_tab",
-  "spaces_domain",
+  "enable_email_pre_verification",
+  "section_break_jstu",
+  "enable_app_grouping",
+  "default_apps",
+  "partner_tab",
+  "partnership_fees_section",
+  "partnership_fee_usd",
+  "column_break_yxrj",
+  "partnership_fee_inr",
   "hybrid_server_tab",
   "hybrid_cluster",
-  "hybrid_domain"
+  "hybrid_domain",
+  "tls_renewal_queue_size",
+  "code_spaces_tab",
+  "spaces_domain"
  ],
  "fields": [
   {
@@ -228,6 +269,7 @@
    "label": "Billing"
   },
   {
+   "collapsible": 1,
    "fieldname": "stripe_settings_section",
    "fieldtype": "Section Break",
    "label": "Stripe Settings"
@@ -828,12 +870,6 @@
    "non_negative": 1
   },
   {
-   "default": "0",
-   "fieldname": "allow_developer_account",
-   "fieldtype": "Check",
-   "label": "Allow Developer Account from Dashboard"
-  },
-  {
    "fieldname": "infrastructure_tab",
    "fieldtype": "Tab Break",
    "label": "Infrastructure"
@@ -928,10 +964,6 @@
    "options": "Monitor Server"
   },
   {
-   "fieldname": "column_break_100",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "monitor_token",
    "fieldtype": "Data",
    "label": "Monitor Token"
@@ -967,7 +999,7 @@
   {
    "fieldname": "usd_rate",
    "fieldtype": "Float",
-   "label": "Commission USD Rate"
+   "label": "USD Rate"
   },
   {
    "fieldname": "press_monitoring_password",
@@ -1177,15 +1209,246 @@
    "label": "Agent Sentry DSN"
   },
   {
-   "fieldname": "remote_build_server",
+   "fieldname": "build_server",
    "fieldtype": "Link",
-   "label": "Remote Build Server",
+   "label": "Build Server",
    "options": "Server"
+  },
+  {
+   "default": "10",
+   "fieldname": "tls_renewal_queue_size",
+   "fieldtype": "Int",
+   "label": "TLS Renewal Queue Size"
+  },
+  {
+   "default": "80",
+   "fieldname": "micro_debit_charge_inr",
+   "fieldtype": "Currency",
+   "label": "Micro Debit Charge (INR)",
+   "precision": "0"
+  },
+  {
+   "default": "1",
+   "fieldname": "micro_debit_charge_usd",
+   "fieldtype": "Currency",
+   "label": "Micro Debit Charge (USD)",
+   "precision": "0"
+  },
+  {
+   "default": "master",
+   "fieldname": "branch",
+   "fieldtype": "Data",
+   "label": "Branch"
+  },
+  {
+   "fieldname": "column_break_yhwz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_cpry",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_wrqp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "500",
+   "fieldname": "usage_record_creation_batch_size",
+   "fieldtype": "Int",
+   "label": "Usage Record Creation Batch Size"
+  },
+  {
+   "fieldname": "hetzner_section",
+   "fieldtype": "Section Break",
+   "label": "Hetzner"
+  },
+  {
+   "fieldname": "hetzner_api_token",
+   "fieldtype": "Password",
+   "label": "Hetzner API Token"
+  },
+  {
+   "fieldname": "press_trial_plan",
+   "fieldtype": "Link",
+   "label": "Press Trial Plan",
+   "options": "Site Plan"
+  },
+  {
+   "fieldname": "section_break_jstu",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_app_grouping",
+   "fieldtype": "Check",
+   "label": "Enable App Grouping"
+  },
+  {
+   "fieldname": "default_apps",
+   "fieldtype": "Table",
+   "label": "Default Apps",
+   "options": "App Group"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_email_pre_verification",
+   "fieldtype": "Check",
+   "label": "Enable Email Pre-Verification"
+  },
+  {
+   "fieldname": "bench_section",
+   "fieldtype": "Section Break",
+   "label": "Bench"
+  },
+  {
+   "default": "512",
+   "fieldname": "redis_cache_size",
+   "fieldtype": "Int",
+   "label": "Redis Cache Size (MB)"
+  },
+  {
+   "fieldname": "partner_tab",
+   "fieldtype": "Tab Break",
+   "label": "Partner"
+  },
+  {
+   "fieldname": "partnership_fees_section",
+   "fieldtype": "Section Break",
+   "label": "Partnership Fees"
+  },
+  {
+   "fieldname": "partnership_fee_usd",
+   "fieldtype": "Int",
+   "label": "Partnership Fee USD"
+  },
+  {
+   "fieldname": "column_break_yxrj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "partnership_fee_inr",
+   "fieldtype": "Int",
+   "label": "Partnership Fee INR"
+  },
+  {
+   "fieldname": "github_pat_token",
+   "fieldtype": "Data",
+   "label": "Github PAT Token"
+  },
+  {
+   "default": "1",
+   "fieldname": "disable_physical_backup",
+   "fieldtype": "Check",
+   "label": "Disable Physical Backup"
+  },
+  {
+   "fieldname": "physical_backups_section",
+   "fieldtype": "Section Break",
+   "label": "Physical Backups"
+  },
+  {
+   "fieldname": "spamd_section",
+   "fieldtype": "Section Break",
+   "label": "Spamd"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_spam_check",
+   "fieldtype": "Check",
+   "label": "Enable Spam Check"
+  },
+  {
+   "fieldname": "spamd_endpoint",
+   "fieldtype": "Data",
+   "label": "Spamd Endpoint"
+  },
+  {
+   "fieldname": "column_break_xhfy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "spamd_api_key",
+   "fieldtype": "Data",
+   "label": "Spamd API Key"
+  },
+  {
+   "fieldname": "spamd_api_secret",
+   "fieldtype": "Password",
+   "label": "Spamd API Secret"
+  },
+  {
+   "default": "2",
+   "fieldname": "max_concurrent_physical_restorations",
+   "fieldtype": "Int",
+   "label": "Max Concurrent Physical Restorations"
+  },
+  {
+   "default": "1",
+   "fieldname": "send_telegram_notifications",
+   "fieldtype": "Check",
+   "label": "Send Telegram Notifications"
+  },
+  {
+   "fieldname": "column_break_jlzi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "send_email_notifications",
+   "fieldtype": "Check",
+   "label": "Send Email Notifications"
+  },
+  {
+   "depends_on": "eval: doc.send_email_notifications== true",
+   "fieldname": "email_recipients",
+   "fieldtype": "Small Text",
+   "label": "Email Recipients"
+  },
+  {
+   "default": "1",
+   "fieldname": "use_agent_job_callbacks",
+   "fieldtype": "Check",
+   "label": "Use Agent Job Callbacks"
+  },
+  {
+   "default": "2",
+   "fieldname": "minimum_rebuild_memory",
+   "fieldtype": "Int",
+   "label": "Minimum Rebuild Memory (GB)",
+   "non_negative": 1
+  },
+  {
+   "description": "Max attempts we will do on a site with failed attempts",
+   "fieldname": "max_failed_backup_attempts_in_a_day",
+   "fieldtype": "Int",
+   "label": "Max Failed Backup Attempts In A Day"
+  },
+  {
+   "default": "0",
+   "fieldname": "disable_frappe_auth",
+   "fieldtype": "Check",
+   "label": "Disable Frappe Auth"
+  },
+  {
+   "fieldname": "section_break_nloq",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "servers_using_alternative_http_port_for_communication",
+   "fieldtype": "Small Text",
+   "label": "Servers Using Alternative HTTP Port For Communication"
+  },
+  {
+   "description": "Add value in percent (%). e.g. 10",
+   "fieldname": "npo_discount",
+   "fieldtype": "Float",
+   "label": "NPO Discount"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2024-05-23 13:52:31.570272",
+ "modified": "2025-05-28 10:07:18.507316",
  "modified_by": "Administrator",
  "module": "Press",
  "name": "Press Settings",
@@ -1203,6 +1466,7 @@
   }
  ],
  "quick_entry": 1,
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

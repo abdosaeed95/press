@@ -2,10 +2,24 @@
 	<div class="sticky top-0 z-10 shrink-0">
 		<Header>
 			<FBreadcrumbs
-				:items="[{ label: 'Partners', route: { name: 'Partners' } }]"
+				:items="[{ label: 'Partnership', route: { name: 'Partnership' } }]"
 			/>
 		</Header>
-		<TabsWithRouter :tabs="tabs" />
+		<TabsWithRouter
+			v-if="
+				Boolean(this.$team.doc.erpnext_partner) && $session.hasPartnerAccess
+			"
+			:tabs="tabs"
+		/>
+		<div
+			v-else
+			class="mx-auto mt-60 w-fit rounded border border-dashed px-12 py-8 text-center text-gray-600"
+		>
+			<i-lucide-alert-triangle class="mx-auto mb-4 h-6 w-6 text-red-600" />
+			<ErrorMessage
+				message="You aren't permitted to view the partner page. Please ask the team owner to provide permission for your role."
+			/>
+		</div>
 	</div>
 </template>
 
@@ -20,7 +34,7 @@ export default {
 		Header,
 		FBreadcrumbs: Breadcrumbs,
 		FTabs: Tabs,
-		TabsWithRouter
+		TabsWithRouter,
 	},
 	data() {
 		return {
@@ -30,10 +44,28 @@ export default {
 				{ label: 'Customers', route: { name: 'PartnerCustomers' } },
 				{
 					label: 'Approval Requests',
-					route: { name: 'PartnerApprovalRequests' }
-				}
-			]
+					route: { name: 'PartnerApprovalRequests' },
+				},
+				{
+					label: 'Partner  Certificates',
+					route: { name: 'PartnerCertificates' },
+				},
+				{
+					label: 'Local Payment Setup',
+					route: { name: 'LocalPaymentSetup' },
+					condition: () =>
+						Boolean(
+							this.$team.doc.country === 'Kenya' &&
+								this.$team.doc.mpesa_enabled,
+						),
+				},
+				{
+					label: 'Partner Payout',
+					route: { name: 'PartnerPayout' },
+					condition: () => Boolean(this.$team.doc.erpnext_partner),
+				},
+			],
 		};
-	}
+	},
 };
 </script>

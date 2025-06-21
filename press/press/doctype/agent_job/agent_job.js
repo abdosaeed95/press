@@ -7,6 +7,12 @@ frappe.ui.form.on('Agent Job', {
 			`https://${frm.doc.server}/agent/jobs/${frm.doc.job_id}`,
 			__('Visit Agent Endpoint'),
 		);
+		frm.add_web_link(
+			frm.doc.site
+				? `/dashboard/sites/${frm.doc.site}/insights/jobs/${frm.doc.name}`
+				: `/dashboard/servers/${frm.doc.server}/jobs/${frm.doc.name}`,
+			__('Visit Dashboard'),
+		);
 
 		if (!['Success', 'Failure', 'Delivery Failure'].includes(frm.doc.status)) {
 			frm.add_custom_button(
@@ -46,6 +52,7 @@ frappe.ui.form.on('Agent Job', {
 				__('Succeed and Process Job Updates'),
 				'succeed_and_process_job_updates',
 			],
+			[__('Cancel Job'), 'cancel_job', ['Pending', "Running"].includes(frm.doc.status)],
 		].forEach(([label, method, condition]) => {
 			frm.add_custom_button(
 				label,

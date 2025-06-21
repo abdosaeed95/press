@@ -1,14 +1,15 @@
 import frappe
 from frappe.model.naming import make_autoname
-from press.utils import log_error
+
 from press.press.doctype.site.saas_site import (
-	get_saas_bench,
-	get_saas_apps,
-	get_saas_domain,
-	get_pool_apps,
 	create_app_subscriptions,
+	get_pool_apps,
+	get_saas_apps,
+	get_saas_bench,
+	get_saas_domain,
 	set_site_in_subscription_docs,
 )
+from press.utils import log_error
 
 
 class SaasSitePool:
@@ -18,9 +19,9 @@ class SaasSitePool:
 			"Site",
 			filters={
 				"is_standby": True,
-				"status": "Active",
+				"status": ["in", ["Active", "Pending", "Installing", "Updating", "Recovering"]],
 				"standby_for": self.app,
-				"hybrid_saas_pool": ("is", "not set"),
+				"hybrid_saas_pool": "",
 			},
 		)
 		self.saas_settings = frappe.get_doc("Saas Settings", app)
@@ -38,14 +39,14 @@ class SaasSitePool:
 				self.create_hybrid_pool_sites()
 
 	def create_one(self, pool_name: str = ""):
-		bench, apps, subdomain, domain, pool_apps = None, None, None, None, None
+		bench, apps, subdomain, domain = None, None, None, None
 		try:
-			if pool_name:
-				pool_apps = get_pool_apps(pool_name)
 			domain = get_saas_domain(self.app)
 			bench = get_saas_bench(self.app)
 			subdomain = self.get_subdomain()
-			apps = pool_apps if pool_name else get_saas_apps(self.app)
+			apps = get_saas_apps(self.app)
+			if pool_name:
+				apps.extend(get_pool_apps(pool_name))
 			site = frappe.get_doc(
 				{
 					"doctype": "Site",
@@ -77,11 +78,17 @@ class SaasSitePool:
 		for pool_name in frappe.get_all("Hybrid Saas Pool", {"app": self.app}, pluck="name"):
 			# only has app rules for now, will add site config and other rules later
 			hybrid_standby_count = frappe.db.count(
-				"Site", {"is_standby": 1, "standby_for": "erpnext", "hybrid_saas_pool": pool_name}
+				"Site",
+				{
+					"is_standby": 1,
+					"standby_for": self.app,
+					"hybrid_saas_pool": pool_name,
+					"status": ("in", ["Active", "Pending", "Installing", "Updating", "Recovering"]),
+				},
 			)
 
 			if hybrid_standby_count > self.saas_settings.standby_pool_size:
-				return
+				continue
 
 			sites_created = 0
 			while sites_created < self.saas_settings.standby_queue_size:

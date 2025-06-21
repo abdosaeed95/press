@@ -15,9 +15,9 @@
 		v-model="show"
 	>
 		<template v-slot:body-content>
-			<LoadingText v-if="$resources.branches.loading"
-				>Fetching Branches</LoadingText
-			>
+			<div v-if="$resources.branches.loading" class="mt-2 flex justify-center">
+				<LoadingText />
+			</div>
 			<ErrorMessage
 				v-else-if="$resources.branches.error"
 				:message="$resources.branches.error"
@@ -37,6 +37,8 @@
 
 <script>
 import { toast } from 'vue-sonner';
+import { getToastErrorMessage } from '../../utils/toast';
+import { DashboardError } from '../../utils/error';
 
 export default {
 	name: 'ChangeAppBranchDialog',
@@ -69,7 +71,7 @@ export default {
 				},
 				validate() {
 					if (this.selectedBranch == this.app.branch) {
-						return 'Please select a different branch';
+						throw new DashboardError('Please select a different branch');
 					}
 				}
 			};
@@ -84,10 +86,7 @@ export default {
 					this.$emit('branch-changed');
 					return 'Branch changed successfully';
 				},
-				error: e => {
-					console.log(e);
-					return e.messages.length ? e.messages.join('\n') : e.message;
-				}
+				error: e => getToastErrorMessage(e)
 			});
 		},
 		branchList() {

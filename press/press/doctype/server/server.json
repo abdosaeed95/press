@@ -15,17 +15,27 @@
   "cluster",
   "provider",
   "virtual_machine",
-  "is_server_prepared",
+  "ignore_incidents_since",
+  "section_break_mequ",
   "is_server_setup",
-  "is_self_hosted",
+  "is_server_prepared",
   "is_server_renamed",
-  "ignore_incidents",
+  "is_self_hosted",
+  "column_break_laiq",
+  "public",
+  "use_agent_job_callbacks",
+  "is_pyspy_setup",
+  "halt_agent_jobs",
+  "stop_deployments",
   "billing_section",
   "team",
   "column_break_11",
   "plan",
+  "auto_add_storage_min",
+  "auto_add_storage_max",
   "networking_section",
   "ip",
+  "ipv6",
   "column_break_3",
   "private_ip",
   "private_mac_address",
@@ -61,6 +71,8 @@
   "use_for_new_benches",
   "use_for_new_sites",
   "staging",
+  "use_for_build",
+  "platform",
   "column_break_ktkv",
   "new_worker_allocation",
   "set_bench_memory_limits",
@@ -72,7 +84,10 @@
   "column_break_edyf",
   "is_standalone_setup",
   "tags_section",
-  "tags"
+  "tags",
+  "mounts_section",
+  "has_data_volume",
+  "mounts"
  ],
  "fields": [
   {
@@ -309,7 +324,7 @@
    "options": "Virtual Machine"
   },
   {
-   "default": "0",
+   "default": "1",
    "fieldname": "new_worker_allocation",
    "fieldtype": "Check",
    "label": "New Worker Allocation"
@@ -367,7 +382,6 @@
   },
   {
    "default": "root",
-   "depends_on": "eval:doc.is_self_hosted",
    "fieldname": "ssh_user",
    "fieldtype": "Data",
    "label": "SSH User"
@@ -463,17 +477,11 @@
    "label": "Skip Scheduled Backups"
   },
   {
-   "default": "0",
-   "fieldname": "ignore_incidents",
-   "fieldtype": "Check",
-   "label": "Ignore Incidents"
-  },
-  {
    "fieldname": "column_break_pdbx",
    "fieldtype": "Column Break"
   },
   {
-   "default": "1",
+   "default": "0",
    "fieldname": "disable_agent_job_auto_retry",
    "fieldtype": "Check",
    "label": "Disable Agent Job Auto Retry"
@@ -490,10 +498,111 @@
    "fieldtype": "Link",
    "label": "Managed Database Service",
    "options": "Managed Database Service"
+  },
+  {
+   "default": "0",
+   "fieldname": "public",
+   "fieldtype": "Check",
+   "label": "Public"
+  },
+  {
+   "fieldname": "ignore_incidents_since",
+   "fieldtype": "Datetime",
+   "label": "Ignore Incidents Since"
+  },
+  {
+   "default": "0",
+   "description": "If checked, server will be used to run Docker builds.",
+   "fieldname": "use_for_build",
+   "fieldtype": "Check",
+   "label": "Use For Build",
+   "search_index": 1
+  },
+  {
+   "default": "25",
+   "description": "Minimum storage to add automatically each time",
+   "fieldname": "auto_add_storage_min",
+   "fieldtype": "Int",
+   "label": "Auto Add Storage Min",
+   "non_negative": 1
+  },
+  {
+   "default": "250",
+   "description": "Maximum storage to add automatically each time",
+   "fieldname": "auto_add_storage_max",
+   "fieldtype": "Int",
+   "label": "Auto Add Storage Max",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "mounts_section",
+   "fieldtype": "Section Break",
+   "label": "Mounts"
+  },
+  {
+   "fieldname": "mounts",
+   "fieldtype": "Table",
+   "label": "Mounts",
+   "options": "Server Mount"
+  },
+  {
+   "default": "0",
+   "fetch_from": "virtual_machine.has_data_volume",
+   "fieldname": "has_data_volume",
+   "fieldtype": "Check",
+   "label": "Has Data Volume",
+   "read_only": 1
+  },
+  {
+   "fieldname": "ipv6",
+   "fieldtype": "Data",
+   "label": "IPv6"
+  },
+  {
+   "default": "0",
+   "fieldname": "use_agent_job_callbacks",
+   "fieldtype": "Check",
+   "label": "Use Agent Job Callbacks"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_pyspy_setup",
+   "fieldtype": "Check",
+   "label": "Is PySpy Setup",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_mequ",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_laiq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "Stop polling and queuing agent jobs",
+   "fieldname": "halt_agent_jobs",
+   "fieldtype": "Check",
+   "label": "Halt Agent Jobs"
+  },
+  {
+   "default": "x86_64",
+   "fieldname": "platform",
+   "fieldtype": "Select",
+   "label": "Platform",
+   "options": "x86_64\narm64"
+  },
+  {
+   "default": "0",
+   "description": "Stop all new builds for the server",
+   "fieldname": "stop_deployments",
+   "fieldtype": "Check",
+   "label": "Stop deployments"
   }
  ],
  "links": [],
- "modified": "2024-05-29 16:58:30.490143",
+ "modified": "2025-06-02 09:43:06.619945",
  "modified_by": "Administrator",
  "module": "Press",
  "name": "Server",
@@ -524,6 +633,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

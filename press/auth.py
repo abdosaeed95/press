@@ -1,11 +1,11 @@
 # Copyright (c) 2022, Frappe and contributors
 # For license information, please see license.txt
 
-import frappe
 import json
-import traceback
 import os
+import traceback
 
+import frappe
 
 PRESS_AUTH_KEY = "press-auth-logs"
 PRESS_AUTH_MAX_ENTRIES = 1000000
@@ -33,12 +33,12 @@ ALLOWED_PATHS = [
 	"/api/method/login",
 	"/api/method/logout",
 	"/api/method/press.press.doctype.razorpay_webhook_log.razorpay_webhook_log.razorpay_webhook_handler",
+	"/api/method/press.press.doctype.razorpay_webhook_log.razorpay_webhook_log.razorpay_authorized_payment_handler",
 	"/api/method/press.press.doctype.stripe_webhook_log.stripe_webhook_log.stripe_webhook_handler",
+	"/api/method/press.press.doctype.drip_email.drip_email.unsubscribe",
 	"/api/method/upload_file",
 	"/api/method/frappe.search.web_search",
 	"/api/method/frappe.email.queue.unsubscribe",
-	"/api/method/frappe.client.get",
-	"/api/method/frappe.client.get_count",
 	"/api/method/press.utils.telemetry.capture_read_event",
 	"/api/method/validate_plan_change",
 	"/api/method/marketplace-apps",
@@ -51,17 +51,25 @@ ALLOWED_PATHS = [
 
 ALLOWED_WILDCARD_PATHS = [
 	"/api/method/press.api.",
+	"/api/method/press.saas.",
 	"/api/method/wiki.",
 	"/api/method/frappe.integrations.oauth2_logins.",
 	"/api/method/press.www.marketplace.index.",
 ]
+
+DENIED_PATHS = [
+	# Added from frappe/wwww/..
+	"/printview",
+	"/printpreview",
+]
+
 
 DENIED_WILDCARD_PATHS = [
 	"/api/",
 ]
 
 
-def hook():
+def hook():  # noqa: C901
 	if frappe.form_dict.cmd:
 		path = f"/api/method/{frappe.form_dict.cmd}"
 	else:
@@ -72,6 +80,10 @@ def hook():
 	# Allow unchecked access to System Users
 	if user_type == "System User":
 		return
+
+	if path in DENIED_PATHS:
+		log(path, user_type)
+		frappe.throw("Access not allowed for this URL", frappe.AuthenticationError)
 
 	for denied in DENIED_WILDCARD_PATHS:
 		if path.startswith(denied):

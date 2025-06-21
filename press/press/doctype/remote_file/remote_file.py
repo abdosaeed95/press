@@ -1,13 +1,13 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2020, Frappe and contributors
 # For license information, please see license.txt
 
+from __future__ import annotations
 
 import json
+import pprint
 
 import frappe
 import requests
-import pprint
 from boto3 import client, resource
 from frappe.model.document import Document
 from frappe.utils.password import get_decrypted_password
@@ -27,101 +27,103 @@ def get_remote_key(file):
 
 
 def poll_file_statuses():
-	from press.utils import chunk
-
-	available_files = {}
-	doctype = "Remote File"
-	aws_access_key = frappe.db.get_single_value(
-		"Press Settings", "offsite_backups_access_key_id"
-	)
+	aws_access_key = frappe.db.get_single_value("Press Settings", "offsite_backups_access_key_id")
 	aws_secret_key = get_decrypted_password(
 		"Press Settings", "Press Settings", "offsite_backups_secret_access_key"
 	)
 	default_region = frappe.db.get_single_value("Press Settings", "backup_region")
-	buckets = {
-		frappe.db.get_single_value("Press Settings", "aws_s3_bucket"): {
+	buckets = [
+		{
+			"name": frappe.db.get_single_value("Press Settings", "aws_s3_bucket"),
 			"region": default_region,
 			"access_key_id": aws_access_key,
 			"secret_access_key": aws_secret_key,
 		},
-		frappe.db.get_single_value("Press Settings", "remote_uploads_bucket"): {
+		{
+			"name": frappe.db.get_single_value("Press Settings", "remote_uploads_bucket"),
 			"region": default_region,
-			"access_key_id": frappe.db.get_single_value(
-				"Press Settings", "remote_access_key_id"
-			),
+			"access_key_id": frappe.db.get_single_value("Press Settings", "remote_access_key_id"),
 			"secret_access_key": get_decrypted_password(
 				"Press Settings", "Press Settings", "remote_secret_access_key"
 			),
 		},
-	}
-
-	[
-		buckets.update(
-			{
-				b["bucket_name"]: {
-					"region": b["region"],
-					"access_key_id": aws_access_key,
-					"secret_access_key": aws_secret_key,
-				},
-			}
-		)
-		for b in frappe.get_all("Backup Bucket", ["bucket_name", "cluster", "region"])
 	]
 
-	for bucket_name, current_bucket in buckets.items():
-		available_files[bucket_name] = []
-
-		s3 = resource(
-			"s3",
-			aws_access_key_id=current_bucket["access_key_id"],
-			aws_secret_access_key=current_bucket["secret_access_key"],
-			region_name=current_bucket["region"],
+	for b in frappe.get_all("Backup Bucket", ["bucket_name", "cluster", "region"]):
+		buckets.append(
+			{
+				"name": b["bucket_name"],
+				"region": b["region"],
+				"access_key_id": aws_access_key,
+				"secret_access_key": aws_secret_key,
+			}
 		)
 
-		for s3_object in s3.Bucket(bucket_name).objects.all():
-			available_files[bucket_name].append(s3_object.key)
-
-		all_files = set(available_files[bucket_name])
-
-		remote_files = frappe.get_all(
-			doctype,
-			fields=["name", "file_path", "status"],
-			filters={"bucket": bucket_name},
+	for bucket in buckets:
+		frappe.enqueue(
+			"press.press.doctype.remote_file.remote_file.poll_file_statuses_from_bucket",
+			bucket=bucket,
+			job_id=f"poll_file_statuses:{bucket['name']}",
+			queue="long",
+			deduplicate=True,
+			enqueue_after_commit=True,
 		)
 
-		set_to_available = []
-		set_to_unavailable = []
-		for remote_file in remote_files:
-			name, file_path, status = (
-				remote_file["name"],
-				remote_file["file_path"],
-				remote_file["status"],
-			)
-			if file_path not in all_files:
-				if status == "Available":
-					set_to_unavailable.append(name)
-			else:
-				if status == "Unavailable":
-					set_to_available.append(name)
 
-		for files in chunk(set_to_unavailable, 1000):
-			frappe.db.set_value(doctype, {"name": ("in", files)}, "status", "Unavailable")
+def poll_file_statuses_from_bucket(bucket):
+	from press.utils import chunk
 
-		for files in chunk(set_to_available, 1000):
-			frappe.db.set_value(doctype, {"name": ("in", files)}, "status", "Available")
+	s3 = resource(
+		"s3",
+		aws_access_key_id=bucket["access_key_id"],
+		aws_secret_access_key=bucket["secret_access_key"],
+		region_name=bucket["region"],
+	)
 
-		# Delete s3 files that are not tracked with Remote Files
-		remote_file_paths = set(file["file_path"] for file in remote_files)
-		file_only_on_s3 = all_files - remote_file_paths
-		delete_s3_files({bucket_name: list(file_only_on_s3)})
-		frappe.db.commit()
+	available_files = set()
+	for s3_object in s3.Bucket(bucket["name"]).objects.all():
+		available_files.add(s3_object.key)
+
+	doctype = "Remote File"
+	remote_files = frappe.get_all(
+		doctype,
+		fields=["name", "file_path", "status"],
+		filters={"bucket": bucket["name"]},
+	)
+
+	set_to_available = []
+	set_to_unavailable = []
+	for remote_file in remote_files:
+		name, file_path, status = (
+			remote_file["name"],
+			remote_file["file_path"],
+			remote_file["status"],
+		)
+		if file_path not in available_files:
+			if status == "Available":
+				set_to_unavailable.append(name)
+		else:
+			if status == "Unavailable":
+				set_to_available.append(name)
+
+	for files in chunk(set_to_unavailable, 1000):
+		frappe.db.set_value(doctype, {"name": ("in", files)}, "status", "Unavailable")
+
+	for files in chunk(set_to_available, 1000):
+		frappe.db.set_value(doctype, {"name": ("in", files)}, "status", "Available")
+
+	# Delete s3 files that are not tracked with Remote Files
+	remote_file_paths = set(file["file_path"] for file in remote_files)
+	file_only_on_s3 = available_files - remote_file_paths
+	delete_s3_files({bucket["name"]: list(file_only_on_s3)})
+	frappe.db.commit()
 
 
 def delete_remote_backup_objects(remote_files):
 	"""Delete specified objects identified by keys in the backups bucket."""
 	remote_files = list(set([x for x in remote_files if x]))
 	if not remote_files:
-		return
+		return None
 
 	buckets = {bucket: [] for bucket in frappe.get_all("Backup Bucket", pluck="name")}
 	buckets.update({frappe.db.get_single_value("Press Settings", "aws_s3_bucket"): []})
@@ -136,9 +138,7 @@ def delete_remote_backup_objects(remote_files):
 	]
 
 	delete_s3_files(buckets)
-	frappe.db.set_value(
-		"Remote File", {"name": ("in", remote_files)}, "status", "Unavailable"
-	)
+	frappe.db.set_value("Remote File", {"name": ("in", remote_files)}, "status", "Unavailable")
 
 	return remote_files
 
@@ -167,18 +167,14 @@ class RemoteFile(Document):
 		if not self.bucket:
 			return None
 
-		elif self.bucket == frappe.db.get_single_value(
-			"Press Settings", "remote_uploads_bucket"
-		):
+		if self.bucket == frappe.db.get_single_value("Press Settings", "remote_uploads_bucket"):
 			access_key_id = frappe.db.get_single_value("Press Settings", "remote_access_key_id")
 			secret_access_key = get_decrypted_password(
 				"Press Settings", "Press Settings", "remote_secret_access_key"
 			)
 
 		elif self.bucket:
-			access_key_id = frappe.db.get_single_value(
-				"Press Settings", "offsite_backups_access_key_id"
-			)
+			access_key_id = frappe.db.get_single_value("Press Settings", "offsite_backups_access_key_id")
 			secret_access_key = get_decrypted_password(
 				"Press Settings", "Press Settings", "offsite_backups_secret_access_key"
 			)
@@ -208,12 +204,11 @@ class RemoteFile(Document):
 				return True
 			self.db_set("status", "Unavailable")
 			return False
-		else:
-			try:
-				return self.s3_client.head_object(Bucket=self.bucket, Key=self.file_path)
-			except Exception:
-				self.db_set("status", "Unavailable")
-				return False
+		try:
+			return self.s3_client.head_object(Bucket=self.bucket, Key=self.file_path)
+		except Exception:
+			self.db_set("status", "Unavailable")
+			return False
 
 	@frappe.whitelist()
 	def delete_remote_object(self):
@@ -237,9 +232,9 @@ class RemoteFile(Document):
 	def get_content(self):
 		if self.url:
 			return json.loads(requests.get(self.url).content)
-		else:
-			obj = self.s3_client.get_object(Bucket=self.bucket, Key=self.file_path)
-			return json.loads(obj["Body"].read().decode("utf-8"))
+
+		obj = self.s3_client.get_object(Bucket=self.bucket, Key=self.file_path)
+		return json.loads(obj["Body"].read().decode("utf-8"))
 
 	@property
 	def size(self) -> int:
@@ -250,20 +245,21 @@ class RemoteFile(Document):
 		"""
 		if int(self.file_size or 0):
 			return int(self.file_size or 0)
-		else:
-			response = requests.head(self.url)
-			self.file_size = int(response.headers.get("content-length", 0))
-			self.save()
-			return int(self.file_size)
+
+		response = requests.head(self.url)
+		self.file_size = int(response.headers.get("content-length", 0))
+		self.save()
+		return int(self.file_size)
 
 
 def delete_s3_files(buckets):
 	"""Delete specified files from s3 buckets"""
 	from boto3 import resource
+
 	from press.utils import chunk
 
 	press_settings = frappe.get_single("Press Settings")
-	for bucket_name in buckets.keys():
+	for bucket_name in buckets:
 		s3 = resource(
 			"s3",
 			aws_access_key_id=press_settings.offsite_backups_access_key_id,
@@ -280,5 +276,3 @@ def delete_s3_files(buckets):
 			frappe.get_doc(
 				doctype="Remote Operation Log", operation_type="Delete Files", response=response
 			).insert()
-
-	return response

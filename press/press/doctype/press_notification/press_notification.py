@@ -1,5 +1,6 @@
 # Copyright (c) 2023, Frappe and contributors
 # For license information, please see license.txt
+from __future__ import annotations
 
 import frappe
 from frappe.model.document import Document
@@ -23,6 +24,8 @@ class PressNotification(Document):
 		is_addressed: DF.Check
 		message: DF.LongText | None
 		read: DF.Check
+		reference_doctype: DF.Link | None
+		reference_name: DF.DynamicLink | None
 		team: DF.Link
 		title: DF.SmallText | None
 		traceback: DF.Code | None
@@ -32,11 +35,12 @@ class PressNotification(Document):
 			"Version Upgrade",
 			"Bench Deploy",
 			"Site Recovery",
+			"Agent Job Failure",
 			"Downtime/Performance",
 		]
 	# end: auto-generated types
 
-	dashboard_fields = [
+	dashboard_fields = (
 		"team",
 		"document_type",
 		"class",
@@ -49,7 +53,7 @@ class PressNotification(Document):
 		"message",
 		"traceback",
 		"assistance_url",
-	]
+	)
 
 	def after_insert(self):
 		if frappe.local.dev_server:
@@ -60,10 +64,11 @@ class PressNotification(Document):
 			return
 
 		if self.type == "Bench Deploy":
-			self.send_bench_deploy_failed(user)
+			recipient = frappe.db.get_value("Team", self.team, "notify_email") or user
+			self.send_bench_deploy_failed(recipient)
 
 	def send_bench_deploy_failed(self, user: str):
-		group_name = frappe.db.get_value("Deploy Candidate", self.document_name, "group")
+		group_name = frappe.db.get_value("Deploy Candidate Build", self.document_name, "group")
 		rg_title = frappe.db.get_value("Release Group", group_name, "title")
 
 		frappe.sendmail(
@@ -71,8 +76,8 @@ class PressNotification(Document):
 			subject=f"Bench Deploy Failed - {rg_title}",
 			template="bench_deploy_failure",
 			args={
-				"message": self.message,
-				"link": f"dashboard/benches/{group_name}/deploys/{self.document_name}",
+				"message": self.title,
+				"link": f"dashboard/groups/{group_name}/deploys/{self.document_name}",
 			},
 		)
 
@@ -90,6 +95,16 @@ class PressNotification(Document):
 
 def create_new_notification(team, type, document_type, document_name, message):
 	if not frappe.db.exists("Press Notification", {"document_name": document_name}):
+		if document_type == "Agent Job":
+			reference_doctype = "Site"
+			reference_doc = frappe.db.get_value("Agent Job", document_name, "site")
+			if not reference_doc:
+				reference_doctype = "Server"
+				reference_doc = frappe.db.get_value("Agent Job", document_name, "server")
+		elif document_type == "Deploy Candidate":
+			reference_doctype = "Release Group"
+			reference_doc = frappe.db.get_value("Deploy Candidate", document_name, "group")
+
 		frappe.get_doc(
 			{
 				"doctype": "Press Notification",
@@ -98,8 +113,8 @@ def create_new_notification(team, type, document_type, document_name, message):
 				"document_type": document_type,
 				"document_name": document_name or 0,
 				"message": message,
+				"reference_doctype": reference_doctype,
+				"reference_name": reference_doc,
 			}
 		).insert()
-		frappe.publish_realtime(
-			"press_notification", doctype="Press Notification", message={"team": team}
-		)
+		frappe.publish_realtime("press_notification", doctype="Press Notification", message={"team": team})

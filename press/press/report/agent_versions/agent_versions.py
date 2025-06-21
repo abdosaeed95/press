@@ -4,6 +4,7 @@
 import json
 
 import frappe
+
 from press.agent import Agent
 from press.press.report.server_stats.server_stats import get_servers
 
@@ -47,6 +48,12 @@ def execute(filters=None):
 			"fieldname": "show",
 			"label": frappe._("Show"),
 			"fieldtype": "Long Text",
+			"width": 100,
+		},
+		{
+			"fieldname": "python",
+			"label": frappe._("Python Version"),
+			"fieldtype": "Data",
 			"width": 100,
 		},
 	]

@@ -1,13 +1,15 @@
 # Copyright (c) 2022, Frappe and contributors
 # For license information, please see license.txt
-
-import frappe
+from __future__ import annotations
 
 from datetime import datetime, timedelta
-from press.utils import log_error
+
+import frappe
 from frappe.model.document import Document
-from press.utils.billing import get_razorpay_client
+
 from press.press.doctype.team.team import _enqueue_finalize_unpaid_invoices_for_team
+from press.utils import log_error
+from press.utils.billing import get_razorpay_client
 
 
 class RazorpayPaymentRecord(Document):
@@ -25,24 +27,30 @@ class RazorpayPaymentRecord(Document):
 		signature: DF.Data | None
 		status: DF.Literal["Captured", "Failed", "Pending"]
 		team: DF.Link | None
+		type: DF.Literal["Prepaid Credits", "Partnership Fee"]
 	# end: auto-generated types
 
 	def on_update(self):
 		if self.has_value_changed("status") and self.status == "Captured":
-			self.process_prepaid_credits()
+			if self.type == "Prepaid Credits":
+				self.process_prepaid_credits()
+			elif self.type == "Partnership Fee":
+				self.process_partnership_fee()
 
 	def process_prepaid_credits(self):
 		team = frappe.get_doc("Team", self.team)
 
 		client = get_razorpay_client()
 		payment = client.payment.fetch(self.payment_id)
-		amount = payment["amount"] / 100
+		amount_with_tax = payment["amount"] / 100
 		gst = float(payment["notes"].get("gst", 0))
+		amount = amount_with_tax - gst
 		balance_transaction = team.allocate_credit_amount(
-			amount - gst if gst else amount,
+			amount,
 			source="Prepaid Credits",
 			remark=f"Razorpay: {self.payment_id}",
 		)
+		team.reload()
 
 		# Add a field to track razorpay event
 		invoice = frappe.get_doc(
@@ -51,10 +59,11 @@ class RazorpayPaymentRecord(Document):
 			type="Prepaid Credits",
 			status="Paid",
 			due_date=datetime.fromtimestamp(payment["created_at"]),
-			amount_paid=amount,
-			gst=gst or 0,
-			total_before_tax=amount - gst,
+			total=amount,
 			amount_due=amount,
+			gst=gst or 0,
+			amount_due_with_tax=amount_with_tax,
+			amount_paid=amount_with_tax,
 			razorpay_order_id=self.order_id,
 			razorpay_payment_record=self.name,
 			razorpay_payment_method=payment["method"],
@@ -76,6 +85,54 @@ class RazorpayPaymentRecord(Document):
 		invoice.submit()
 
 		_enqueue_finalize_unpaid_invoices_for_team(team.name)
+
+	def process_partnership_fee(self):
+		team = frappe.get_doc("Team", self.team)
+
+		client = get_razorpay_client()
+		payment = client.payment.fetch(self.payment_id)
+		amount_with_tax = payment["amount"] / 100
+		gst = float(payment["notes"].get("gst", 0))
+		amount = amount_with_tax - gst
+		balance_transaction = team.allocate_credit_amount(
+			amount,
+			source="Prepaid Credits",
+			remark=f"Razorpay: {self.payment_id}",
+			type="Partnership Fee",
+		)
+		team.reload()
+
+		# Add a field to track razorpay event
+		invoice = frappe.get_doc(
+			doctype="Invoice",
+			team=team.name,
+			type="Partnership Fees",
+			status="Paid",
+			due_date=datetime.fromtimestamp(payment["created_at"]),
+			total=amount,
+			amount_due=amount,
+			gst=gst or 0,
+			amount_due_with_tax=amount_with_tax,
+			amount_paid=amount_with_tax,
+			razorpay_order_id=self.order_id,
+			razorpay_payment_record=self.name,
+			razorpay_payment_method=payment["method"],
+		)
+		invoice.append(
+			"items",
+			{
+				"description": "Partnership Fee",
+				"document_type": "Balance Transaction",
+				"document_name": balance_transaction.name,
+				"quantity": 1,
+				"rate": amount,
+			},
+		)
+		invoice.insert()
+		invoice.reload()
+
+		invoice.update_razorpay_transaction_details(payment)
+		invoice.submit()
 
 	@frappe.whitelist()
 	def sync(self):
@@ -99,7 +156,6 @@ class RazorpayPaymentRecord(Document):
 
 
 def fetch_pending_payment_orders(hours=12):
-
 	past_12hrs_ago = datetime.now() - timedelta(hours=hours)
 	pending_orders = frappe.get_all(
 		"Razorpay Payment Record",
@@ -112,7 +168,6 @@ def fetch_pending_payment_orders(hours=12):
 		return
 
 	for order_id in pending_orders:
-
 		try:
 			response = client.order.payments(order_id)
 			for item in response.get("items"):

@@ -25,6 +25,13 @@ frappe.ui.form.on('Database Server', {
 				frm.doc.is_server_setup,
 			],
 			[
+				__('Install Filebeat'),
+				'install_filebeat',
+				true,
+				frm.doc.is_server_setup,
+			],
+			[__('Setup Logrotate'), 'setup_logrotate', true, frm.doc.is_server_setup],
+			[
 				__('Fetch Keys'),
 				'fetch_keys',
 				true,
@@ -154,6 +161,19 @@ frappe.ui.form.on('Database Server', {
 				true,
 				frm.doc.is_self_hosted,
 			],
+			[
+				__('Mount Volumes'),
+				'mount_volumes',
+				true,
+				frm.doc.virtual_machine && frm.doc.mounts,
+			],
+			[
+				'Get Binlog Summary',
+				'get_binlog_summary',
+				true,
+				frm.doc.is_server_setup,
+			],
+			['Sync Binlogs Info', 'sync_binlogs_info', true, frm.doc.is_server_setup],
 		].forEach(([label, method, confirm, condition]) => {
 			if (typeof condition === 'undefined' || condition) {
 				frm.add_custom_button(
@@ -238,6 +258,72 @@ frappe.ui.form.on('Database Server', {
 					dialog.show();
 				},
 				__('Actions'),
+			);
+			frm.add_custom_button(
+				__('Update Memory Allocator'),
+				() => {
+					const dialog = new frappe.ui.Dialog({
+						title: __('Update Memory Allocator'),
+						fields: [
+							{
+								fieldtype: 'Select',
+								label: __('Memory Allocator'),
+								options: ['System', 'jemalloc', 'TCMalloc']
+									.filter((option) => option !== frm.doc.memory_allocator)
+									.join('\n'),
+								fieldname: 'memory_allocator',
+								reqd: 1,
+							},
+						],
+					});
+
+					dialog.set_primary_action(__('Update'), (args) => {
+						frm.call({
+							method: 'update_memory_allocator',
+							doc: frm.doc,
+							args: args,
+							freeze: true,
+							callback: () => {
+								dialog.hide();
+								frm.refresh();
+							},
+						});
+					});
+					dialog.show();
+				},
+				__('Dangerous Actions'),
+			);
+
+			frm.add_custom_button(
+				__('Purge Binlogs'),
+				() => {
+					const dialog = new frappe.ui.Dialog({
+						title: __('Purge Binlogs'),
+						fields: [
+							{
+								fieldtype: 'Data',
+								label: __('To Binlog (mysql-bin.xxxxxx)'),
+								fieldname: 'to_binlog',
+								reqd: 1,
+							},
+						],
+					});
+
+					dialog.set_primary_action(__('Purge'), (args) => {
+						frm.call({
+							method: 'purge_binlogs',
+							doc: frm.doc,
+							args: args,
+							freeze: true,
+							callback: () => {
+								dialog.hide();
+								frm.refresh();
+							},
+						});
+					});
+					dialog.show();
+				},
+				__('Dangerous Actions'),
 			);
 		}
 	},

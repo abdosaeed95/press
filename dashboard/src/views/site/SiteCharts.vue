@@ -1,5 +1,5 @@
 <template>
-	<div class="space-y-4">
+	<div class="space-y-4 p-5">
 		<ErrorMessage :message="$resources.analytics.error" />
 		<FormControl
 			class="w-32"
@@ -144,6 +144,7 @@ import { DateTime } from 'luxon';
 import LineChart from '@/components/charts/LineChart.vue';
 import BarChart from '@/components/charts/BarChart.vue';
 import SiteAnalyticsUptime from './SiteAnalyticsUptime.vue';
+import AlertBanner from '../../../src2/components/AlertBanner.vue';
 
 export default {
 	name: 'SiteAnalytics',
@@ -151,7 +152,8 @@ export default {
 	components: {
 		BarChart,
 		LineChart,
-		SiteAnalyticsUptime
+		SiteAnalyticsUptime,
+		AlertBanner
 	},
 	data() {
 		return {

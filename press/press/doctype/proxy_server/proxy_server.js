@@ -8,6 +8,18 @@ frappe.ui.form.on('Proxy Server', {
 			[__('Ping Ansible'), 'ping_ansible', true],
 			[__('Ping Ansible Unprepared'), 'ping_ansible_unprepared', true],
 			[__('Update Agent'), 'update_agent', true, frm.doc.is_server_setup],
+			[
+				__('Update Agent Ansible'),
+				'update_agent_ansible',
+				true,
+				frm.doc.is_server_setup,
+			],
+			[
+				__('Install Filebeat'),
+				'install_filebeat',
+				true,
+				frm.doc.is_server_setup,
+			],
 			[__('Prepare Server'), 'prepare_server', true, !frm.doc.is_server_setup],
 			[__('Setup Server'), 'setup_server', true, !frm.doc.is_server_setup],
 			[
@@ -35,6 +47,12 @@ frappe.ui.form.on('Proxy Server', {
 				frm.doc.is_server_setup,
 			],
 			[
+				__('Show Agent Password'),
+				'show_agent_password',
+				false,
+				frm.doc.is_server_setup,
+			],
+			[
 				__('Fetch Keys'),
 				'fetch_keys',
 				false,
@@ -42,6 +60,7 @@ frappe.ui.form.on('Proxy Server', {
 					(!frm.doc.frappe_public_key || !frm.doc.root_public_key),
 			],
 			[__('Update TLS Certificate'), 'update_tls_certificate', true],
+			[__('Reload NGINX'), 'reload_nginx', true, frm.doc.is_server_setup],
 			[__('Create Image'), 'create_image', true, frm.doc.status == 'Active'],
 			[
 				__('Setup Replication'),

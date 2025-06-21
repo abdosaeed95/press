@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import re
 import typing
+from typing import Literal
 
 import dockerfile
 import frappe
@@ -12,42 +15,35 @@ ansi_escape_rx = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 done_check_rx = re.compile(r"#\d+\sDONE\s\d+\.\d+")
 
 if typing.TYPE_CHECKING:
-	from typing import Any, Generator, Optional, TypedDict
+	from typing import Any, Generator
 
-	from frappe.types import DF
-	from press.press.doctype.deploy_candidate.deploy_candidate import DeployCandidate
+	from press.press.doctype.deploy_candidate_build.deploy_candidate_build import DeployCandidateBuild
 	from press.press.doctype.deploy_candidate_build_step.deploy_candidate_build_step import (
 		DeployCandidateBuildStep,
 	)
 
 	BuildOutput = list[str] | Generator[str, Any, None]
 	PushOutput = list[dict] | Generator[dict, Any, None]
-	IndexSplit = TypedDict(
-		"IndexSplit",
-		{
-			"index": int,
-			"line": str,
-			"is_unusual": bool,
-		},
-	)
+
+
+class IndexSplit(typing.TypedDict):
+	index: int
+	line: str
+	is_unusual: bool
 
 
 class DockerBuildOutputParser:
 	"""
 	Parses `docker build` raw output and updates Deploy Candidate.
 
-	Output can be generated from a remote builder (agent) or from a build running
-	on press itself.
-
-	In case of a remote build, due to the way agent updates are propagated, all
-	lines are updated when agent is polled, and so output is looped N! times.
+	Due to the way agent updates are propagated, all lines are updated
+	when agent is polled, and so output is looped N! times.
 	"""
 
-	_steps_by_step_slug: "Optional[dict[tuple[str, str], DeployCandidateBuildStep]]"
+	_steps_by_step_slug: dict[tuple[str, str], DeployCandidateBuildStep] | None
 
-	def __init__(self, dc: "DeployCandidate") -> None:
+	def __init__(self, dc: "DeployCandidateBuild") -> None:
 		self.dc = dc
-		self.is_remote = dc.is_remote_builder_used
 		self.last_updated = now_datetime()
 
 		# Used to generate output and track parser state
@@ -60,12 +56,9 @@ class DockerBuildOutputParser:
 	@property
 	def steps_by_step_slug(self):
 		if not self._steps_by_step_slug:
-			self._steps_by_step_slug = {
-				(bs.stage_slug, bs.step_slug): bs for bs in self.dc.build_steps
-			}
+			self._steps_by_step_slug = {(bs.stage_slug, bs.step_slug): bs for bs in self.dc.build_steps}
 		return self._steps_by_step_slug
 
-	# `output` can be from local or remote build
 	def parse_and_update(self, output: "BuildOutput"):
 		for raw_line in output:
 			self._parse_line_handle_exc(raw_line)
@@ -73,19 +66,6 @@ class DockerBuildOutputParser:
 
 	def _parse_line_handle_exc(self, raw_line: str):
 		self._parse_line(raw_line)
-		self._update_dc_build_output()
-
-	def _update_dc_build_output(self):
-		# Output saved at the end of parsing all lines
-		if self.is_remote:
-			return
-
-		sec_since_last_update = (now_datetime() - self.last_updated).total_seconds()
-		if sec_since_last_update <= 1:
-			return
-
-		self.flush_output()
-		self.last_update = now_datetime()
 
 	def flush_output(self, commit: bool = True):
 		self.dc.build_output = "".join(self.lines)
@@ -149,9 +129,7 @@ class DockerBuildOutputParser:
 			self.error_lines.append(escaped_line)
 
 	def _end_parsing(self):
-		if self.is_remote:
-			self.dc.last_updated = now_datetime()
-
+		self.dc.last_updated = now_datetime()
 		self.flush_output(True)
 
 	def _set_docker_image_id(self, line: str):
@@ -205,7 +183,7 @@ class DockerBuildOutputParser:
 
 		self.steps[index] = step
 
-	def _get_step_index_split(self, line: str) -> "Optional[IndexSplit]":
+	def _get_step_index_split(self, line: str) -> "IndexSplit | None":
 		splits = line.split(maxsplit=1)
 		keys = sorted(self.steps)
 		if len(splits) != 2 and len(keys) == 0:
@@ -260,9 +238,8 @@ class UploadStepUpdater:
 
 	_upload_step: "DeployCandidateBuildStep | None"
 
-	def __init__(self, dc: "DeployCandidate") -> None:
+	def __init__(self, dc: "DeployCandidateBuild") -> None:
 		self.dc = dc
-		self.is_remote = dc.is_remote_builder_used
 		self.output: list[dict] = []
 
 		# Used only if not remote
@@ -291,39 +268,20 @@ class UploadStepUpdater:
 			return
 
 		for line in output:
-			self._process_single_line(line)
+			self._update_output(line)
 
-		# If remote, duration is accumulated
-		last_update = self.start_time
-
-		# If not remote, duration is calculated once
-		if self.is_remote:
-			last_update = self.dc.last_updated
-
+		last_update = self.dc.last_updated
 		duration = (now_datetime() - last_update).total_seconds()
 		self.upload_step.duration = rounded(duration, 1)
 		self.flush_output()
 
-	def end(self, status: 'Optional[DF.Literal["Success", "Failure"]]'):
+	def end(self, status: Literal["Success", "Failure"] | None):
 		if not self.upload_step:
 			return
 
 		# Used only if the build is running locally
 		self.upload_step.status = status
 		self.flush_output()
-
-	def _process_single_line(self, line: dict):
-		self._update_output(line)
-		if self.is_remote:
-			return
-
-		# If not remote, upload step output is updated every 1 second
-		now = now_datetime()
-		if (now - self.last_updated).total_seconds() <= 1:
-			return
-
-		self.flush_output()
-		self.last_updated = now
 
 	def _update_output(self, line: dict):
 		if error := line.get("error"):

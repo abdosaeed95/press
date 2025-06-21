@@ -10,11 +10,39 @@
 		<div class="p-5">
 			<AlertAddPaymentMode
 				class="mb-5"
-				v-if="!$team.doc.payment_mode && !$team.doc.parent_team"
+				v-if="$team?.doc && !$team.doc.payment_mode && !$team.doc.parent_team"
 			/>
 			<AlertCardExpired
 				class="mb-5"
-				v-if="isCardExpired && $team.doc.payment_mode == 'Card'"
+				v-if="$team?.doc && isCardExpired && $team.doc?.payment_mode == 'Card'"
+			/>
+			<AlertAddressDetails
+				class="mb-5"
+				v-if="
+					$team?.doc &&
+					!$team.doc?.billing_details?.name &&
+					$team.doc.payment_mode
+				"
+			/>
+			<AlertBanner
+				v-if="banner?.enabled"
+				class="mb-5"
+				:title="`<b>${banner.title}:</b> ${banner.message}`"
+				:type="banner.type.toLowerCase()"
+			/>
+			<AlertMandateInfo
+				class="mb-5"
+				v-if="
+					$team?.doc &&
+					isMandateNotSet &&
+					$team.doc.currency === 'INR' &&
+					$team.doc.payment_mode == 'Card'
+				"
+			/>
+			<AlertUnpaidInvoices
+				class="mb-5"
+				v-if="hasUnpaidInvoices > 0"
+				:amount="hasUnpaidInvoices"
 			/>
 			<ObjectList :options="listOptions" />
 		</div>
@@ -28,6 +56,7 @@ import { Breadcrumbs, Button, Dropdown, TextInput } from 'frappe-ui';
 import { getObject } from '../objects';
 import { defineAsyncComponent } from 'vue';
 import dayjs from '../utils/dayjs';
+import AlertBanner from '../components/AlertBanner.vue';
 
 export default {
 	components: {
@@ -37,11 +66,21 @@ export default {
 		Button,
 		Dropdown,
 		TextInput,
+		AlertBanner,
 		AlertAddPaymentMode: defineAsyncComponent(() =>
 			import('../components/AlertAddPaymentMode.vue')
 		),
 		AlertCardExpired: defineAsyncComponent(() =>
 			import('../components/AlertCardExpired.vue')
+		),
+		AlertAddressDetails: defineAsyncComponent(() =>
+			import('../components/AlertAddressDetails.vue')
+		),
+		AlertMandateInfo: defineAsyncComponent(() =>
+			import('../components/AlertMandateInfo.vue')
+		),
+		AlertUnpaidInvoices: defineAsyncComponent(() =>
+			import('../components/AlertUnpaidInvoices.vue')
 		)
 	},
 	props: {
@@ -82,6 +121,30 @@ export default {
 			} else {
 				return false;
 			}
+		},
+		banner() {
+			return this.$resources.banner.doc;
+		},
+		isMandateNotSet() {
+			return !this.$team.doc?.payment_method?.stripe_mandate_id;
+		},
+		hasUnpaidInvoices() {
+			return this.$resources.getAmountDue.data;
+		}
+	},
+	resources: {
+		banner() {
+			return {
+				type: 'document',
+				doctype: 'Dashboard Banner',
+				name: 'Dashboard Banner'
+			};
+		},
+		getAmountDue() {
+			return {
+				url: 'press.api.billing.total_unpaid_amount',
+				auto: true
+			};
 		}
 	}
 };

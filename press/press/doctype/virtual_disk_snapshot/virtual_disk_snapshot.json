@@ -9,6 +9,7 @@
   "virtual_machine",
   "snapshot_id",
   "status",
+  "expired",
   "column_break_4",
   "cluster",
   "region",
@@ -18,8 +19,13 @@
   "start_time",
   "column_break_7lcz",
   "progress",
+  "duration",
   "section_break_12",
-  "mariadb_root_password"
+  "mariadb_root_password",
+  "snapshot_purpose_section",
+  "physical_backup",
+  "column_break_xgrp",
+  "rolling_snapshot"
  ],
  "fields": [
   {
@@ -36,7 +42,8 @@
    "label": "Virtual Machine",
    "options": "Virtual Machine",
    "read_only": 1,
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "fetch_from": "virtual_machine.cluster",
@@ -77,7 +84,8 @@
    "in_standard_filter": 1,
    "label": "Status",
    "options": "Pending\nCompleted\nError\nRecovering\nRecoverable\nUnavailable",
-   "read_only": 1
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "fieldname": "start_time",
@@ -108,18 +116,61 @@
    "fieldtype": "Data",
    "label": "Snapshot ID",
    "read_only": 1,
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "fieldname": "volume_id",
    "fieldtype": "Data",
    "label": "Volume ID",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "duration",
+   "fieldtype": "Duration",
+   "label": "Duration",
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "physical_backup",
+   "fieldtype": "Check",
+   "in_standard_filter": 1,
+   "label": "Physical Backup"
+  },
+  {
+   "fieldname": "snapshot_purpose_section",
+   "fieldtype": "Section Break",
+   "label": "Snapshot Purpose"
+  },
+  {
+   "fieldname": "column_break_xgrp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "rolling_snapshot",
+   "fieldtype": "Check",
+   "in_standard_filter": 1,
+   "label": "Rolling Snapshot"
+  },
+  {
+   "default": "0",
+   "fieldname": "expired",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Expired"
   }
  ],
  "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2023-12-11 18:24:35.112153",
+ "links": [
+  {
+   "link_doctype": "Site Backup",
+   "link_fieldname": "database_snapshot"
+  }
+ ],
+ "modified": "2025-04-16 14:48:54.212097",
  "modified_by": "Administrator",
  "module": "Press",
  "name": "Virtual Disk Snapshot",

@@ -1,13 +1,14 @@
 # Copyright (c) 2024, Frappe and Contributors
 # See license.txt
 
-from frappe.tests.utils import FrappeTestCase
+from __future__ import annotations
 
 from datetime import date
 from unittest.mock import patch
 
 import frappe
 from frappe.model.naming import make_autoname
+from frappe.tests.utils import FrappeTestCase
 
 
 def create_test_plan(
@@ -15,8 +16,13 @@ def create_test_plan(
 	price_usd: float = 10.0,
 	price_inr: float = 750.0,
 	cpu_time: int = 1,
-	plan_title: str = None,
-	plan_name: str = None,
+	plan_title: str | None = None,
+	plan_name: str | None = None,
+	allow_downgrading_from_other_plan: bool = True,
+	allowed_apps: list[str] | None = None,
+	release_groups: list[str] | None = None,
+	private_benches: bool = False,
+	is_trial_plan: bool = False,
 ):
 	"""Create test Plan doc."""
 	plan_name = plan_name or f"Test {document_type} plan {make_autoname('.#')}"
@@ -30,10 +36,21 @@ def create_test_plan(
 			"price_inr": price_inr,
 			"price_usd": price_usd,
 			"cpu_time_per_day": cpu_time,
+			"allow_downgrading_from_other_plan": allow_downgrading_from_other_plan,
 			"disk": 50,
 			"instance_type": "t2.micro",
+			"private_benches": private_benches,
+			"is_trial_plan": is_trial_plan,
 		}
-	).insert(ignore_if_duplicate=True)
+	)
+	if allowed_apps:
+		for app in allowed_apps:
+			plan.append("allowed_apps", {"app": app})
+	if release_groups:
+		for release_group in release_groups:
+			plan.append("release_groups", {"release_group": release_group})
+
+	plan.insert(ignore_if_duplicate=True)
 	plan.reload()
 	return plan
 

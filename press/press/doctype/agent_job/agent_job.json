@@ -120,7 +120,8 @@
    "label": "Server Type",
    "options": "DocType",
    "read_only": 1,
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "fieldname": "bench",
@@ -236,7 +237,8 @@
    "fieldtype": "Link",
    "label": "Reference Doctype",
    "options": "DocType",
-   "read_only": 1
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "depends_on": "eval: doc.reference_name",
@@ -244,7 +246,8 @@
    "fieldtype": "Dynamic Link",
    "label": "Reference Name",
    "options": "reference_doctype",
-   "read_only": 1
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "fieldname": "column_break_ayyq",
@@ -253,7 +256,7 @@
  ],
  "in_create": 1,
  "links": [],
- "modified": "2024-05-17 11:25:24.215362",
+ "modified": "2025-04-16 12:11:23.204689",
  "modified_by": "Administrator",
  "module": "Press",
  "name": "Agent Job",

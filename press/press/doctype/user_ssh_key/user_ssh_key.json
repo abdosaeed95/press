@@ -9,6 +9,7 @@
   "user",
   "column_break_2",
   "is_default",
+  "is_removed",
   "section_break_4",
   "ssh_public_key",
   "ssh_fingerprint"
@@ -48,11 +49,17 @@
   {
    "fieldname": "section_break_4",
    "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_removed",
+   "fieldtype": "Check",
+   "label": "Is Removed"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2022-10-11 15:57:00.071186",
+ "modified": "2025-01-30 17:39:14.574515",
  "modified_by": "Administrator",
  "module": "Press",
  "name": "User SSH Key",
@@ -87,6 +94,7 @@
    "write": 1
   }
  ],
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

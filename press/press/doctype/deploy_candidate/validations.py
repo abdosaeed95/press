@@ -1,17 +1,22 @@
+from __future__ import annotations
+
 import ast
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import frappe
 import semantic_version as sv
+
 from press.press.doctype.deploy_candidate.utils import (
 	PackageManagerFiles,
 	PackageManagers,
+	get_will_fail_checker,
 )
 from press.utils import get_filepath, log_error
 
 if TYPE_CHECKING:
 	from press.press.doctype.deploy_candidate.deploy_candidate import DeployCandidate
+	from press.press.doctype.release_group.release_group import ReleaseGroup
 
 
 class PreBuildValidations:
@@ -31,8 +36,8 @@ class PreBuildValidations:
 
 	def _validate_repos(self):
 		for app in self.dc.apps:
-			if frappe.get_value(app.release, "invalid_release"):
-				reason = frappe.get_value(app.release, "invalidation_reason")
+			if frappe.get_value("App Release", app.release, "invalid_release"):
+				reason = frappe.get_value("App Release", app.release, "invalidation_reason")
 
 				# Do not change message without updating deploy_notifications.py
 				raise Exception(
@@ -142,7 +147,7 @@ class PreBuildValidations:
 				expected,
 			)
 
-	def _get_app_version(self, app: str) -> Optional[str]:
+	def _get_app_version(self, app: str) -> str | None:
 		pm = self.pmf.get(app)
 		if not pm:
 			return None
@@ -196,7 +201,7 @@ def get_required_apps_from_hookpy(hooks_path: str) -> list[str]:
 		if not hasattr(assign.targets[0], "id"):
 			continue
 
-		if not assign.targets[0].id == "required_apps":
+		if assign.targets[0].id != "required_apps":
 			continue
 
 		if not isinstance(assign.value, ast.List):
@@ -205,3 +210,16 @@ def get_required_apps_from_hookpy(hooks_path: str) -> list[str]:
 		return [v.value for v in assign.value.elts]
 
 	return []
+
+
+def check_if_update_will_fail(rg: "ReleaseGroup", new_dc: "DeployCandidate"):
+	if not (old_dcb := rg.get_last_deploy_candidate_build()):
+		return
+
+	if not old_dcb.error_key:
+		return
+
+	if not (checker := get_will_fail_checker(old_dcb.error_key)):
+		return
+
+	checker(old_dcb, new_dc)

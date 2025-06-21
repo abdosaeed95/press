@@ -15,10 +15,10 @@ Defaulters are identified based on the following conditions:
 The `execute` method is the main method which is run by the scheduler on every day of the month.
 """
 
-
 import frappe
+from frappe.utils import add_days, get_first_day, get_last_day, getdate
+
 from press.utils import log_error
-from frappe.utils import getdate, add_days, get_first_day, get_last_day
 
 
 def execute():
@@ -70,9 +70,7 @@ def get_teams_with_unpaid_invoices():
 
 	plan = frappe.qb.DocType("Site Plan")
 	query = (
-		frappe.qb.from_(plan)
-		.select(plan.name)
-		.where((plan.enabled == 1) & (plan.is_frappe_plan == 1))
+		frappe.qb.from_(plan).select(plan.name).where((plan.enabled == 1) & (plan.is_frappe_plan == 1))
 	).run(as_dict=True)
 	frappe_plans = [d.name for d in query]
 
@@ -90,6 +88,7 @@ def get_teams_with_unpaid_invoices():
 			(site.status).isin(["Active", "Inactive"])
 			& (team.enabled == 1)
 			& (team.free_account == 0)
+			& (team.extend_payment_due_suspension == 0)
 			& (invoice.status == "Unpaid")
 			& (invoice.docstatus < 2)
 			& (invoice.type == "Subscription")
@@ -100,5 +99,10 @@ def get_teams_with_unpaid_invoices():
 		.select(invoice.team)
 		.distinct()
 	)
+
+	first_day = get_first_day(today)
+	two_weeks = add_days(first_day, 14)  # 15th day of the month
+	if today < two_weeks:
+		query = query.where(team.erpnext_partner == 0)
 
 	return query.run(as_dict=True)

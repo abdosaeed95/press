@@ -1,14 +1,17 @@
 # Copyright (c) 2021, Frappe and contributors
 # For license information, please see license.txt
 
-import frappe
-from frappe.core.utils import find
-import yaml
-import json
-from frappe.model.document import Document
-from press.agent import Agent
+from __future__ import annotations
 
+import json
 from typing import TYPE_CHECKING
+
+import frappe
+import yaml
+from frappe.core.utils import find
+from frappe.model.document import Document
+
+from press.agent import Agent
 
 if TYPE_CHECKING:
 	from press.press.doctype.server.server import Server
@@ -22,6 +25,7 @@ class PrometheusAlertRule(Document):
 
 	if TYPE_CHECKING:
 		from frappe.types import DF
+
 		from press.press.doctype.prometheus_alert_rule_cluster.prometheus_alert_rule_cluster import (
 			PrometheusAlertRuleCluster,
 		)
@@ -55,24 +59,22 @@ class PrometheusAlertRule(Document):
 		annotations = json.loads(self.annotations)
 		annotations.update({"description": self.description})
 
-		rule = {
+		return {
 			"alert": self.name,
 			"expr": self.expression,
 			"for": self.get("for"),
 			"labels": labels,
 			"annotations": annotations,
 		}
-		return rule
 
 	def get_route(self):
-		route = {
+		return {
 			"group_by": json.loads(self.group_by),
 			"group_wait": self.group_wait,
 			"group_interval": self.group_interval,
 			"repeat_interval": self.repeat_interval,
 			"matchers": [f'alertname="{self.name}"'],
 		}
-		return route
 
 	def on_update(self):
 		rules = yaml.dump(self.get_rules())
@@ -112,20 +114,37 @@ class PrometheusAlertRule(Document):
 
 		return routes_dict
 
-	def react(self, instance_type: str, instance: str):
-		return self.run_press_job(self.press_job_type, instance_type, instance)
+	def react(self, instance_type: str, instance: str, labels: dict | None = None):
+		return self.run_press_job(self.press_job_type, instance_type, instance, labels)
 
 	def run_press_job(
-		self, job_name: str, server_type: str, server_name: str, arguments=None
+		self, job_name: str, server_type: str, server_name: str, labels: dict | None = None, arguments=None
 	):
 		server: "Server" = frappe.get_doc(server_type, server_name)
-		if self.only_on_shared and not server.is_shared:
-			return
+		if self.only_on_shared and not server.public:
+			return None
 		if find(self.ignore_on_clusters, lambda x: x.cluster == server.cluster):
-			return
+			return None
 
 		if arguments is None:
 			arguments = {}
+
+		if not labels:
+			labels = {}
+
+		arguments.update({"labels": labels})
+
+		if existing_jobs := frappe.get_all(
+			"Press Job",
+			{
+				"status": ("in", ["Pending", "Running"]),
+				"server_type": server_type,
+				"server": server_name,
+			},
+			pluck="name",
+		):
+			return frappe.get_doc("Press Job", existing_jobs[0])
+
 		return frappe.get_doc(
 			{
 				"doctype": "Press Job",

@@ -13,8 +13,10 @@
   "partner_email",
   "frappe_partnership_date",
   "customer_partnership_date",
+  "billing_email",
   "column_break_4",
   "status",
+  "refund_reason",
   "marketplace",
   "type",
   "period_start",
@@ -23,22 +25,26 @@
   "amended_from",
   "section_break_8",
   "items",
+  "discounts_section",
+  "discount_note",
+  "column_break_mqqa",
+  "total_before_discount",
+  "total_discount_amount",
   "section_break_10",
-  "starting_balance",
-  "ending_balance",
   "payment_date",
   "payment_attempt_count",
   "payment_attempt_date",
+  "next_payment_attempt_date",
   "payment_mode",
-  "total_before_discount",
-  "total_discount_amount",
+  "write_off_amount",
   "column_break_15",
   "total",
   "total_before_tax",
-  "gst",
   "applied_credits",
   "free_credits",
   "amount_due",
+  "gst",
+  "amount_due_with_tax",
   "amount_paid",
   "section_break_15",
   "credit_allocations",
@@ -61,6 +67,14 @@
   "column_break_44",
   "razorpay_payment_id",
   "razorpay_payment_method",
+  "mpesa_billing_section",
+  "mpesa_payment_record",
+  "mpesa_receipt_number",
+  "mpesa_invoice",
+  "mpesa_invoice_pdf",
+  "column_break_ouox",
+  "mpesa_request_id",
+  "mpesa_merchant_id",
   "section_break_47",
   "discounts"
  ],
@@ -184,20 +198,6 @@
    "options": "Currency"
   },
   {
-   "fieldname": "starting_balance",
-   "fieldtype": "Currency",
-   "hidden": 1,
-   "label": "Starting Balance",
-   "options": "currency"
-  },
-  {
-   "fieldname": "ending_balance",
-   "fieldtype": "Currency",
-   "hidden": 1,
-   "label": "Ending Balance",
-   "options": "currency"
-  },
-  {
    "fieldname": "column_break_15",
    "fieldtype": "Column Break"
   },
@@ -234,6 +234,7 @@
    "no_copy": 1
   },
   {
+   "default": "0",
    "fieldname": "applied_credits",
    "fieldtype": "Currency",
    "label": "Applied Credits",
@@ -309,7 +310,7 @@
    "fieldname": "type",
    "fieldtype": "Select",
    "label": "Type",
-   "options": "Subscription\nPrepaid Credits\nService\nSummary"
+   "options": "Subscription\nPrepaid Credits\nService\nSummary\nPartnership Fees"
   },
   {
    "depends_on": "eval:doc.type == 'Prepaid Credits'",
@@ -428,8 +429,94 @@
   {
    "fieldname": "total_before_tax",
    "fieldtype": "Currency",
+   "hidden": 1,
    "label": "Total Before Tax",
    "options": "currency"
+  },
+  {
+   "fieldname": "write_off_amount",
+   "fieldtype": "Float",
+   "label": "Write-Off Amount",
+   "precision": "9"
+  },
+  {
+   "fieldname": "amount_due_with_tax",
+   "fieldtype": "Currency",
+   "label": "Amount Due (Including Tax)",
+   "no_copy": 1,
+   "options": "currency"
+  },
+  {
+   "fieldname": "discounts_section",
+   "fieldtype": "Section Break",
+   "label": "Discounts"
+  },
+  {
+   "fieldname": "discount_note",
+   "fieldtype": "Data",
+   "label": "Discount Note"
+  },
+  {
+   "fieldname": "column_break_mqqa",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "team.billing_email",
+   "fieldname": "billing_email",
+   "fieldtype": "Data",
+   "label": "Billing Email"
+  },
+  {
+   "depends_on": "eval:doc.payment_mode == \"Card\" && doc.status == \"Unpaid\"",
+   "fieldname": "next_payment_attempt_date",
+   "fieldtype": "Date",
+   "label": "Next Payment Attempt Date"
+  },
+  {
+   "depends_on": "eval: doc.status=='Refunded'",
+   "fieldname": "refund_reason",
+   "fieldtype": "Data",
+   "label": "Refund Reason"
+  },
+  {
+   "fieldname": "mpesa_billing_section",
+   "fieldtype": "Section Break",
+   "label": "Mpesa Billing"
+  },
+  {
+   "fieldname": "mpesa_payment_record",
+   "fieldtype": "Data",
+   "label": "Mpesa Payment Record"
+  },
+  {
+   "fieldname": "mpesa_request_id",
+   "fieldtype": "Data",
+   "label": "Mpesa Request ID"
+  },
+  {
+   "fieldname": "mpesa_receipt_number",
+   "fieldtype": "Data",
+   "label": "Mpesa Receipt Number"
+  },
+  {
+   "fieldname": "column_break_ouox",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "mpesa_merchant_id",
+   "fieldtype": "Data",
+   "label": "Mpesa Merchant ID"
+  },
+  {
+   "fieldname": "mpesa_invoice",
+   "fieldtype": "Data",
+   "label": "Mpesa Invoice"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "mpesa_invoice_pdf",
+   "fieldtype": "Attach",
+   "label": "Mpesa Invoice PDF"
   }
  ],
  "is_submittable": 1,
@@ -455,7 +542,7 @@
    "link_fieldname": "invoice"
   }
  ],
- "modified": "2024-03-12 15:24:29.792253",
+ "modified": "2025-02-02 19:05:05.300386",
  "modified_by": "Administrator",
  "module": "Press",
  "name": "Invoice",
@@ -486,6 +573,15 @@
    "role": "Press Admin",
    "submit": 1,
    "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Press Member"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Site Manager"
   }
  ],
  "sort_field": "modified",

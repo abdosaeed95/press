@@ -23,3 +23,59 @@ class MissingAppsInBench(ValidationError):
 
 class InsufficientSpaceOnServer(ValidationError):
 	pass
+
+
+class VolumeResizeLimitError(ValidationError):
+	pass
+
+
+class TeamHeaderNotInRequestError(ValidationError):
+	pass
+
+
+class AlertRuleNotEnabled(ValidationError):
+	pass
+
+
+class SiteUnderMaintenance(ValidationError):
+	pass
+
+
+class SiteAlreadyArchived(ValidationError):
+	pass
+
+
+class InactiveDomains(ValidationError):
+	pass
+
+
+class DNSValidationError(ValidationError):
+	pass
+
+
+class AAAARecordExists(DNSValidationError):
+	pass
+
+
+class DomainProxied(DNSValidationError):
+	pass
+
+
+class ConflictingCAARecord(DNSValidationError):
+	pass
+
+
+class ConflictingDNSRecord(DNSValidationError):
+	pass
+
+
+class MultipleARecords(DNSValidationError):
+	pass
+
+
+class MultipleCNAMERecords(DNSValidationError):
+	pass
+
+
+class TLSRetryLimitExceeded(ValidationError):
+	pass

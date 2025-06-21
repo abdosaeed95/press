@@ -1,17 +1,20 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2020, Frappe and contributors
 # For license information, please see license.txt
+from __future__ import annotations
 
+from typing import TYPE_CHECKING
 
 import frappe
+from frappe.utils import unique
+
+from press.agent import Agent
 from press.press.doctype.server.server import BaseServer
 from press.runner import Ansible
-from press.agent import Agent
 from press.utils import log_error
-from frappe.utils import unique
-from frappe.core.utils import find
 
-import boto3
+if TYPE_CHECKING:
+	from press.press.doctype.bench.bench import Bench
+	from press.press.doctype.root_domain.root_domain import RootDomain
 
 
 class ProxyServer(BaseServer):
@@ -22,11 +25,12 @@ class ProxyServer(BaseServer):
 
 	if TYPE_CHECKING:
 		from frappe.types import DF
-		from press.press.doctype.proxy_server_domain.proxy_server_domain import (
-			ProxyServerDomain,
-		)
+
+		from press.press.doctype.proxy_server_domain.proxy_server_domain import ProxyServerDomain
 
 		agent_password: DF.Password | None
+		auto_add_storage_max: DF.Int
+		auto_add_storage_min: DF.Int
 		cluster: DF.Link | None
 		disable_agent_job_auto_retry: DF.Check
 		domain: DF.Link | None
@@ -34,6 +38,7 @@ class ProxyServer(BaseServer):
 		enabled_default_routing: DF.Check
 		frappe_public_key: DF.Code | None
 		frappe_user_password: DF.Password | None
+		halt_agent_jobs: DF.Check
 		hostname: DF.Data
 		hostname_abbreviation: DF.Data | None
 		ip: DF.Data | None
@@ -52,6 +57,7 @@ class ProxyServer(BaseServer):
 		provider: DF.Literal["Generic", "Scaleway", "AWS EC2", "OCI"]
 		proxysql_admin_password: DF.Password | None
 		proxysql_monitor_password: DF.Password | None
+		public: DF.Check
 		root_public_key: DF.Code | None
 		self_hosted_server_domain: DF.Data | None
 		ssh_certificate_authority: DF.Link | None
@@ -78,7 +84,7 @@ class ProxyServer(BaseServer):
 		code_servers = [row.code_server for row in self.domains]
 		# Always include self.domain in the domains child table
 		# Remove duplicates
-		domains = unique([self.domain] + domains)
+		domains = unique([self.domain, *domains])
 		self.domains = []
 		for i, domain in enumerate(domains):
 			if not frappe.db.exists(
@@ -128,23 +134,17 @@ class ProxyServer(BaseServer):
 			"TLS Certificate", {"wildcard": True, "domain": self.domain}, "name"
 		)
 		certificate = frappe.get_doc("TLS Certificate", certificate_name)
-		monitoring_password = frappe.get_doc("Cluster", self.cluster).get_password(
-			"monitoring_password"
-		)
+		monitoring_password = frappe.get_doc("Cluster", self.cluster).get_password("monitoring_password")
 
 		log_server = frappe.db.get_single_value("Press Settings", "log_server")
 		if log_server:
-			kibana_password = frappe.get_doc("Log Server", log_server).get_password(
-				"kibana_password"
-			)
+			kibana_password = frappe.get_doc("Log Server", log_server).get_password("kibana_password")
 		else:
 			kibana_password = None
 
 		try:
 			ansible = Ansible(
-				playbook="self_hosted_proxy.yml"
-				if getattr(self, "is_self_hosted", False)
-				else "proxy.yml",
+				playbook="self_hosted_proxy.yml" if getattr(self, "is_self_hosted", False) else "proxy.yml",
 				server=self,
 				user=self.ssh_user or "root",
 				port=self.ssh_port or 22,
@@ -176,9 +176,7 @@ class ProxyServer(BaseServer):
 		self.save()
 
 	def _install_exporters(self):
-		monitoring_password = frappe.get_doc("Cluster", self.cluster).get_password(
-			"monitoring_password"
-		)
+		monitoring_password = frappe.get_doc("Cluster", self.cluster).get_password("monitoring_password")
 		try:
 			ansible = Ansible(
 				playbook="proxy_exporters.yml",
@@ -196,9 +194,7 @@ class ProxyServer(BaseServer):
 
 	@frappe.whitelist()
 	def setup_ssh_proxy(self):
-		frappe.enqueue_doc(
-			self.doctype, self.name, "_setup_ssh_proxy", queue="long", timeout=1200
-		)
+		frappe.enqueue_doc(self.doctype, self.name, "_setup_ssh_proxy", queue="long", timeout=1200)
 
 	def _setup_ssh_proxy(self):
 		settings = frappe.db.get_value(
@@ -233,9 +229,7 @@ class ProxyServer(BaseServer):
 	def setup_fail2ban(self):
 		self.status = "Installing"
 		self.save()
-		frappe.enqueue_doc(
-			self.doctype, self.name, "_setup_fail2ban", queue="long", timeout=1200
-		)
+		frappe.enqueue_doc(self.doctype, self.name, "_setup_fail2ban", queue="long", timeout=1200)
 
 	def _setup_fail2ban(self):
 		try:
@@ -256,9 +250,7 @@ class ProxyServer(BaseServer):
 
 	@frappe.whitelist()
 	def setup_proxysql(self):
-		frappe.enqueue_doc(
-			self.doctype, self.name, "_setup_proxysql", queue="long", timeout=1200
-		)
+		frappe.enqueue_doc(self.doctype, self.name, "_setup_proxysql", queue="long", timeout=1200)
 
 	def _setup_proxysql(self):
 		try:
@@ -289,9 +281,7 @@ class ProxyServer(BaseServer):
 	def setup_replication(self):
 		self.status = "Installing"
 		self.save()
-		frappe.enqueue_doc(
-			self.doctype, self.name, "_setup_replication", queue="long", timeout=1200
-		)
+		frappe.enqueue_doc(self.doctype, self.name, "_setup_replication", queue="long", timeout=1200)
 
 	def _setup_replication(self):
 		self._setup_secondary()
@@ -322,14 +312,11 @@ class ProxyServer(BaseServer):
 		self.save()
 
 	def _setup_secondary(self):
-		primary_public_key = frappe.db.get_value(
-			"Proxy Server", self.primary, "frappe_public_key"
-		)
 		try:
 			ansible = Ansible(
 				playbook="secondary_proxy.yml",
 				server=self,
-				variables={"primary_public_key": primary_public_key},
+				variables={"primary_public_key": self.get_primary_frappe_public_key()},
 			)
 			play = ansible.run()
 			self.reload()
@@ -349,76 +336,108 @@ class ProxyServer(BaseServer):
 			return
 		self.status = "Installing"
 		self.save()
-		frappe.enqueue_doc(
-			self.doctype, self.name, "_trigger_failover", queue="long", timeout=1200
+		frappe.enqueue_doc(self.doctype, self.name, "_trigger_failover", queue="long", timeout=3600)
+
+	def stop_primary(self):
+		primary = frappe.get_doc("Proxy Server", self.primary)
+		try:
+			ansible = Ansible(
+				playbook="failover_prepare_primary_proxy.yml",
+				server=primary,
+			)
+			ansible.run()
+		except Exception:
+			pass  # may be unreachable
+
+	def forward_jobs_to_secondary(self):
+		frappe.db.set_value(
+			"Agent Job",
+			{"server": self.primary, "status": "Undelivered"},
+			"server",
+			self.name,
 		)
+
+	def move_wildcard_domains_from_primary(self):
+		frappe.db.set_value(
+			"Proxy Server Domain",
+			{"parent": self.primary},
+			"parent",
+			self.name,
+		)
+
+	def remove_primarys_access(self):
+		ansible = Ansible(
+			playbook="failover_remove_primary_access.yml",
+			server=self,
+			variables={
+				"primary_public_key": frappe.db.get_value("Proxy Server", self.primary, "frappe_public_key")
+			},
+		)
+		ansible.run()
+
+	def up_secondary(self):
+		ansible = Ansible(playbook="failover_up_secondary_proxy.yml", server=self)
+		ansible.run()
+
+	def update_dns_records_for_all_sites(self):
+		from itertools import groupby
+
+		servers = frappe.get_all("Server", {"proxy_server": self.primary}, pluck="name")
+		sites_domains = frappe.get_all(
+			"Site",
+			{"status": ("!=", "Archived"), "server": ("in", servers)},
+			["name", "domain"],
+			order_by="domain",
+		)
+		for domain_name, sites in groupby(sites_domains, lambda x: x["domain"]):
+			domain: RootDomain = frappe.get_doc("Root Domain", domain_name)
+			domain.update_dns_records_for_sites([site.name for site in sites], self.name)
 
 	def _trigger_failover(self):
 		try:
-			self.update_dns_record()
-			self.reload_nginx()
+			self.update_dns_records_for_all_sites()
+			self.stop_primary()
+			self.remove_primarys_access()
+			self.forward_jobs_to_secondary()
+			self.up_secondary()
 			self.update_app_servers()
+			self.move_wildcard_domains_from_primary()
 			self.switch_primary()
+			self.add_ssh_users_for_existing_benches()
 		except Exception:
 			self.status = "Broken"
-			log_error("Proxy Server Failover Exception", server=self.as_dict())
+			log_error("Proxy Server Failover Exception", doc=self)
 		self.save()
 
-	def update_dns_record(self):
-		try:
-			domain = frappe.get_doc("Root Domain", self.domain)
-			client = boto3.client(
-				"route53",
-				aws_access_key_id=domain.aws_access_key_id,
-				aws_secret_access_key=domain.get_password("aws_secret_access_key"),
-			)
-			zones = client.list_hosted_zones_by_name()["HostedZones"]
-			# list_hosted_zones_by_name returns a lexicographically ordered list of zones
-			# i.e. x.example.com comes after example.com
-			# Name field has a trailing dot
-			hosted_zone = find(reversed(zones), lambda x: domain.name.endswith(x["Name"][:-1]))[
-				"Id"
-			]
-			client.change_resource_record_sets(
-				ChangeBatch={
-					"Changes": [
-						{
-							"Action": "UPSERT",
-							"ResourceRecordSet": {
-								"Name": self.primary,
-								"Type": "CNAME",
-								"TTL": 3600,
-								"ResourceRecords": [{"Value": self.name}],
-							},
-						}
-					]
-				},
-				HostedZoneId=hosted_zone,
-			)
-		except Exception:
-			self.status = "Broken"
-			log_error("Route 53 Record Update Error", domain=domain.name, server=self.name)
-
-	def reload_nginx(self):
-		agent = Agent(self.name, server_type="Proxy Server")
-		agent.restart_nginx()
+	def add_ssh_users_for_existing_benches(self):
+		benches = frappe.qb.DocType("Bench")
+		servers = frappe.qb.DocType("Server")
+		active_benches = (
+			frappe.qb.from_(benches)
+			.join(servers)
+			.on(servers.name == benches.server)
+			.select(benches.name)
+			.where(servers.proxy_server == self.primary)
+			.where(benches.status == "Active")
+			.run(as_dict=True)
+		)
+		for bench_name in active_benches:
+			bench: "Bench" = frappe.get_doc("Bench", bench_name)
+			bench.add_ssh_user()
 
 	def update_app_servers(self):
-		frappe.db.set_value(
-			"Server", {"proxy_server": self.primary}, "proxy_server", self.name
-		)
+		frappe.db.set_value("Server", {"proxy_server": self.primary}, "proxy_server", self.name)
 
 	def switch_primary(self):
-		primary = frappe.get_doc("Proxy Server", self.primary)
+		frappe.db.set_value("Proxy Server", self.primary, "is_primary", False)
 		self.is_primary = True
-		primary.is_primary = False
-		primary.save()
+		self.is_replication_setup = False
+		self.primary = None
+		self.status = "Active"
 
 	@frappe.whitelist()
 	def setup_proxysql_monitor(self):
-		frappe.enqueue_doc(
-			self.doctype, self.name, "_setup_proxysql_monitor", queue="long", timeout=1200
-		)
+		frappe.enqueue_doc(self.doctype, self.name, "_setup_proxysql_monitor", queue="long", timeout=1200)
 
 	def _setup_proxysql_monitor(self):
 		try:
@@ -444,9 +463,7 @@ class ProxyServer(BaseServer):
 	@frappe.whitelist()
 	def setup_wireguard(self):
 		if not self.private_ip_interface_id:
-			play = frappe.get_last_doc(
-				"Ansible Play", {"play": "Ping Server", "server": self.name}
-			)
+			play = frappe.get_last_doc("Ansible Play", {"play": "Ping Server", "server": self.name})
 			task = frappe.get_doc("Ansible Task", {"play": play.name, "task": "Gather Facts"})
 			import json
 
@@ -455,9 +472,7 @@ class ProxyServer(BaseServer):
 				if task_res[i]["ipv4"]["address"] == self.private_ip:
 					self.private_ip_interface_id = task_res[i]["device"]
 			self.save()
-		frappe.enqueue_doc(
-			self.doctype, self.name, "_setup_wireguard", queue="long", timeout=1200
-		)
+		frappe.enqueue_doc(self.doctype, self.name, "_setup_wireguard", queue="long", timeout=1200)
 
 	def _setup_wireguard(self):
 		try:
@@ -474,7 +489,7 @@ class ProxyServer(BaseServer):
 					"wireguard_private_key": False,
 					"wireguard_public_key": False,
 					"peers": "",
-					"reload_wireguard": True if self.is_wireguard_setup else False,
+					"reload_wireguard": bool(self.is_wireguard_setup),
 				},
 			)
 			play = ansible.run()
@@ -494,9 +509,7 @@ class ProxyServer(BaseServer):
 
 	@frappe.whitelist()
 	def reload_wireguard(self):
-		frappe.enqueue_doc(
-			"Proxy Server", self.name, "_reload_wireguard", queue="default", timeout=1200
-		)
+		frappe.enqueue_doc("Proxy Server", self.name, "_reload_wireguard", queue="default", timeout=1200)
 
 	def _reload_wireguard(self):
 		import json

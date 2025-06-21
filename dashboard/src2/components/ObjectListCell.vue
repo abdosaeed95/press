@@ -32,7 +32,7 @@
 		<div v-else-if="column.type == 'Select'">
 			<Dropdown :options="formattedValue" right>
 				<template v-slot="{ open }">
-					<Button type="white" icon-right="chevron-down">
+					<Button variant="outline" icon-right="chevron-down">
 						{{ row.selectedOption || value[0] }}
 					</Button>
 				</template>
@@ -49,7 +49,7 @@
 			{{ formattedDate }}
 		</div>
 		<div v-else-if="column.type == 'Actions'">
-			<Dropdown v-if="showDropdown" :options="actions">
+			<Dropdown v-if="showDropdown" :options="actions" @click.stop>
 				<button
 					class="flex items-center rounded bg-gray-100 px-1 py-0.5 hover:bg-gray-200"
 				>

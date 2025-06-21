@@ -30,7 +30,7 @@ frappe.ui.form.on('Site', {
 				</div>
 			</div>`,
 		);
-		frm.add_web_link(`https://${frm.doc.name}`, __('Visit Site'));
+		frm.add_web_link(`https://${frm.doc.name}/apps`, __('Visit Site'));
 		frm.add_web_link(`/dashboard/sites/${frm.doc.name}`, __('Visit Dashboard'));
 
 		let site = frm.get_doc();
@@ -84,6 +84,7 @@ frappe.ui.form.on('Site', {
 
 		[
 			[__('Backup'), 'backup'],
+			[__('Physical Backup'), 'physical_backup'],
 			[__('Sync Info'), 'sync_info'],
 		].forEach(([label, method]) => {
 			frm.add_custom_button(
@@ -97,6 +98,7 @@ frappe.ui.form.on('Site', {
 		[
 			[__('Archive'), 'archive', frm.doc.status !== 'Archived'],
 			[__('Cleanup after Archive'), 'cleanup_after_archive'],
+			[__('Sync Apps'), 'sync_apps'],
 			[__('Migrate'), 'migrate'],
 			[__('Reinstall'), 'reinstall'],
 			[__('Restore'), 'restore_site'],
@@ -108,27 +110,7 @@ frappe.ui.form.on('Site', {
 			[__('Clear Cache'), 'clear_site_cache'],
 			[__('Optimize Tables'), 'optimize_tables'],
 			[__('Update Site Config'), 'update_site_config'],
-			[
-				__('Enable Database Access'),
-				'enable_database_access',
-				!frm.doc.is_database_access_enabled,
-			],
-			[
-				__('Disable Database Access'),
-				'disable_database_access',
-				frm.doc.is_database_access_enabled,
-			],
 			[__('Create DNS Record'), 'create_dns_record'],
-			[
-				__('Enable Database Write Access'),
-				'enable_read_write',
-				frm.doc.database_access_mode == 'read_only',
-			],
-			[
-				__('Disable Database Write Access'),
-				'disable_read_write',
-				frm.doc.database_access_mode == 'read_write',
-			],
 			[__('Run After Migrate Steps'), 'run_after_migrate_steps'],
 			[__('Retry Rename'), 'retry_rename'],
 			[
@@ -142,6 +124,14 @@ frappe.ui.form.on('Site', {
 				'fetch_bench_from_agent',
 				frm.doc.status !== 'Archived',
 			],
+			[
+				__('Set status based on Ping'),
+				'set_status_based_on_ping',
+				!['Active', 'Archived', 'Inactive', 'Suspended'].includes(
+					frm.doc.status,
+				),
+			],
+			[__('Show Admin Password'), 'show_admin_password'],
 		].forEach(([label, method, condition]) => {
 			if (typeof condition === 'undefined' || condition) {
 				frm.add_custom_button(
@@ -156,6 +146,14 @@ frappe.ui.form.on('Site', {
 				);
 			}
 		});
+
+		frm.add_custom_button(
+			__('Update Skip Failing Patches'),
+			() => {
+				frm.call('schedule_update', { skip_failing_patches: true });
+			},
+			__('Actions'),
+		);
 
 		frm.add_custom_button(
 			__('Force Archive'),
@@ -195,29 +193,6 @@ frappe.ui.form.on('Site', {
 			);
 		});
 		frm.toggle_enable(['host_name'], frm.doc.status === 'Active');
-
-		if (frm.doc.is_database_access_enabled) {
-			frm.add_custom_button(
-				__('Show Database Credentials'),
-				() =>
-					frm.call('get_database_credentials').then((r) => {
-						let message = `Host: ${r.message.host}
-
-Port: ${r.message.port}
-
-Database: ${r.message.database}
-
-Username: ${r.message.username}
-
-Password: ${r.message.password}
-
-\`\`\`\nmysql -u ${r.message.username} -p${r.message.password} -h ${r.message.host} -P ${r.message.port} --ssl --ssl-verify-server-cert\n\`\`\``;
-
-						frappe.msgprint(frappe.markdown(message), 'Database Credentials');
-					}),
-				__('Actions'),
-			);
-		}
 
 		frm.add_custom_button(
 			__('Replicate Site'),
@@ -379,6 +354,61 @@ ${r.message.error}
 									'Failed to Remove Site',
 								);
 							}
+						});
+				});
+
+				dialog.show();
+			},
+			__('Dangerous Actions'),
+		);
+
+		frm.add_custom_button(
+			__('Forcefully Move Site'),
+			() => {
+				const dialog = new frappe.ui.Dialog({
+					title: __('Forcefully Move Site'),
+					fields: [
+						{
+							fieldtype: 'Link',
+							options: 'Bench',
+							label: __('Bench'),
+							fieldname: 'bench',
+							reqd: 1,
+							get_query: () => {
+								return {
+									filters: [
+										['name', '!=', frm.doc.bench],
+										['status', '!=', 'Archived'],
+									],
+								};
+							},
+						},
+						{
+							fieldtype: 'Check',
+							label: __("I know what I'm doing"),
+							fieldname: 'confirmation',
+							reqd: 1,
+						},
+						{
+							fieldtype: 'Check',
+							label: __('Deactivate'),
+							fieldname: 'deactivate',
+						},
+					],
+				});
+
+				dialog.set_primary_action(__('Forcefully Move Site'), (args) => {
+					if (!args.confirmation) {
+						frappe.throw(__("Please confirm that you know what you're doing"));
+					}
+					frm
+						.call('move_to_bench', {
+							bench: args.bench,
+							deactivate: args.deactivate,
+						})
+						.then(() => {
+							dialog.hide();
+							frm.refresh();
 						});
 				});
 

@@ -1,5 +1,9 @@
 <template>
-	<Card title="Email Notifications">
+	<Card
+		v-if="$team?.doc?.user === $session?.user"
+		title="Email Notifications"
+		class="mx-auto max-w-3xl"
+	>
 		<template #actions>
 			<Button icon-left="edit" @click="showEmailsEditDialog = true">
 				Edit
@@ -40,15 +44,25 @@
 </template>
 
 <script>
+import { toast } from 'vue-sonner';
 export default {
 	name: 'AccountEmails',
+	data() {
+		return {
+			showEmailsEditDialog: false,
+			emailData: []
+		};
+	},
 	resources: {
 		getEmails() {
 			return {
 				url: 'press.api.account.get_emails',
 				auto: true,
-				onSuccess(res) {
-					this.emailData = res;
+				transform(data) {
+					this.emailData = data.map(d => ({
+						type: d.type,
+						value: d.value
+					}));
 				}
 			};
 		},
@@ -60,21 +74,16 @@ export default {
 				},
 				onSuccess(res) {
 					this.showEmailsEditDialog = false;
+					toast.success('Emails updated successfully');
 				}
 			};
 		}
 	},
-	data() {
-		return {
-			showEmailsEditDialog: false,
-			emailData: []
-		};
-	},
 	computed: {
 		fieldLabelMap() {
 			return {
-				invoices: 'Send invoices to',
-				marketplace_notifications: 'Send marketplace emails to'
+				billing_email: 'Get billing emails at',
+				notify_email: 'Get operational emails at'
 			};
 		}
 	}

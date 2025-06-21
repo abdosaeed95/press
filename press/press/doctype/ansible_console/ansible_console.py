@@ -1,8 +1,9 @@
 # Copyright (c) 2023, Frappe and contributors
 # For license information, please see license.txt
 
+from __future__ import annotations
+
 import json
-import shutil
 
 import frappe
 from ansible import constants, context
@@ -15,6 +16,7 @@ from ansible.plugins.callback import CallbackBase
 from ansible.vars.manager import VariableManager
 from frappe.model.document import Document
 from frappe.utils import get_timedelta
+
 from press.utils import reconnect_on_failure
 
 
@@ -26,6 +28,7 @@ class AnsibleConsole(Document):
 
 	if TYPE_CHECKING:
 		from frappe.types import DF
+
 		from press.press.doctype.ansible_console_output.ansible_console_output import (
 			AnsibleConsoleOutput,
 		)
@@ -57,7 +60,9 @@ class AnsibleConsole(Document):
 @frappe.whitelist()
 def execute_command(doc):
 	frappe.enqueue(
-		"press.press.doctype.ansible_console.ansible_console._execute_command", doc=doc
+		"press.press.doctype.ansible_console.ansible_console._execute_command",
+		doc=doc,
+		timeout=7200,
 	)
 	return doc
 
@@ -70,7 +75,7 @@ def _execute_command(doc):
 
 class AnsibleCallback(CallbackBase):
 	def __init__(self, *args, **kwargs):
-		super(AnsibleCallback, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		self.hosts = {}
 
 	def v2_runner_on_ok(self, result, *args, **kwargs):
@@ -140,8 +145,13 @@ class AnsibleAdHoc:
 
 		self.callback = AnsibleCallback()
 
-	def run(self, command, nonce=None):
-		self.tasks = [dict(action=dict(module="shell", args=command))]
+	def run(self, command, nonce=None, raw_params: bool = False):
+		shell_command_args = command
+		if raw_params:
+			shell_command_args = {
+				"_raw_params": command,
+			}
+		self.tasks = [dict(action=dict(module="shell", args=shell_command_args))]
 		source = dict(
 			name="Ansible Play",
 			hosts="all",
@@ -149,9 +159,7 @@ class AnsibleAdHoc:
 			tasks=self.tasks,
 		)
 
-		self.play = Play().load(
-			source, variable_manager=self.variable_manager, loader=self.loader
-		)
+		self.play = Play().load(source, variable_manager=self.variable_manager, loader=self.loader)
 
 		self.callback.nonce = nonce
 
@@ -168,9 +176,6 @@ class AnsibleAdHoc:
 			tqm.run(self.play)
 		finally:
 			tqm.cleanup()
-			self.loader.cleanup_all_tmp_files()
-
-		shutil.rmtree(constants.DEFAULT_LOCAL_TMP, True)
 
 		self.callback.publish_update()
 		return list(self.callback.hosts.values())

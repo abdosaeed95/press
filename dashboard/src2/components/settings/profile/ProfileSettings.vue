@@ -1,19 +1,19 @@
 <template>
-	<div class="space-y-5 p-5">
-		<div class="grid grid-cols-1 items-start gap-5 sm:grid-cols-2">
+	<div class="p-5">
+		<div class="space-y-5">
 			<AccountProfile />
-			<AccountEmails />
 			<AccountReferral />
 			<AccountPartner />
+			<AccountEmails />
 		</div>
 	</div>
 </template>
 
 <script setup>
-import AccountEmails from './AccountEmails.vue';
 import AccountProfile from './AccountProfile.vue';
 import AccountReferral from './AccountReferral.vue';
 import AccountPartner from './AccountPartner.vue';
+import AccountEmails from './AccountEmails.vue';
 
 document.title = 'Settings - Profile';
 </script>

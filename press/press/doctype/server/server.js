@@ -8,8 +8,14 @@ frappe.ui.form.on('Server', {
 			__('Visit Dashboard'),
 		);
 
-		[
+		const ping_actions = [
 			[__('Ping Agent'), 'ping_agent', false, frm.doc.is_server_setup],
+			[
+				__('Ping Agent (Job)'),
+				'ping_agent_job',
+				false,
+				frm.doc.is_server_setup,
+			],
 			[__('Ping Ansible'), 'ping_ansible', true, !frm.doc.is_server_prepared],
 			[
 				__('Ping Ansible Unprepared'),
@@ -17,12 +23,52 @@ frappe.ui.form.on('Server', {
 				true,
 				!frm.doc.is_server_prepared,
 			],
+		];
+
+		for (const [label, method, confirm, condition] of ping_actions) {
+			if (!condition || typeof condition === 'undefined') {
+				continue;
+			}
+
+			async function callback() {
+				if (confirm && !(await frappe_confirm(label))) {
+					return;
+				}
+
+				const res = await frm.call(method);
+				if (res.message && method == 'ping_agent_job') {
+					frappe.msgprint(
+						`Agejt Job <a href="/app/agent-job/${res?.message}">${res?.message}</a> created.`,
+					);
+				} else if (res.message) {
+					frappe.msgprint(res.message);
+				} else {
+					frm.refresh();
+				}
+			}
+
+			frm.add_custom_button(label, callback, __('Ping'));
+		}
+
+		[
 			[__('Update Agent'), 'update_agent', true, frm.doc.is_server_setup],
+			[
+				__('Install Filebeat'),
+				'install_filebeat',
+				true,
+				frm.doc.is_server_setup,
+			],
 			[
 				__('Update Agent Ansible'),
 				'update_agent_ansible',
 				true,
 				frm.doc.is_server_setup,
+			],
+			[
+				__('Setup PySpy'),
+				'setup_pyspy',
+				false,
+				frm.doc.is_server_setup && !frm.doc.is_pyspy_setup,
 			],
 			[
 				__('Prepare Server'),
@@ -103,8 +149,20 @@ frappe.ui.form.on('Server', {
 				frm.doc.is_server_setup,
 			],
 			[
+				__('Start Active Benches'),
+				'start_active_benches',
+				true,
+				frm.doc.is_server_setup,
+			],
+			[
 				__('Show Agent Password'),
 				'show_agent_password',
+				false,
+				frm.doc.is_server_setup,
+			],
+			[
+				__('Show Agent Version'),
+				'show_agent_version',
 				false,
 				frm.doc.is_server_setup,
 			],
@@ -138,7 +196,39 @@ frappe.ui.form.on('Server', {
 				__('Reboot with serial console'),
 				'reboot_with_serial_console',
 				true,
+				frm.doc.provider === 'AWS EC2',
+			],
+			[
+				__('Enable Public Bench and Site Creation'),
+				'enable_server_for_new_benches_and_site',
+				true,
 				frm.doc.virtual_machine,
+			],
+			[
+				__('Disable Public Bench and Site Creation'),
+				'disable_server_for_new_benches_and_site',
+				true,
+				frm.doc.virtual_machine,
+			],
+			[
+				__('Set Swappiness and SysRq'),
+				'set_swappiness',
+				false,
+				frm.doc.is_server_setup,
+			],
+			[
+				__('Mount Volumes'),
+				'mount_volumes',
+				true,
+				frm.doc.virtual_machine && frm.doc.mounts,
+			],
+			[
+				__('Collect ARM Images'),
+				'collect_arm_images',
+				true,
+				frm.doc.virtual_machine &&
+					frm.doc.status === 'Active' &&
+					frm.doc.platform === 'x86_64',
 			],
 		].forEach(([label, method, confirm, condition]) => {
 			if (typeof condition === 'undefined' || condition) {
@@ -171,6 +261,7 @@ frappe.ui.form.on('Server', {
 				);
 			}
 		});
+
 		if (frm.doc.is_server_setup) {
 			frm.add_custom_button(
 				__('Increase Swap'),
@@ -180,8 +271,8 @@ frappe.ui.form.on('Server', {
 						fields: [
 							{
 								fieldtype: 'Int',
-								label: __('Swap Size'),
-								description: __('Size in GB'),
+								label: __('Swap Size (GB)'),
+								description: __('Add additional swap'),
 								fieldname: 'swap_size',
 								default: 4,
 							},
@@ -198,6 +289,34 @@ frappe.ui.form.on('Server', {
 				},
 				__('Actions'),
 			);
+			frm.add_custom_button(
+				__('Reset Swap'),
+				() => {
+					const dialog = new frappe.ui.Dialog({
+						title: __('Swap Size'),
+						fields: [
+							{
+								fieldtype: 'Int',
+								label: __('Swap Size (GB)'),
+								description: __(
+									'This will reset swap space to specified size. 0 or empty to remove all.',
+								),
+								fieldname: 'swap_size',
+								default: 1,
+							},
+						],
+					});
+
+					dialog.set_primary_action(__('Reset Swap'), (args) => {
+						frm.call('reset_swap', args).then(() => {
+							dialog.hide();
+							frm.refresh();
+						});
+					});
+					dialog.show();
+				},
+				__('Actions'),
+			);
 		}
 	},
 
@@ -205,3 +324,13 @@ frappe.ui.form.on('Server', {
 		press.set_hostname_abbreviation(frm);
 	},
 });
+
+async function frappe_confirm(label) {
+	return new Promise((r) => {
+		frappe.confirm(
+			`Are you sure you want to ${label.toLowerCase()}?`,
+			() => r(true),
+			() => r(false),
+		);
+	});
+}

@@ -18,7 +18,7 @@
 							v-if="site?.status === 'Active'"
 							icon-left="external-link"
 							label="Visit Site"
-							:link="`https://${site?.name}`"
+							:link="`https://${site?.name}/apps`"
 						/>
 						<Dropdown :options="siteActions">
 							<template v-slot="{ open }">
@@ -340,10 +340,10 @@ export default {
 				{
 					label: 'Manage Bench',
 					icon: 'tool',
-					route: `/benches/${this.site?.group}`,
+					route: `/groups/${this.site?.group}`,
 					condition: () => this.site?.group,
 					onClick: () => {
-						this.$router.push(`/benches/${this.site?.group}`);
+						this.$router.push(`/groups/${this.site?.group}`);
 					}
 				},
 				{

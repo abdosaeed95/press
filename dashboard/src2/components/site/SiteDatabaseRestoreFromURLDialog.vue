@@ -2,16 +2,6 @@
 	<Dialog
 		:options="{
 			title: 'Restore from an existing site',
-			actions: [
-				{
-					label: 'Restore',
-					variant: 'solid',
-					theme: 'red',
-					loading: $resources.restoreBackup.loading,
-					disabled: !$resources.getBackupLinks.data,
-					onClick: () => $resources.restoreBackup.submit()
-				}
-			]
 		}"
 		v-model="showRestoreDialog"
 	>
@@ -21,8 +11,8 @@
 			>
 				<i-lucide-alert-triangle class="mr-4 inline-block h-6 w-6" />
 				<div>
-					This operation will replace the current <b>data</b> & <b>apps</b> in
-					your site with those from the backup
+					This will overwrite the current <b>data</b> & <b>apps</b> in your site
+					with those from the backup
 				</div>
 			</div>
 			<div class="space-y-4">
@@ -55,18 +45,30 @@
 				"
 			/>
 		</template>
+		<template #actions>
+			<Button
+				class="w-full"
+				label="Restore"
+				variant="solid"
+				theme="red"
+				:loading="$resources.restoreBackup.loading"
+				:disabled="!$resources.getBackupLinks.data"
+				@click="$resources.restoreBackup.submit"
+			/>
+		</template>
 	</Dialog>
 </template>
 <script>
 import { date } from '../../utils/format';
+import { DashboardError } from '../../utils/error';
 
 export default {
 	name: 'SiteDatabaseRestoreDialog',
 	props: {
 		site: {
 			type: String,
-			required: true
-		}
+			required: true,
+		},
 	},
 	data() {
 		return {
@@ -76,10 +78,10 @@ export default {
 			selectedFiles: {
 				database: null,
 				public: null,
-				private: null
+				private: null,
 			},
 			showRestoreDialog: true,
-			skipFailingPatches: false
+			skipFailingPatches: false,
 		};
 	},
 	resources: {
@@ -89,24 +91,24 @@ export default {
 				params: {
 					url: this.siteURL,
 					email: this.email,
-					password: this.password
+					password: this.password,
 				},
 				validate() {
 					if (!this.siteURL) {
-						return 'Site URL is required';
+						throw new DashboardError('Site URL is required');
 					}
 					if (!this.email) {
-						return 'Email is required';
+						throw new DashboardError('Email is required');
 					}
 					if (!this.password) {
-						return 'Password is required';
+						throw new DashboardError('Password is required');
 					}
 				},
 				onSuccess(remoteFiles) {
 					for (let file of remoteFiles) {
 						this.selectedFiles[file.type] = file.remote_file;
 					}
-				}
+				},
 			};
 		},
 		restoreBackup() {
@@ -115,11 +117,13 @@ export default {
 				params: {
 					name: this.site,
 					files: this.selectedFiles,
-					skip_failing_patches: this.skipFailingPatches
+					skip_failing_patches: this.skipFailingPatches,
 				},
 				validate() {
 					if (!this.selectedFiles.database) {
-						return 'Something went wrong while fetching the backups from the site';
+						throw new DashboardError(
+							'Something went wrong while fetching the backups from the site',
+						);
 					}
 				},
 				onSuccess() {
@@ -129,12 +133,12 @@ export default {
 					this.showRestoreDialog = false;
 
 					this.$router.push({
-						name: 'Site Detail Jobs',
-						params: { objectType: 'Site', name: this.site }
+						name: 'Site Jobs',
+						params: { name: this.site },
 					});
-				}
+				},
 			};
-		}
+		},
 	},
 	computed: {
 		fetchedBackupFileTimestamp() {
@@ -147,7 +151,7 @@ export default {
 				.join('T');
 
 			return date(timestamp_string);
-		}
-	}
+		},
+	},
 };
 </script>

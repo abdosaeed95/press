@@ -1,20 +1,25 @@
 import { defineAsyncComponent, h } from 'vue';
+import LucideAppWindow from '~icons/lucide/app-window';
 import ServerActions from '../components/server/ServerActions.vue';
-import { planTitle, duration } from '../utils/format';
-import { icon } from '../utils/components';
 import { getTeam } from '../data/team';
-import { tagTab } from './common/tags';
 import router from '../router';
+import { icon } from '../utils/components';
+import { duration, planTitle, userCurrency } from '../utils/format';
+import { trialDays } from '../utils/site';
+import { getJobsTab } from './common/jobs';
+import { tagTab } from './common/tags';
 
 export default {
 	doctype: 'Server',
 	whitelistedMethods: {
+		increaseDiskSize: 'increase_disk_size_for_server',
+		configureAutoAddStorage: 'configure_auto_add_storage',
 		changePlan: 'change_plan',
 		reboot: 'reboot',
 		rename: 'rename',
 		dropServer: 'drop_server',
 		addTag: 'add_resource_tag',
-		removeTag: 'remove_resource_tag'
+		removeTag: 'remove_resource_tag',
 	},
 	list: {
 		route: '/servers',
@@ -26,8 +31,37 @@ export default {
 			'plan.price_usd as price_usd',
 			'plan.price_inr as price_inr',
 			'cluster.image as cluster_image',
-			'cluster.title as cluster_title'
+			'cluster.title as cluster_title',
 		],
+		searchField: 'title',
+		filterControls() {
+			return [
+				{
+					type: 'select',
+					label: 'Status',
+					fieldname: 'status',
+					options: ['', 'Active', 'Pending'],
+				},
+				{
+					type: 'select',
+					label: 'Region',
+					fieldname: 'cluster',
+					options: [
+						'',
+						'Bahrain',
+						'Cape Town',
+						'Frankfurt',
+						'KSA',
+						'London',
+						'Mumbai',
+						'Singapore',
+						'UAE',
+						'Virginia',
+						'Zurich',
+					],
+				},
+			];
+		},
 		orderBy: 'creation desc',
 		columns: [
 			{
@@ -37,14 +71,14 @@ export default {
 				class: 'font-medium',
 				format(value, row) {
 					return row.title || value;
-				}
+				},
 			},
 			{ label: 'Status', fieldname: 'status', type: 'Badge', width: 0.8 },
 			{
 				label: 'App Server Plan',
 				format(value, row) {
 					return planTitle(row);
-				}
+				},
 			},
 			{
 				label: 'Database Server Plan',
@@ -52,7 +86,7 @@ export default {
 				format(value) {
 					if (!value) return '';
 					return planTitle(value);
-				}
+				},
 			},
 			{
 				label: 'Region',
@@ -64,42 +98,42 @@ export default {
 					return h('img', {
 						src: row.cluster_image,
 						class: 'w-4 h-4',
-						alt: row.cluster_title
+						alt: row.cluster_title,
 					});
-				}
-			}
+				},
+			},
 		],
 		primaryAction({ listResource: servers }) {
 			return {
 				label: 'New Server',
 				variant: 'solid',
 				slots: {
-					prefix: icon('plus')
+					prefix: icon('plus'),
 				},
 				onClick() {
 					router.push({ name: 'New Server' });
-				}
+				},
 			};
-		}
+		},
 	},
 	detail: {
 		titleField: 'name',
 		route: '/servers/:name',
 		statusBadge({ documentResource: server }) {
 			return {
-				label: server.doc.status
+				label: server.doc.status,
 			};
 		},
 		breadcrumbs({ documentResource: server }) {
 			return [
 				{
 					label: 'Servers',
-					route: '/servers'
+					route: '/servers',
 				},
 				{
 					label: server.doc.title || server.doc.name,
-					route: `/servers/${server.doc.name}`
-				}
+					route: `/servers/${server.doc.name}`,
+				},
 			];
 		},
 		actions({ documentResource: server }) {
@@ -107,18 +141,32 @@ export default {
 
 			return [
 				{
+					label: 'Impersonate Server Owner',
+					title: 'Impersonate Server Owner', // for label to pop-up on hover
+					slots: {
+						icon: defineAsyncComponent(
+							() => import('~icons/lucide/venetian-mask'),
+						),
+					},
+					condition: () =>
+						$team.doc?.is_desk_user && server.doc.team !== $team.name,
+					onClick() {
+						switchToTeam(server.doc.team);
+					},
+				},
+				{
 					label: 'Options',
 					button: {
 						label: 'Options',
 						slots: {
-							icon: icon('more-horizontal')
-						}
+							icon: icon('more-horizontal'),
+						},
 					},
 					options: [
 						{
 							label: 'View in Desk',
 							icon: icon('external-link'),
-							condition: () => $team.doc.is_desk_user,
+							condition: () => $team.doc?.is_desk_user,
 							onClick() {
 								window.open(
 									`${window.location.protocol}//${
@@ -126,21 +174,21 @@ export default {
 									}/app/${server.doctype.replace(' ', '-').toLowerCase()}/${
 										server.doc.name
 									}`,
-									'_blank'
+									'_blank',
 								);
-							}
+							},
 						},
 						{
 							label: 'Visit Server',
 							icon: icon('external-link'),
 							condition: () =>
-								server.doc.status === 'Active' && $team.doc.is_desk_user,
+								server.doc.status === 'Active' && $team.doc?.is_desk_user,
 							onClick() {
 								window.open(`https://${server.doc.name}`, '_blank');
-							}
-						}
-					]
-				}
+							},
+						},
+					],
+				},
 			];
 		},
 		tabs: [
@@ -149,35 +197,141 @@ export default {
 				icon: icon('home'),
 				route: 'overview',
 				type: 'Component',
-				component: defineAsyncComponent(() =>
-					import('../components/server/ServerOverview.vue')
+				component: defineAsyncComponent(
+					() => import('../components/server/ServerOverview.vue'),
 				),
-				props: server => {
+				props: (server) => {
 					return { server: server.doc.name };
-				}
+				},
 			},
 			{
 				label: 'Analytics',
 				icon: icon('bar-chart-2'),
 				route: 'analytics',
 				type: 'Component',
-				component: defineAsyncComponent(() =>
-					import('../../src/views/server/ServerAnalytics.vue')
+				component: defineAsyncComponent(
+					() => import('../components/server/ServerCharts.vue'),
 				),
-				props: server => {
+				props: (server) => {
 					return {
-						serverName: server.doc.name
+						serverName: server.doc.name,
 					};
-				}
+				},
 			},
 			{
-				label: 'Benches',
+				label: 'Sites',
+				icon: icon(LucideAppWindow),
+				route: 'sites',
+				type: 'list',
+				list: {
+					doctype: 'Site',
+					filters: (server) => {
+						return { server: server.doc.name };
+					},
+					fields: [
+						'plan.plan_title as plan_title',
+						'plan.price_usd as price_usd',
+						'plan.price_inr as price_inr',
+						'group.title as group_title',
+						'group.public as group_public',
+						'group.team as group_team',
+						'group.version as version',
+						'trial_end_date',
+					],
+					orderBy: 'creation desc',
+					searchField: 'host_name',
+					route(row) {
+						return { name: 'Site Detail', params: { name: row.name } };
+					},
+					filterControls() {
+						return [
+							{
+								type: 'select',
+								label: 'Status',
+								fieldname: 'status',
+								options: ['', 'Active', 'Inactive', 'Suspended', 'Broken'],
+							},
+							{
+								type: 'link',
+								label: 'Version',
+								fieldname: 'group.version',
+								options: {
+									doctype: 'Frappe Version',
+								},
+							},
+							{
+								type: 'link',
+								label: 'Bench Group',
+								fieldname: 'group',
+								options: {
+									doctype: 'Release Group',
+								},
+							},
+							{
+								type: 'link',
+								label: 'Tag',
+								fieldname: 'tags.tag',
+								options: {
+									doctype: 'Press Tag',
+									filters: {
+										doctype_name: 'Site',
+									},
+								},
+							},
+						];
+					},
+					columns: [
+						{
+							label: 'Site',
+							fieldname: 'host_name',
+							width: 1.5,
+							class: 'font-medium',
+							format(value, row) {
+								return value || row.name;
+							},
+						},
+						{ label: 'Status', fieldname: 'status', type: 'Badge', width: 0.6 },
+						{
+							label: 'Plan',
+							fieldname: 'plan',
+							width: 0.85,
+							format(value, row) {
+								if (row.trial_end_date) {
+									return trialDays(row.trial_end_date);
+								}
+								let $team = getTeam();
+								if (row.price_usd > 0) {
+									let india = $team.doc.country == 'India';
+									let formattedValue = userCurrency(
+										india ? row.price_inr : row.price_usd,
+										0,
+									);
+									return `${formattedValue}/mo`;
+								}
+								return row.plan_title;
+							},
+						},
+						{
+							label: 'Bench Group',
+							fieldname: 'group_title',
+							width: '15rem',
+						},
+						{
+							label: 'Version',
+							fieldname: 'version',
+							width: 0.5,
+						},
+					],
+				},
+			},
+			{
+				label: 'Bench Groups',
 				icon: icon('package'),
-				route: 'benches',
+				route: 'groups',
 				type: 'list',
 				list: {
 					doctype: 'Release Group',
-					filters: server => {
+					filters: (server) => {
 						return { server: server.doc.name };
 					},
 					fields: [{ apps: ['app'] }, { servers: ['server'] }],
@@ -191,104 +345,73 @@ export default {
 							format: (value, row) => {
 								if (!value) return 'Awaiting Deploy';
 								else return 'Active';
-							}
+							},
 						},
 						{
 							label: 'Version',
 							fieldname: 'version',
-							width: 0.5
+							width: 0.5,
 						},
 						{
 							label: 'Apps',
 							fieldname: 'app',
 							format: (value, row) => {
-								return (row.apps || []).map(d => d.app).join(', ');
+								return (row.apps || []).map((d) => d.app).join(', ');
 							},
-							width: '25rem'
+							width: '25rem',
 						},
 						{
 							label: 'Sites',
 							fieldname: 'site_count',
-							width: 0.25
-						}
+							width: 0.25,
+						},
 					],
+					filterControls() {
+						return [
+							{
+								type: 'link',
+								label: 'Version',
+								fieldname: 'version',
+								options: {
+									doctype: 'Frappe Version',
+								},
+							},
+							{
+								type: 'link',
+								label: 'Tag',
+								fieldname: 'tags.tag',
+								options: {
+									doctype: 'Press Tag',
+									filters: {
+										doctype_name: 'Release Group',
+									},
+								},
+							},
+						];
+					},
 					route(row) {
 						return {
 							name: 'Release Group Detail',
-							params: { name: row.name }
+							params: { name: row.name },
 						};
 					},
 					primaryAction({ listResource: benches, documentResource: server }) {
 						return {
-							label: 'New Bench',
+							label: 'New Bench Group',
 							slots: {
-								prefix: icon('plus')
+								prefix: icon('plus'),
 							},
 							onClick() {
 								router.push({
-									name: 'Server New Bench',
-									params: { server: server.doc.name }
+									name: 'Server New Release Group',
+									params: { server: server.doc.name },
 								});
-							}
-						};
-					}
-				}
-			},
-			{
-				label: 'Jobs',
-				icon: icon('truck'),
-				childrenRoutes: ['Server Job'],
-				route: 'jobs',
-				type: 'list',
-				list: {
-					doctype: 'Agent Job',
-					filters: server => {
-						return { server: server.doc.name };
-					},
-					route(row) {
-						return {
-							name: 'Server Job',
-							params: { id: row.name }
+							},
 						};
 					},
-					orderBy: 'creation desc',
-					fields: ['server', 'end'],
-					columns: [
-						{
-							label: 'Job Type',
-							fieldname: 'job_type',
-							width: 2
-						},
-						{
-							label: 'Status',
-							fieldname: 'status',
-							type: 'Badge'
-						},
-						{
-							label: 'Job ID',
-							fieldname: 'job_id'
-						},
-						{
-							label: 'Duration',
-							fieldname: 'duration',
-							format(value, row) {
-								if (row.job_id === 0 || !row.end) return;
-								return duration(value);
-							}
-						},
-						{
-							label: 'Created By',
-							fieldname: 'owner'
-						},
-						{
-							label: '',
-							fieldname: 'creation',
-							type: 'Timestamp',
-							align: 'right'
-						}
-					]
-				}
+				},
 			},
+			getJobsTab('Server'),
 			{
 				label: 'Plays',
 				icon: icon('play'),
@@ -306,27 +429,27 @@ export default {
 								options: [
 									server.doc.name,
 									server.doc.database_server,
-									server.doc.replication_server
-								].filter(Boolean)
-							}
+									server.doc.replication_server,
+								].filter(Boolean),
+							},
 						];
 					},
-					filters: server => {
+					filters: (server) => {
 						return {
 							server: [
 								'in',
 								[
 									server.doc.name,
 									server.doc.database_server,
-									server.doc.replication_server
-								].filter(Boolean)
-							]
+									server.doc.replication_server,
+								].filter(Boolean),
+							],
 						};
 					},
 					route(row) {
 						return {
 							name: 'Server Play',
-							params: { id: row.name }
+							params: { id: row.name },
 						};
 					},
 					orderBy: 'creation desc',
@@ -335,18 +458,18 @@ export default {
 						{
 							label: 'Play',
 							fieldname: 'play',
-							width: 2
+							width: 2,
 						},
 						{
 							label: 'Status',
 							fieldname: 'status',
 							type: 'Badge',
-							width: 0.5
+							width: 0.5,
 						},
 						{
 							label: 'Server',
 							fieldname: 'server',
-							width: 2
+							width: 2,
 						},
 						{
 							label: 'Duration',
@@ -355,16 +478,16 @@ export default {
 							format(value, row) {
 								if (row.job_id === 0 || !row.end) return;
 								return duration(value);
-							}
+							},
 						},
 						{
 							label: '',
 							fieldname: 'creation',
 							type: 'Timestamp',
-							align: 'right'
-						}
-					]
-				}
+							align: 'right',
+						},
+					],
+				},
 			},
 			{
 				label: 'Actions',
@@ -372,23 +495,23 @@ export default {
 				route: 'actions',
 				type: 'Component',
 				component: ServerActions,
-				props: server => {
+				props: (server) => {
 					return { server: server.doc.name };
-				}
+				},
 			},
-			tagTab()
-		]
+			tagTab(),
+		],
 	},
 	routes: [
 		{
 			name: 'Server Job',
 			path: 'jobs/:id',
-			component: () => import('../pages/JobPage.vue')
+			component: () => import('../pages/JobPage.vue'),
 		},
 		{
 			name: 'Server Play',
 			path: 'plays/:id',
-			component: () => import('../pages/PlayPage.vue')
-		}
-	]
+			component: () => import('../pages/PlayPage.vue'),
+		},
+	],
 };
