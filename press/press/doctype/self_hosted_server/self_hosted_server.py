@@ -84,10 +84,8 @@ class SelfHostedServer(Document):
 		self.validate_is_duplicate()
 
 	def autoname(self):
-		series = make_autoname("SHS-.#####")
-		self.name = f"{series}.{self.hybrid_domain}"
-
-		self.hostname = series
+		
+		self.name = f"{self.hostname}.{self.hybrid_domain}"
 		self.domain = self.hybrid_domain
 
 	def validate(self):
@@ -537,6 +535,7 @@ class SelfHostedServer(Document):
 		self.save()
 
 	def get_hostname(self, server_type):
+		return self.hostname
 		symbolic_name = get_symbolic_name(server_type)
 		series = f"{symbolic_name}-{self.cluster}.#####"
 

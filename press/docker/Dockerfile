@@ -229,6 +229,7 @@ RUN `#stage-bench-env`
 ENV {{v.key}} {{ v.value }}
 {% endfor %}
 
+RUN git config --global --add safe.directory /home/frappe/context/apps/frappe/.git
 # Install Frappe app
 RUN --mount=type=cache,sharing=locked,target=/home/frappe/.cache,uid=1000,gid=1000 --mount=type=bind,source=apps/frappe,target=/home/frappe/context/apps/frappe bench init --python /usr/bin/python${PYTHON_VERSION} --no-backups --frappe-path file:///home/frappe/context/apps/frappe frappe-bench `#stage-apps-frappe`
 WORKDIR /home/frappe/frappe-bench
@@ -244,7 +245,30 @@ COPY --chown=frappe:frappe common_site_config.json /home/frappe/frappe-bench/sit
 {% for app in doc.apps %}
 {% if app.app != "frappe" %}
 
-RUN --mount=type=cache,sharing=locked,target=/home/frappe/.cache,uid=1000,gid=1000 \
+RUN git config --global --add safe.directory /home/frappe/context/apps/{{ app.app }}/.git
+
+
+
+  {% if app.app == "fodista" %}
+  RUN --mount=type=cache,sharing=locked,target=/home/frappe/.cache,uid=1000,gid=1000 \
+    --mount=type=bind,source=apps/{{ app.app }},target=/home/frappe/context/apps/{{ app.app }} \
+    bash -c "bench get-app file:///home/frappe/context/apps/{{ app.app }} --skip-assets" \
+    `#stage-apps-{{ app.app }}`
+
+  # Step 2: Copy the .git folder after bench get-app is executed
+  COPY --chown=frappe:frappe apps/{{ app.app }}/.git /home/frappe/frappe-bench/apps/{{ app.app }}/.git
+
+  # Step 3: Submodule Update and Build with Caching
+  RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 \
+      --mount=type=cache,target=/home/frappe/frappe-bench/apps/{{ app.app }}/node_modules,uid=1000,gid=1000 \
+      git -C /home/frappe/frappe-bench/apps/{{ app.app }} submodule update --init --recursive \
+      && cd /home/frappe/frappe-bench/apps/{{ app.app }}/dashboard && yarn install && NODE_ENV=production yarn run build \
+      && bench build --app {{ app.app }} \
+      `#stage-apps-Build-{{ app.app }}`
+  
+  {% else %}
+
+  RUN --mount=type=cache,sharing=locked,target=/home/frappe/.cache,uid=1000,gid=1000 \
   --mount=type=bind,source=apps/{{ app.app }},target=/home/frappe/context/apps/{{ app.app }} \
   bench get-app file:///home/frappe/context/apps/{{ app.app }} \
     {% if app.use_cached %}
@@ -252,6 +276,8 @@ RUN --mount=type=cache,sharing=locked,target=/home/frappe/.cache,uid=1000,gid=10
     --cache-key {{ app.hash }} {% if doc.compress_app_cache %}--compress-artifacts{% endif %} \
     {% endif %}
   `#stage-apps-{{ app.app }}`
+
+  {% endif %}
 
 {% endif %}
 {% endfor %}
@@ -269,7 +295,6 @@ RUN --mount=type=bind,source=app_updates/{{ app.app }},target=/home/frappe/conte
   `#stage-pull-{{ app.app }}`
 {% endif %}
 {% endfor %}
-
 
 COPY --chown=frappe:frappe config /home/frappe/frappe-bench/config
 COPY --chown=frappe:frappe apps.txt /home/frappe/frappe-bench/sites/apps.txt

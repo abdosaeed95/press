@@ -16,7 +16,7 @@ ExecStart=/home/frappe/grafana/bin/grafana-server \
     cfg:default.paths.logs=/home/frappe/grafana/logs \
     cfg:default.paths.data=/home/frappe/grafana/data \
     cfg:default.paths.plugins=/home/frappe/grafana/plugins \
-    cfg:default.paths.provisioning=/home/frappe/grafana/provisioning  
+    cfg:default.paths.provisioning=/home/frappe/grafana/provisioning
 
 SyslogIdentifier=grafana
 Restart=always

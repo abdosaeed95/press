@@ -24,7 +24,7 @@
 
 - name: Load Configs
   set_fact:
-    configs: "{{ configs | default([])+ [{ 'site' : item.0, 'config' : item.1 }] }}" 
+    configs: "{{ configs | default([])+ [{ 'site' : item.0, 'config' : item.1 }] }}"
   ignore_errors: True
   with_together:
     - "{{ sites.stdout }}"

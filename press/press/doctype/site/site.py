@@ -812,11 +812,11 @@ class Site(Document, TagHelpers):
 		create_dns_record(self, record_name=self._get_site_name(self.subdomain))
 		self.create_agent_request()
 
-		if hasattr(self, "share_details_consent") and self.share_details_consent:
-			# create partner lead
-			frappe.get_doc(doctype="Partner Lead", team=self.team, site=self.name).insert(
-				ignore_permissions=True
-			)
+	@frappe.whitelist()
+	def create_dns_record(self):
+		"""Check if site needs dns records and creates one."""
+
+		create_dns_record(self, record_name=self._get_site_name(self.subdomain))
 
 		add_permission_for_newly_created_doc(self)
 
@@ -1431,8 +1431,8 @@ class Site(Document, TagHelpers):
 
 		self.db_set("host_name", None)
 
-		self.delete_physical_backups()
-		self.delete_offsite_backups()
+		#self.delete_physical_backups()
+		#self.delete_offsite_backups()
 		frappe.db.set_value(
 			"Site Backup",
 			{"site": self.name, "offsite": False},

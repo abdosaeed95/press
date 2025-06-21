@@ -35,9 +35,16 @@
     group: root
     mode: 0600
 
+- name: Check if WireGuard interface wg0 is already up
+  shell: ip link show wg0
+  register: wg_status
+  ignore_errors: true
+
 - name: Wireguard Quick up
-  shell: |
-    wg-quick up wg0
+  shell: wg-quick up wg0
+  when: wg_status.rc != 0
+  register: wg_up_result
+  ignore_errors: true
 
 - name: Wireguard Quick down
   shell: |

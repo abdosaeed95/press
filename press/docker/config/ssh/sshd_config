@@ -33,7 +33,7 @@ TrustedUserCAKeys /home/frappe/frappe-bench/config/ssh/ca.pub
 AuthorizedPrincipalsFile /home/frappe/frappe-bench/config/ssh/principals
 
 HostKey /home/frappe/frappe-bench/config/ssh/ssh_host_rsa_key
-HostCertificate /home/frappe/frappe-bench/config/ssh/ssh_host_rsa_key-cert.pub 
+HostCertificate /home/frappe/frappe-bench/config/ssh/ssh_host_rsa_key-cert.pub
 
 
 # Capability Limits
