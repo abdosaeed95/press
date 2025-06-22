@@ -988,11 +988,11 @@ class DeployCandidateBuild(Document):
 		settings = self._fetch_registry_settings()
 
 		if settings.docker_registry_namespace:
-			namespace = f"{settings.docker_registry_namespace}/{settings.domain}"
+			namespace = f"{settings.docker_registry_namespace}"
 		else:
 			namespace = f"{settings.domain}"
 
-		self.docker_image_repository = f"{settings.docker_registry_url}/{self.group}"
+		self.docker_image_repository = f"{settings.docker_registry_url}/{namespace}/{self.group}"
 		self.docker_image_tag = self.name
 		self.docker_image = f"{self.docker_image_repository}:{self.docker_image_tag}"
 
