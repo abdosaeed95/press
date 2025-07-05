@@ -27,7 +27,7 @@
 							v-if="hasForgotPassword"
 							:to="{
 								name: 'Login',
-								query: { ...$route.query, forgot: undefined }
+								query: { ...$route.query, forgot: undefined },
 							}"
 						>
 							I remember my password
@@ -63,7 +63,7 @@
 								class="text-sm"
 								:to="{
 									name: 'Login',
-									query: { ...$route.query, forgot: 1 }
+									query: { ...$route.query, forgot: 1 },
 								}"
 							>
 								Forgot Password?
@@ -121,7 +121,7 @@
 						class="text-center text-base font-medium"
 						:to="{
 							name: $route.name == 'Login' ? 'Signup' : 'Login',
-							query: { ...$route.query, forgot: undefined }
+							query: { ...$route.query, forgot: undefined },
 						}"
 					>
 						{{
@@ -156,7 +156,7 @@ export default {
 	name: 'Signup',
 	components: {
 		LoginBox,
-		GoogleIconSolid
+		GoogleIconSolid,
 	},
 	data() {
 		return {
@@ -164,7 +164,7 @@ export default {
 			password: null,
 			signupEmailSent: false,
 			resetPasswordEmailSent: false,
-			loginError: null
+			loginError: null,
 		};
 	},
 	resources: {
@@ -174,11 +174,11 @@ export default {
 				params: {
 					email: this.email,
 					referrer: this.getReferrerIfAny(),
-					product: this.$route.query.product
+					product: this.$route.query.product,
 				},
 				onSuccess() {
 					this.signupEmailSent = true;
-				}
+				},
 			};
 		},
 		googleLogin() {
@@ -186,29 +186,29 @@ export default {
 				url: 'press.api.oauth.google_login',
 				onSuccess(r) {
 					window.location = r;
-				}
+				},
 			};
 		},
 		resetPassword() {
 			return {
 				url: 'press.api.account.send_reset_password_email',
 				params: {
-					email: this.email
+					email: this.email,
 				},
 				onSuccess() {
 					this.resetPasswordEmailSent = true;
-				}
+				},
 			};
 		},
 		signupSettings() {
 			return {
 				url: 'press.api.account.signup_settings',
 				params: {
-					product: this.$route.query.product
+					product: this.$route.query.product,
 				},
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	methods: {
 		async submitForm() {
@@ -231,7 +231,7 @@ export default {
 			const params = location.search;
 			const searchParams = new URLSearchParams(params);
 			return searchParams.get('referrer');
-		}
+		},
 	},
 	computed: {
 		saasProduct() {
@@ -242,7 +242,7 @@ export default {
 		},
 		hasForgotPassword() {
 			return this.$route.name == 'Login' && this.$route.query.forgot;
-		}
-	}
+		},
+	},
 };
 </script>

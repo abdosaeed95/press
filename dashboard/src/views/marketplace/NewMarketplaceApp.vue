@@ -5,7 +5,7 @@
 			<p class="text-base text-gray-700">Add an app to marketplace</p>
 		</div>
 
-		<SelectAppFromGithub @onSelect="d => (app = d)" />
+		<SelectAppFromGithub @onSelect="(d) => (app = d)" />
 
 		<div v-if="app">
 			<label class="mb-3 text-base" for="version-select"
@@ -42,12 +42,12 @@ export default {
 	name: 'NewMarketplaceApp',
 	components: {
 		WizardCard,
-		SelectAppFromGithub
+		SelectAppFromGithub,
 	},
 	data() {
 		return {
 			app: null,
-			version: null
+			version: null,
 		};
 	},
 	resources: {
@@ -59,7 +59,7 @@ export default {
 					if (data) {
 						this.version = data[0];
 					}
-				}
+				},
 			};
 		},
 		addApp() {
@@ -72,14 +72,14 @@ export default {
 						repository_url: this.app?.repository_url,
 						branch: this.app?.branch,
 						github_installation_id: this.app?.github_installation_id,
-						version: this.version
-					}
+						version: this.version,
+					},
 				},
 				onSuccess() {
 					this.$router.push(`/marketplace/apps/${this.app.name}`);
-				}
+				},
 			};
-		}
+		},
 	},
 	computed: {
 		versionList() {
@@ -90,7 +90,7 @@ export default {
 				return [];
 			}
 			return this.$resources.frappeVersions.data;
-		}
-	}
+		},
+	},
 };
 </script>

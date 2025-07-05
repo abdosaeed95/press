@@ -27,16 +27,16 @@ export default {
 					options = this.field.options.data || [];
 				}
 			}
-			return options.map(option => {
+			return options.map((option) => {
 				if (typeof option === 'string') {
 					return {
 						label: option,
-						value: option
+						value: option,
 					};
 				}
 				return option;
 			});
-		}
-	}
+		},
+	},
 };
 </script>

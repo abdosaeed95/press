@@ -3,7 +3,7 @@
 		class="flex w-full flex-row items-center justify-between rounded-lg border border-gray-100 px-4 py-2 shadow focus:outline-none"
 		:class="[
 			selected || uninstall ? 'ring-2 ring-inset ring-gray-600' : '',
-			selectable ? 'hover:border-gray-300' : 'cursor-default'
+			selectable ? 'hover:border-gray-300' : 'cursor-default',
 		]"
 		ref="card"
 	>
@@ -35,7 +35,7 @@
 				v-if="deployFrom"
 				class="flex cursor-pointer flex-col justify-center"
 				:href="`${app.repository_url}/compare/${app.current_hash}...${getHash(
-					deployTo.value
+					deployTo.value,
 				)}`"
 				target="_blank"
 			>
@@ -62,15 +62,15 @@ export default {
 		return {
 			deployTo: {
 				label: this.initialDeployTo(),
-				value: this.app.next_release
-			}
+				value: this.app.next_release,
+			},
 		};
 	},
 	watch: {
 		deployTo(newVal) {
 			this.app.next_release = newVal.value;
 			this.$emit('update:app', this.app);
-		}
+		},
 	},
 	computed: {
 		deployFrom() {
@@ -82,7 +82,7 @@ export default {
 				: null;
 		},
 		autocompleteOptions() {
-			return this.app.releases.map(release => {
+			return this.app.releases.map((release) => {
 				const messageMaxLength = 75;
 				let message = release.message.split('\n')[0];
 				message =
@@ -94,17 +94,17 @@ export default {
 					label: release.tag
 						? release.tag
 						: `${message} (${release.hash.slice(0, 7)})`,
-					value: release.name
+					value: release.name,
 				};
 			});
-		}
+		},
 	},
 	methods: {
 		initialDeployTo() {
 			if (this.uninstall) return '';
 
 			let next_release = this.app.releases.filter(
-				release => release.name === this.app.next_release
+				(release) => release.name === this.app.next_release,
 			)[0];
 			if (this.app.will_branch_change) {
 				return this.app.branch;
@@ -113,9 +113,9 @@ export default {
 			}
 		},
 		getHash(tag) {
-			return this.app.releases.find(release => release.name === tag).hash;
-		}
+			return this.app.releases.find((release) => release.name === tag).hash;
+		},
 	},
-	components: { CommitTag, CommitChooser }
+	components: { CommitTag, CommitChooser },
 };
 </script>

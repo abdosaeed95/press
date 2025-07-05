@@ -2,7 +2,7 @@
 	<Dialog
 		:options="{
 			title: 'Normalized Query',
-			size: '2xl'
+			size: '2xl',
 		}"
 		v-model="show"
 	>
@@ -20,6 +20,6 @@
 
 <script>
 export default {
-	props: ['query', 'duration']
+	props: ['query', 'duration'],
 };
 </script>

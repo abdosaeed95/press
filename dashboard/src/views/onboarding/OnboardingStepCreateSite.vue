@@ -23,6 +23,6 @@
 <script>
 export default {
 	name: 'OnboardingStepCreateAccount',
-	props: ['active', 'done']
+	props: ['active', 'done'],
 };
 </script>

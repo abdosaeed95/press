@@ -12,11 +12,11 @@ export default {
 	name: 'InvoiceUsageCard',
 	props: ['invoice'],
 	components: {
-		InvoiceUsageTable
+		InvoiceUsageTable,
 	},
 	data() {
 		return {
-			doc: null
+			doc: null,
 		};
 	},
 	computed: {
@@ -33,7 +33,7 @@ export default {
 			let start = periodStart.toLocaleString({ month: 'long', day: 'numeric' });
 			let end = periodEnd.toLocaleString({ month: 'short', day: 'numeric' });
 			return `Invoice for ${start} - ${end} ${periodEnd.year}`;
-		}
-	}
+		},
+	},
 };
 </script>

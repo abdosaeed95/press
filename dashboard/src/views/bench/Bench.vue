@@ -10,9 +10,9 @@
 						label: bench?.title,
 						route: {
 							name: 'BenchSiteList',
-							params: { benchName: bench?.name }
-						}
-					}
+							params: { benchName: bench?.name },
+						},
+					},
 				]"
 			>
 				<template #actions>
@@ -70,7 +70,7 @@ export default {
 	name: 'Bench',
 	pageMeta() {
 		return {
-			title: `Bench - ${this.bench?.title || 'Private'} - Frappe Cloud`
+			title: `Bench - ${this.bench?.title || 'Private'} - Frappe Cloud`,
 		};
 	},
 	props: ['benchName'],
@@ -79,12 +79,12 @@ export default {
 		BenchDropDialog,
 		AlertUpdate,
 		AlertBenchUpdate,
-		EditBenchTitleDialog
+		EditBenchTitleDialog,
 	},
 	data() {
 		return {
 			showDropBenchDialog: false,
-			showEditTitleDialog: false
+			showEditTitleDialog: false,
 		};
 	},
 	resources: {
@@ -92,35 +92,35 @@ export default {
 			return {
 				url: 'press.api.bench.get',
 				params: {
-					name: this.benchName
+					name: this.benchName,
 				},
 				auto: true,
-				onError: this.$routeTo404PageIfNotFound
+				onError: this.$routeTo404PageIfNotFound,
 			};
 		},
 		updateAllSites() {
 			return {
 				url: 'press.api.bench.update_all_sites',
 				params: {
-					name: this.benchName
+					name: this.benchName,
 				},
 				onSuccess() {
 					notify({
 						title: 'Switched Team',
 						message: `Switched to ${this.bench.team}`,
 						icon: 'check',
-						color: 'green'
+						color: 'green',
 					});
 				},
 				onError(e) {
 					notify({
 						title: e,
 						icon: 'x',
-						color: 'red'
+						color: 'red',
 					});
-				}
+				},
 			};
-		}
+		},
 	},
 	activated() {
 		this.$socket.on('list_update', this.onSocketUpdate);
@@ -138,7 +138,7 @@ export default {
 					title:
 						'Please settle your unpaid invoices from the billing tab in order to create new sites',
 					icon: 'info',
-					color: 'yellow'
+					color: 'yellow',
 				});
 			} else {
 				this.$router.push(`/${this.bench.name}/new`);
@@ -162,7 +162,7 @@ export default {
 			}
 
 			return '/sites';
-		}
+		},
 	},
 	computed: {
 		bench() {
@@ -171,28 +171,28 @@ export default {
 			}
 		},
 		tabs() {
-			let tabRoute = subRoute => `/groups/${this.benchName}/${subRoute}`;
+			let tabRoute = (subRoute) => `/groups/${this.benchName}/${subRoute}`;
 			let tabs = [
 				{
 					label: 'Sites',
-					route: 'sites'
+					route: 'sites',
 				},
 				{ label: 'Apps', route: 'apps' },
 				{ label: 'Deploys', route: 'deploys' },
 				{
 					label: 'Config',
 					route: 'bench-config',
-					condition: () => !this.bench?.public
+					condition: () => !this.bench?.public,
 				},
 				{ label: 'Jobs', route: 'jobs' },
-				{ label: 'Settings', route: 'settings' }
-			].filter(tab => (tab.condition ? tab.condition() : true));
+				{ label: 'Settings', route: 'settings' },
+			].filter((tab) => (tab.condition ? tab.condition() : true));
 
 			if (this.bench) {
-				return tabs.map(tab => {
+				return tabs.map((tab) => {
 					return {
 						...tab,
-						route: tabRoute(tab.route)
+						route: tabRoute(tab.route),
 					};
 				});
 			}
@@ -203,7 +203,7 @@ export default {
 				{
 					label: 'Edit Title',
 					icon: 'edit',
-					onClick: () => (this.showEditTitleDialog = true)
+					onClick: () => (this.showEditTitleDialog = true),
 				},
 				{
 					label: 'View in Desk',
@@ -212,9 +212,9 @@ export default {
 					onClick: () => {
 						window.open(
 							`${window.location.protocol}//${window.location.host}/app/release-group/${this.bench.name}`,
-							'_blank'
+							'_blank',
 						);
-					}
+					},
 				},
 				{
 					label: 'Impersonate Team',
@@ -222,7 +222,7 @@ export default {
 					condition: () => this.$account.user.user_type == 'System User',
 					onClick: async () => {
 						await this.$account.switchTeam(this.bench.team);
-					}
+					},
 				},
 				{
 					label: 'Update All Sites',
@@ -235,18 +235,18 @@ export default {
 							message:
 								'All sites in this bench will be updated to the latest version',
 							icon: 'check',
-							color: 'green'
+							color: 'green',
 						});
-					}
+					},
 				},
 				{
 					label: 'Drop Bench',
 					icon: 'trash',
 					condition: () => !this.bench.public,
-					onClick: () => (this.showDropBenchDialog = true)
-				}
+					onClick: () => (this.showDropBenchDialog = true),
+				},
 			];
-		}
-	}
+		},
+	},
 };
 </script>

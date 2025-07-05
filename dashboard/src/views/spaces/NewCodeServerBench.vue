@@ -17,7 +17,7 @@
 				:class="[
 					modelValue && modelValue == bench
 						? 'relative ring-2 ring-inset ring-blue-500'
-						: ''
+						: '',
 				]"
 				v-on:click="selectBench(bench)"
 			>
@@ -46,18 +46,18 @@ export default {
 	methods: {
 		selectBench(bench) {
 			this.$emit('update:modelValue', bench);
-		}
+		},
 	},
 	resources: {
 		options() {
 			return {
 				url: 'press.api.spaces.code_server_bench_options',
 				params: {
-					group: this.selectedGroup
+					group: this.selectedGroup,
 				},
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	computed: {
 		benches() {
@@ -65,7 +65,7 @@ export default {
 				return [];
 			}
 			return this.$resources.options.data;
-		}
-	}
+		},
+	},
 };
 </script>

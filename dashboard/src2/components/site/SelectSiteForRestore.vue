@@ -12,9 +12,9 @@
 					onClick: () => {
 						this.$emit('restore', this.selectedSite.value);
 						showDialog = false;
-					}
-				}
-			]
+					},
+				},
+			],
 		}"
 	>
 		<template #body-content>
@@ -24,10 +24,10 @@
 				type="autocomplete"
 				v-model="selectedSite"
 				:options="
-					($resources.sites.data || []).map(site => {
+					($resources.sites.data || []).map((site) => {
 						return {
 							label: site.host_name || site.name,
-							value: site.name
+							value: site.name,
 						};
 					})
 				"
@@ -52,11 +52,11 @@ export default {
 	data() {
 		return {
 			selectedSite: null,
-			showDialog: true
+			showDialog: true,
 		};
 	},
 	components: {
-		AlertBanner
+		AlertBanner,
 	},
 	resources: {
 		sites() {
@@ -66,9 +66,9 @@ export default {
 				fields: ['host_name', 'name'],
 				filters: { name: ['!=', this.site] },
 				pageLength: 500,
-				auto: true
+				auto: true,
 			};
-		}
-	}
+		},
+	},
 };
 </script>

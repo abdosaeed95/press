@@ -8,9 +8,9 @@
 					variant: 'solid',
 					theme: 'red',
 					loading: $resources.dropBench.loading,
-					onClick: () => $resources.dropBench.submit()
-				}
-			]
+					onClick: () => $resources.dropBench.submit(),
+				},
+			],
 		}"
 		v-model="show"
 	>
@@ -36,7 +36,7 @@ export default {
 	emits: ['update:modelValue'],
 	data() {
 		return {
-			confirmBenchName: ''
+			confirmBenchName: '',
 		};
 	},
 	resources: {
@@ -44,7 +44,7 @@ export default {
 			return {
 				url: 'press.api.bench.archive',
 				params: {
-					name: this.bench?.name
+					name: this.bench?.name,
 				},
 				onSuccess() {
 					this.show = false;
@@ -54,9 +54,9 @@ export default {
 					if (this.bench?.title !== this.confirmBenchName) {
 						return 'Please type the bench name correctly to confirm';
 					}
-				}
+				},
 			};
-		}
+		},
 	},
 	computed: {
 		show: {
@@ -65,8 +65,8 @@ export default {
 			},
 			set(value) {
 				this.$emit('update:modelValue', value);
-			}
-		}
-	}
+			},
+		},
+	},
 };
 </script>

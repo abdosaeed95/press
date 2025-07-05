@@ -118,9 +118,9 @@
 								label: 'Save Changes',
 								variant: 'solid',
 								loading: $resources.updateAutoUpdateInfo.loading,
-								onClick: () => $resources.updateAutoUpdateInfo.submit()
-							}
-						]
+								onClick: () => $resources.updateAutoUpdateInfo.submit(),
+							},
+						],
 					}"
 					v-model="showEditDialog"
 				>
@@ -202,7 +202,7 @@ export default {
 			monthDay: '',
 			endOfMonth: false,
 			updateTime: '',
-			showEditDialog: false
+			showEditDialog: false,
 		};
 	},
 	resources: {
@@ -210,7 +210,7 @@ export default {
 			return {
 				url: 'press.api.site.get_auto_update_info',
 				params: {
-					name: this.site?.name
+					name: this.site?.name,
 				},
 				auto: true,
 				onSuccess(data) {
@@ -221,30 +221,30 @@ export default {
 					this.monthDay = data.update_on_day_of_month;
 					this.lastTriggeredAt = data.auto_update_last_triggered_on;
 					this.updateTime = this.getFormattedTime(data.update_trigger_time);
-				}
+				},
 			};
 		},
 		enableAutoUpdate() {
 			return {
 				url: 'press.api.site.enable_auto_update',
 				params: {
-					name: this.site?.name
+					name: this.site?.name,
 				},
 				onSuccess() {
 					this.$resources.getSiteAutoUpdateInfo.fetch();
-				}
+				},
 			};
 		},
 		disableAutoUpdate() {
 			return {
 				url: 'press.api.site.disable_auto_update',
 				params: {
-					name: this.site?.name
+					name: this.site?.name,
 				},
 				onSuccess() {
 					this.showEditDialog = false;
 					this.$resources.getSiteAutoUpdateInfo.fetch();
-				}
+				},
 			};
 		},
 		updateAutoUpdateInfo() {
@@ -259,15 +259,15 @@ export default {
 						update_end_of_month: this.endOfMonth,
 						update_on_day_of_month: this.monthDay,
 						auto_update_last_triggered_on: this.lastTriggeredAt,
-						update_trigger_time: this.updateTime
-					}
+						update_trigger_time: this.updateTime,
+					},
 				},
 				onSuccess() {
 					this.showEditDialog = false;
 					this.$resources.getSiteAutoUpdateInfo.fetch();
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		enableAutoUpdate() {
@@ -283,7 +283,7 @@ export default {
 			// E.g. "8:19:00" --> "08:19"
 			let timeParts = timeStringFromServer.split(':').slice(0, 2);
 			return timeParts[0].padStart(2, '0') + ':' + timeParts[1];
-		}
+		},
 	},
 	computed: {
 		siteAutoUpdateInfo() {
@@ -305,7 +305,7 @@ export default {
 				'Wednesday',
 				'Thursday',
 				'Friday',
-				'Saturday'
+				'Saturday',
 			];
 		},
 		monthDayOptions() {
@@ -323,7 +323,7 @@ export default {
 				ops.push(`${currentHour}:30`);
 			}
 			return ops;
-		}
-	}
+		},
+	},
 };
 </script>

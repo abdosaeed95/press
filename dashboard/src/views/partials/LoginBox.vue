@@ -42,7 +42,7 @@ export default {
 	props: ['title', 'logo'],
 	components: {
 		FCLogo,
-		FrappeLogo
+		FrappeLogo,
 	},
 	mounted() {
 		const params = new URLSearchParams(window.location.search);
@@ -51,14 +51,14 @@ export default {
 			notify({
 				title: 'Token Invalid or Expired',
 				color: 'red',
-				icon: 'x'
+				icon: 'x',
 			});
 		}
 	},
 	methods: {
 		redirectForFrappeioAuth() {
 			window.location = '/f-login';
-		}
-	}
+		},
+	},
 };
 </script>

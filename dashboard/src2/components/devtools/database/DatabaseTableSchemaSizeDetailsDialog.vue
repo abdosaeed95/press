@@ -2,7 +2,7 @@
 	<Dialog
 		:options="{
 			title: 'Table Size',
-			size: '3xl'
+			size: '3xl',
 		}"
 	>
 		<template #body-content>
@@ -20,19 +20,19 @@ export default {
 	props: {
 		site: {
 			type: String,
-			required: true
+			required: true,
 		},
 		tableSchemas: {
 			type: Object,
-			required: true
+			required: true,
 		},
 		viewSchemaDetails: {
 			type: Function,
-			required: true
-		}
+			required: true,
+		},
 	},
 	components: {
-		ObjectList
+		ObjectList,
 	},
 	computed: {
 		listOptions() {
@@ -44,7 +44,7 @@ export default {
 					table_name: tableName,
 					index_size: this.bytesToMB(table.size.index_length),
 					data_size: this.bytesToMB(table.size.data_length),
-					total_size: this.bytesToMB(table.size.total_size)
+					total_size: this.bytesToMB(table.size.total_size),
 				});
 			}
 			// sort in the order of total_size
@@ -69,26 +69,26 @@ export default {
 											navigator.clipboard.writeText(row.table_name);
 											toast.success('Copied to clipboard');
 										}
-									}
+									},
 								},
-								[row.table_name]
+								[row.table_name],
 							);
-						}
+						},
 					},
 					{
 						label: 'Total Size (MB)',
 						fieldname: 'total_size',
-						align: 'center'
+						align: 'center',
 					},
 					{
 						label: 'Data Size (MB)',
 						fieldname: 'data_size',
-						align: 'center'
+						align: 'center',
 					},
 					{
 						label: 'Index Size (MB)',
 						fieldname: 'index_size',
-						align: 'center'
+						align: 'center',
 					},
 					{
 						label: 'View Schema',
@@ -103,20 +103,20 @@ export default {
 										'inline-flex items-center justify-center gap-2 transition-colors focus:outline-none text-gray-800 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 focus-visible:ring focus-visible:ring-gray-400 h-7 text-base px-2 rounded',
 									onClick: () => {
 										this.viewSchemaDetails(row.table_name);
-									}
+									},
 								},
-								['View Schema']
+								['View Schema'],
 							);
-						}
-					}
-				]
+						},
+					},
+				],
 			};
-		}
+		},
 	},
 	methods: {
 		bytesToMB(bytes) {
 			return (bytes / (1024 * 1024)).toFixed(2);
-		}
-	}
+		},
+	},
 };
 </script>

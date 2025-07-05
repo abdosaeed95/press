@@ -2,13 +2,13 @@
 	<div
 		class="-m-5 flex divide-x"
 		:class="{
-			'flex-col': $isMobile
+			'flex-col': $isMobile,
 		}"
 	>
 		<div
 			:class="{
 				'ml-5 mt-5 w-60 divide-y rounded-sm border': $isMobile,
-				'w-60': !$isMobile
+				'w-60': !$isMobile,
 			}"
 		>
 			<template v-for="tab in tabs">
@@ -18,14 +18,14 @@
 					:class="{
 						' bg-gray-50 text-gray-800': isActiveTab(tab),
 						'text-gray-600': !isActiveTab(tab),
-						'border-b': !$isMobile
+						'border-b': !$isMobile,
 					}"
 				>
 					<div
 						class="px-4"
 						:class="{
 							'py-2': $isMobile,
-							'py-2.5': !$isMobile
+							'py-2.5': !$isMobile,
 						}"
 					>
 						{{ tab.label }}
@@ -48,7 +48,7 @@ export default {
 			tabs: [
 				{
 					label: 'Analytics',
-					value: 'Site Analytics'
+					value: 'Site Analytics',
 				},
 				{
 					label: 'Reports',
@@ -58,20 +58,20 @@ export default {
 						'Site Performance Binary Logs',
 						'Site Performance Process List',
 						'Site Performance Request Logs',
-						'Site Performance Deadlock Report'
-					]
+						'Site Performance Deadlock Report',
+					],
 				},
 				{
 					label: 'Logs',
 					value: 'Site Logs',
-					children: ['Site Log']
+					children: ['Site Log'],
 				},
 				{
 					label: 'Jobs',
 					value: 'Site Jobs',
-					children: ['Site Job']
-				}
-			]
+					children: ['Site Job'],
+				},
+			],
 		};
 	},
 	mounted() {
@@ -82,9 +82,9 @@ export default {
 	methods: {
 		isActiveTab(tab) {
 			return [tab.value, ...(tab.children || [])].find(
-				child => child === this.$route.name
+				(child) => child === this.$route.name,
 			);
-		}
-	}
+		},
+	},
 };
 </script>

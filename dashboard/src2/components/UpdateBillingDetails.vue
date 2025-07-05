@@ -7,9 +7,9 @@
 					label: 'Submit',
 					variant: 'solid',
 					loading: $resources.updateBillingInformation.loading,
-					onClick: () => $resources.updateBillingInformation.submit()
-				}
-			]
+					onClick: () => $resources.updateBillingInformation.submit(),
+				},
+			],
 		}"
 		:modelValue="show"
 		@update:modelValue="$emit('update:show', $event)"
@@ -46,7 +46,7 @@ export default {
 	props: ['message', 'show'],
 	emits: ['update:show', 'updated'],
 	components: {
-		AddressForm
+		AddressForm,
 	},
 	data() {
 		return {
@@ -57,8 +57,8 @@ export default {
 				postal_code: '',
 				country: '',
 				gstin: '',
-				billing_name: ''
-			}
+				billing_name: '',
+			},
 		};
 	},
 	resources: {
@@ -78,10 +78,10 @@ export default {
 								billingInformation.gstin == 'Not Applicable'
 									? ''
 									: billingInformation.gstin,
-							billing_name: billingInformation.billing_name
+							billing_name: billingInformation.billing_name,
 						});
 					}
-				}
+				},
 			};
 		},
 		updateBillingInformation() {
@@ -89,7 +89,7 @@ export default {
 				url: 'press.api.account.update_billing_information',
 				makeParams() {
 					return {
-						billing_details: this.billingInformation
+						billing_details: this.billingInformation,
 					};
 				},
 				onSuccess() {
@@ -103,14 +103,14 @@ export default {
 					var billingNameValid = billingNameRegex.test(billing_name);
 					if (!billingNameValid) {
 						throw new DashboardError(
-							'Billing Name contains invalid characters'
+							'Billing Name contains invalid characters',
 						);
 					}
 					this.billingInformation.billing_name = billing_name;
 					return this.$refs['address-form'].validateValues();
-				}
+				},
 			};
-		}
-	}
+		},
+	},
 };
 </script>

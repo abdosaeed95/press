@@ -74,9 +74,9 @@
 							label: 'Drop Code Server',
 							variant: 'solid',
 							theme: 'red',
-							onClick: () => $resources.dropCodeServer.submit()
-						}
-					]
+							onClick: () => $resources.dropCodeServer.submit(),
+						},
+					],
 				}"
 			>
 				<template v-slot:body-content>
@@ -102,12 +102,12 @@ export default {
 	props: {
 		codeServer: {
 			type: Object,
-			default: () => {}
-		}
+			default: () => {},
+		},
 	},
 	data() {
 		return {
-			showDialog: false
+			showDialog: false,
 		};
 	},
 	resources: {
@@ -115,29 +115,29 @@ export default {
 			return {
 				url: 'press.api.spaces.stop_code_server',
 				params: {
-					name: this.codeServer.name
+					name: this.codeServer.name,
 				},
 				onSuccess(r) {
 					this.$router.push(`/codeservers/${this.codeServer.name}/jobs`);
-				}
+				},
 			};
 		},
 		startCodeServer() {
 			return {
 				url: 'press.api.spaces.start_code_server',
 				params: {
-					name: this.codeServer.name
+					name: this.codeServer.name,
 				},
 				onSuccess(r) {
 					this.$router.push(`/codeservers/${this.codeServer.name}/jobs`);
-				}
+				},
 			};
 		},
 		showPassword() {
 			return {
 				url: 'press.api.spaces.code_server_password',
 				params: {
-					name: this.codeServer.name
+					name: this.codeServer.name,
 				},
 				onSuccess(r) {
 					const clipboard = window.navigator.clipboard;
@@ -145,23 +145,23 @@ export default {
 						notify({
 							title: 'Password copied to clipboard!',
 							icon: 'check',
-							color: 'green'
+							color: 'green',
 						});
 					});
-				}
+				},
 			};
 		},
 		dropCodeServer() {
 			return {
 				url: 'press.api.spaces.drop_code_server',
 				params: {
-					name: this.codeServer.name
+					name: this.codeServer.name,
 				},
 				onSuccess() {
 					this.$router.push('/spaces');
-				}
+				},
 			};
-		}
-	}
+		},
+	},
 };
 </script>

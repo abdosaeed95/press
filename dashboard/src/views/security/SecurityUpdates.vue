@@ -49,7 +49,7 @@ export default {
 	inject: ['viewportWidth'],
 	components: {
 		CardWithDetails,
-		SecurityUpdateInfo
+		SecurityUpdateInfo,
 	},
 	resources: {
 		updates() {
@@ -61,9 +61,9 @@ export default {
 				orderBy: 'priority_level asc',
 				pageLength: 10,
 				start: 0,
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	methods: {
 		updateRoute(sec_update) {
@@ -92,12 +92,12 @@ export default {
 				default:
 					return 'Unknown';
 			}
-		}
+		},
 	},
 	computed: {
 		updates() {
 			return this.$resources.updates.data;
-		}
-	}
+		},
+	},
 };
 </script>

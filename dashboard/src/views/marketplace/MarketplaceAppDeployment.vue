@@ -10,10 +10,10 @@ import MarketplaceAppReleaseList from '@/components/MarketplaceAppReleaseList.vu
 export default {
 	name: 'MarketplaceAppDeployment',
 	props: {
-		app: Object
+		app: Object,
 	},
 	components: {
-		MarketplaceAppReleaseList
-	}
+		MarketplaceAppReleaseList,
+	},
 };
 </script>

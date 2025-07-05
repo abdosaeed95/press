@@ -14,13 +14,13 @@ export default {
 	name: 'SiteDeadlockReport',
 	props: ['name'],
 	components: {
-		PerformanceReport
+		PerformanceReport,
 	},
 	data() {
 		return {
 			start_datetime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
 			stop_datetime: dayjs().subtract(1, 'day').format('YYYY-MM-DD HH:mm:ss'),
-			max_log_size: 500
+			max_log_size: 500,
 		};
 	},
 	computed: {
@@ -29,7 +29,7 @@ export default {
 				resource: () => {
 					return {
 						url: 'press.api.analytics.deadlock_report',
-						makeParams: params => {
+						makeParams: (params) => {
 							// for filterControls to work
 							if (params) return params;
 
@@ -37,13 +37,13 @@ export default {
 								name: this.name,
 								start_datetime: this.start_datetime,
 								stop_datetime: this.stop_datetime,
-								max_log_size: parseInt(this.max_log_size ?? '')
+								max_log_size: parseInt(this.max_log_size ?? ''),
 							};
 						},
 						auto: true,
 						initialData: [],
-						transform: data => {
-							return data.map(record => {
+						transform: (data) => {
+							return data.map((record) => {
 								// Handle null values
 								// because some records can be empty as well, to keep a blank line after two deadlock records
 								record.timestamp = record.timestamp
@@ -54,7 +54,7 @@ export default {
 								record.query = record.query || '';
 								return record;
 							});
-						}
+						},
 					};
 				},
 				emptyStateMessage: 'No query deadlock records found',
@@ -63,28 +63,28 @@ export default {
 						label: 'Timestamp',
 						fieldname: 'timestamp',
 						width: '12rem',
-						format: value => {
+						format: (value) => {
 							return this.$format.date(value, 'YYYY-MM-DD HH:mm:ss');
-						}
+						},
 					},
 					{
 						label: 'Txn ID',
 						fieldname: 'transaction_id',
 						align: 'left',
-						width: '100px'
+						width: '100px',
 					},
 					{
 						label: 'Table',
 						fieldname: 'table',
 						class: 'text-gray-600',
 						align: 'left',
-						width: '200px'
+						width: '200px',
 					},
 					{
 						label: 'Query',
 						fieldname: 'query',
-						class: 'font-mono'
-					}
+						class: 'font-mono',
+					},
 				],
 				filterControls: () => {
 					return [
@@ -92,23 +92,23 @@ export default {
 							type: 'datetime-local',
 							label: 'Start Time',
 							fieldname: 'start_datetime',
-							default: this.start_datetime
+							default: this.start_datetime,
 						},
 						{
 							type: 'datetime-local',
 							label: 'End Time',
 							fieldname: 'stop_datetime',
-							default: this.stop_datetime
+							default: this.stop_datetime,
 						},
 						{
 							label: 'Max Log Lines',
 							fieldname: 'max_log_size',
-							default: this.max_log_size
-						}
+							default: this.max_log_size,
+						},
 					];
-				}
+				},
 			};
-		}
-	}
+		},
+	},
 };
 </script>

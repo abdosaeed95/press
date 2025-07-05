@@ -57,12 +57,12 @@ import { Button, Dialog, FeatherIcon, ErrorMessage } from 'frappe-ui';
 
 export default {
 	props: {
-		name: String
+		name: String,
 	},
 	components: {
 		Dialog,
 		Button,
-		FeatherIcon
+		FeatherIcon,
 	},
 	emits: ['done'],
 	data() {
@@ -70,7 +70,7 @@ export default {
 			helpViewed: false,
 			show: true,
 			copied: false,
-			error: ''
+			error: '',
 		};
 	},
 	resources: {
@@ -80,15 +80,15 @@ export default {
 				doctype: 'Press Notification',
 				name: this.name,
 				whitelistedMethods: {
-					markAsAddressed: 'mark_as_addressed'
-				}
+					markAsAddressed: 'mark_as_addressed',
+				},
 			};
-		}
+		},
 	},
 	computed: {
 		doc() {
 			return this.$resources.notification.doc ?? null;
-		}
+		},
 	},
 	methods: {
 		async copyTraceback() {
@@ -111,7 +111,7 @@ export default {
 			this.error = '';
 			this.helpViewed = true;
 			window.open(this.doc.assistance_url, '_blank');
-		}
-	}
+		},
+	},
 };
 </script>

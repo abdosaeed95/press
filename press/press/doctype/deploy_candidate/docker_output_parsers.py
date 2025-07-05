@@ -15,7 +15,8 @@ ansi_escape_rx = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 done_check_rx = re.compile(r"#\d+\sDONE\s\d+\.\d+")
 
 if typing.TYPE_CHECKING:
-	from typing import Any, Generator
+	from collections.abc import Generator
+	from typing import Any
 
 	from press.press.doctype.deploy_candidate_build.deploy_candidate_build import DeployCandidateBuild
 	from press.press.doctype.deploy_candidate_build_step.deploy_candidate_build_step import (

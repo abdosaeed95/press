@@ -57,8 +57,8 @@
 					<div class="mt-4">
 						<AppSourceSelector
 							:apps="[
-								...selectedVersion.apps.filter(app => app.name === 'frappe'),
-								...selectedVersion.apps.filter(app => app.name !== 'frappe')
+								...selectedVersion.apps.filter((app) => app.name === 'frappe'),
+								...selectedVersion.apps.filter((app) => app.name !== 'frappe'),
 							]"
 							v-model="selectedApps"
 							:multiple="true"
@@ -108,7 +108,7 @@ export default {
 	components: {
 		WizardCard,
 		AppSourceSelector,
-		RichSelect
+		RichSelect,
 	},
 	data() {
 		return {
@@ -117,7 +117,7 @@ export default {
 			selectedApps: [],
 			selectedRegion: null,
 			serverTitle: null,
-			agreedToRegionConsent: false
+			agreedToRegionConsent: false,
 		};
 	},
 	resources: {
@@ -126,19 +126,19 @@ export default {
 				url: 'press.api.bench.options',
 				initialData: {
 					versions: [],
-					clusters: []
+					clusters: [],
 				},
 				auto: true,
 				onSuccess(options) {
 					if (!this.selectedVersionName) {
 						this.selectedVersionName = this.options.versions.filter(
-							v => v.default == 1
+							(v) => v.default == 1,
 						)[0].name;
 					}
 					if (!this.selectedRegion) {
 						this.selectedRegion = this.options.clusters[0].name;
 					}
-				}
+				},
 			};
 		},
 		createBench() {
@@ -150,12 +150,12 @@ export default {
 						version: this.selectedVersionName,
 						cluster: this.selectedRegion,
 						saas_app: this.saas_app || null,
-						apps: this.selectedApps.map(app => ({
+						apps: this.selectedApps.map((app) => ({
 							name: app.app,
-							source: app.source.name
+							source: app.source.name,
 						})),
-						server: this.server || null
-					}
+						server: this.server || null,
+					},
 				},
 				validate() {
 					if (!this.benchTitle) {
@@ -175,17 +175,17 @@ export default {
 				},
 				onSuccess(benchName) {
 					this.$router.push(`/groups/${benchName}`);
-				}
+				},
 			};
-		}
+		},
 	},
 	async mounted() {
 		if (this.server) {
 			let { title, cluster } = await this.$call(
 				'press.api.server.get_title_and_cluster',
 				{
-					name: this.server
-				}
+					name: this.server,
+				},
 			);
 			this.serverTitle = title;
 			this.selectedRegion = cluster;
@@ -201,18 +201,18 @@ export default {
 		selectedApps: {
 			handler(newVal, oldVal) {
 				// dont remove frappe app
-				let hasFrappe = newVal.find(app => app.app === 'frappe');
+				let hasFrappe = newVal.find((app) => app.app === 'frappe');
 				if (!hasFrappe && oldVal) {
 					this.selectedApps = oldVal;
 				}
 			},
-			deep: true
-		}
+			deep: true,
+		},
 	},
 	methods: {
 		getFrappeApp(apps) {
-			return apps.find(app => app.name === 'frappe');
-		}
+			return apps.find((app) => app.name === 'frappe');
+		},
 	},
 	computed: {
 		options() {
@@ -220,29 +220,29 @@ export default {
 		},
 		selectedVersion() {
 			return this.options.versions.find(
-				v => v.name === this.selectedVersionName
+				(v) => v.name === this.selectedVersionName,
 			);
 		},
 		versionOptions() {
-			return this.options.versions.map(v => ({
+			return this.options.versions.map((v) => ({
 				label: `${v.name} (${v.status})`,
-				value: v.name
+				value: v.name,
 			}));
 		},
 		regionOptions() {
 			let clusters = this.options.clusters;
 			if (this.server && this.selectedRegion) {
 				clusters = clusters.filter(
-					cluster => cluster.name === this.selectedRegion
+					(cluster) => cluster.name === this.selectedRegion,
 				);
 			}
-			return clusters.map(d => ({
+			return clusters.map((d) => ({
 				label: d.title,
 				value: d.name,
 				image: d.image,
-				beta: d.beta
+				beta: d.beta,
 			}));
-		}
-	}
+		},
+	},
 };
 </script>

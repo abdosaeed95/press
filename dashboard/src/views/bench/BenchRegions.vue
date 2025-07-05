@@ -51,7 +51,7 @@
 					@click="
 						$resources.addRegion.submit({
 							name: benchName,
-							region: selectedRegion
+							region: selectedRegion,
 						})
 					"
 				>
@@ -72,7 +72,7 @@ export default {
 	data() {
 		return {
 			selectedRegion: null,
-			showAddRegionDialog: false
+			showAddRegionDialog: false,
 		};
 	},
 	resources: {
@@ -80,22 +80,22 @@ export default {
 			return {
 				url: 'press.api.bench.regions',
 				params: {
-					name: this.benchName
+					name: this.benchName,
 				},
-				auto: true
+				auto: true,
 			};
 		},
 		availableRegions() {
 			return {
 				url: 'press.api.bench.available_regions',
 				params: {
-					name: this.benchName
+					name: this.benchName,
 				},
 				auto: true,
 				onSuccess(availableRegions) {
 					if (availableRegions.length)
 						this.selectedRegion = availableRegions[0].name;
-				}
+				},
 			};
 		},
 		addRegion() {
@@ -103,26 +103,26 @@ export default {
 				url: 'press.api.bench.add_region',
 				onSuccess() {
 					window.location.reload();
-				}
+				},
 			};
-		}
+		},
 	},
 	computed: {
 		regionOptions() {
 			let availableRegions = this.$resources.availableRegions.data;
 			return availableRegions
-				? availableRegions.map(d => ({
+				? availableRegions.map((d) => ({
 						label: d.title,
 						value: d.name,
 						image: d.image,
-						beta: d.beta
-				  }))
+						beta: d.beta,
+					}))
 				: [];
 		},
 		showAddRegionButton() {
 			let regions = this.$resources.regions.data;
 			return regions && regions.length < 2;
-		}
-	}
+		},
+	},
 };
 </script>

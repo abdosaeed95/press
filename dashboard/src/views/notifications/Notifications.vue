@@ -22,7 +22,7 @@
 					:title="notification.type"
 					:description="`${notification.message} • ${formatDate(
 						notification.creation,
-						'relative'
+						'relative',
 					)}`"
 				>
 					<template #actions>
@@ -50,15 +50,15 @@ export default {
 	name: 'Notifications',
 	pageMeta() {
 		return {
-			title: 'Notifications'
+			title: 'Notifications',
 		};
 	},
 	components: {
-		TabButtons
+		TabButtons,
 	},
 	data() {
 		return {
-			activeTab: 'Unread'
+			activeTab: 'Unread',
 		};
 	},
 	resources: {
@@ -67,10 +67,10 @@ export default {
 			return {
 				url: 'press.api.notifications.get_notifications',
 				params: {
-					filters: { team: this.$account.team.name, read: false }
+					filters: { team: this.$account.team.name, read: false },
 				},
 				cache: ['unreadNotifications', this.$account?.team],
-				auto: true
+				auto: true,
 			};
 		},
 		readNotifications() {
@@ -80,35 +80,35 @@ export default {
 				params: {
 					filters: {
 						team: this.$account.team.name,
-						read: true
-					}
+						read: true,
+					},
 				},
 				cache: ['readNotifications', this.$account?.team],
-				auto: true
+				auto: true,
 			};
 		},
 		markNotificationAsRead: {
-			url: 'press.api.notifications.mark_notification_as_read'
-		}
+			url: 'press.api.notifications.mark_notification_as_read',
+		},
 	},
 	methods: {
 		openNotification(notification) {
 			if (!notification.read) {
 				this.$resources.markNotificationAsRead.submit({
-					name: notification.name
+					name: notification.name,
 				});
 
-				unreadNotificationsCount.setData(data => data - 1);
+				unreadNotificationsCount.setData((data) => data - 1);
 			}
 			this.$router.push(notification.route);
-		}
+		},
 	},
 	computed: {
 		notifications() {
 			return this.activeTab === 'Unread'
 				? this.$resources.unreadNotifications.data
 				: this.$resources.readNotifications.data;
-		}
-	}
+		},
+	},
 };
 </script>

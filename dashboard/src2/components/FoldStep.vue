@@ -57,7 +57,7 @@ export default defineComponent({
 		title: { type: String, required: true },
 		body: { type: String, required: true },
 		status: { type: String, required: false },
-		caption: { type: String, required: false }
+		caption: { type: String, required: false },
 	},
 	emits: ['toggle'],
 	watch: {
@@ -69,7 +69,7 @@ export default defineComponent({
 			this.$nextTick(() => {
 				this.$refs.output.scrollTop = this.$refs.output.scrollHeight;
 			});
-		}
+		},
 	},
 	computed: {
 		icon(): string {
@@ -101,7 +101,7 @@ export default defineComponent({
 				default:
 					return 'bg-gray-400';
 			}
-		}
-	}
+		},
+	},
 });
 </script>

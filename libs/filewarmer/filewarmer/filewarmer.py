@@ -1,7 +1,7 @@
 import ctypes
 import os
 import platform
-from typing import List, Literal
+from typing import Literal
 
 
 class FWUP:
@@ -10,7 +10,7 @@ class FWUP:
 
 	def warmup(
 		self,
-		file_paths: List[str],  # noqa: FA100
+		file_paths: list[str],
 		method: Literal["psync", "io_uring"] = "psync",
 		small_file_size_threshold: int = 1024 * 1024,  # 1MB
 		block_size_for_small_files: int = 256 * 1024,  # 256KB

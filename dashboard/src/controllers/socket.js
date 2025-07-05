@@ -7,7 +7,7 @@ let protocol = port ? 'http' : 'https';
 let siteName = window.site_name || host;
 let url = `${protocol}://${host}${port}/${siteName}`;
 let socket = io(url, {
-	withCredentials: true
+	withCredentials: true,
 });
 
 export default socket;

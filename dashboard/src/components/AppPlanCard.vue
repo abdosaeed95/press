@@ -5,7 +5,7 @@
 		:class="[
 			popular ? 'relative bg-blue-100' : '',
 			selected ? 'relative ring-2 ring-inset ring-blue-500' : '',
-			clickable ? 'cursor-pointer hover:border-gray-300' : ''
+			clickable ? 'cursor-pointer hover:border-gray-300' : '',
 		]"
 	>
 		<div>
@@ -36,7 +36,7 @@
 					</span>
 				</div>
 				<div v-if="editable">
-					<Button icon-left="edit" @click="e => $emit('beginEdit', e)"
+					<Button icon-left="edit" @click="(e) => $emit('beginEdit', e)"
 						>Edit</Button
 					>
 				</div>
@@ -72,27 +72,27 @@ export default {
 	emits: ['beginEdit'],
 	props: {
 		plan: {
-			type: Object
+			type: Object,
 		},
 		popular: {
 			type: Boolean,
-			default: false
+			default: false,
 		},
 		selected: {
 			type: Boolean,
-			default: false
+			default: false,
 		},
 		clickable: {
 			type: Boolean,
-			default: true
+			default: true,
 		},
 		editable: {
 			type: Boolean,
-			default: false
-		}
+			default: false,
+		},
 	},
 	components: {
-		FeatureList
-	}
+		FeatureList,
+	},
 };
 </script>

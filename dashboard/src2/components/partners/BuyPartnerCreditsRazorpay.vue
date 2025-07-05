@@ -42,16 +42,16 @@ import { DashboardError } from '../../utils/error';
 const props = defineProps({
 	amount: {
 		type: Number,
-		default: 0
+		default: 0,
 	},
 	maximumAmount: {
 		type: Number,
-		default: 0
+		default: 0,
 	},
 	type: {
 		type: String,
-		default: 'prepaid-credits'
-	}
+		default: 'prepaid-credits',
+	},
 });
 
 const emit = defineEmits(['success']);
@@ -66,7 +66,7 @@ onMounted(() => {
 	razorpayCheckoutJS.value = document.createElement('script');
 	razorpayCheckoutJS.value.setAttribute(
 		'src',
-		'https://checkout.razorpay.com/v1/checkout.js'
+		'https://checkout.razorpay.com/v1/checkout.js',
 	);
 	razorpayCheckoutJS.value.async = true;
 	document.head.appendChild(razorpayCheckoutJS.value);
@@ -83,21 +83,21 @@ const createRazorpayOrder = createResource({
 	url: 'press.api.billing.create_razorpay_order',
 	params: {
 		amount: props.amount,
-		type: order_type
+		type: order_type,
 	},
-	onSuccess: data => processOrder(data),
+	onSuccess: (data) => processOrder(data),
 	validate: () => {
 		if (props.amount > props.maximumAmount) {
 			throw new DashboardError('Amount more than maximum amount required');
 		}
-	}
+	},
 });
 
 const handlePaymentFailed = createResource({
 	url: 'press.api.billing.handle_razorpay_payment_failed',
 	onSuccess: () => {
 		console.log('Payment Failed.');
-	}
+	},
 });
 
 function processOrder(data) {
@@ -108,7 +108,7 @@ function processOrder(data) {
 		image: 'https://frappe.io/files/cloud.png',
 		prefill: { email: team.doc?.user },
 		handler: handlePaymentSuccess,
-		theme: { color: '#171717' }
+		theme: { color: '#171717' },
 	};
 
 	const rzp = new Razorpay(options);

@@ -4,13 +4,13 @@ import MarketplacePayoutDetails from './MarketplacePayoutDetails.vue';
 
 const props = defineProps({
 	payoutOrderName: {
-		type: String
-	}
+		type: String,
+	},
 });
 
 const payouts = createResource({
 	url: 'press.api.marketplace.get_payouts_list',
-	auto: true
+	auto: true,
 });
 </script>
 
@@ -45,7 +45,7 @@ const payouts = createResource({
 							$date(payout.period_end).toLocaleString({
 								month: 'long',
 								day: 'numeric',
-								year: 'numeric'
+								year: 'numeric',
 							})
 						}}
 					</div>

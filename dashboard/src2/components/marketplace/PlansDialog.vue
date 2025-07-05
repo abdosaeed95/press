@@ -111,8 +111,8 @@ export default {
 				price_usd: 0,
 				features: [''],
 				title: '',
-				enabled: true
-			}
+				enabled: true,
+			},
 		};
 	},
 	mounted() {
@@ -128,9 +128,9 @@ export default {
 				url: 'press.api.marketplace.get_app_plans',
 				params: {
 					app: this.app,
-					include_disabled: true
+					include_disabled: true,
 				},
-				auto: true
+				auto: true,
 			};
 		},
 		updateAppPlan() {
@@ -138,7 +138,7 @@ export default {
 				url: 'press.api.marketplace.update_app_plan',
 				onSuccess() {
 					this.refreshState();
-				}
+				},
 			};
 		},
 		createAppPlan() {
@@ -151,9 +151,9 @@ export default {
 				},
 				onSuccess() {
 					this.refreshState();
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		editPlan() {
@@ -176,12 +176,12 @@ export default {
 				this.currentEditingPlan.name
 					? this.$resources.updateAppPlan.submit({
 							app_plan_name: this.currentEditingPlan.name,
-							updated_plan_data: this.currentEditingPlan
-					  })
+							updated_plan_data: this.currentEditingPlan,
+						})
 					: this.$resources.createAppPlan.submit({
 							plan_data: this.currentEditingPlan,
-							marketplace_app: this.app
-					  }),
+							marketplace_app: this.app,
+						}),
 				{
 					loading: 'Saving plan...',
 					success: () => {
@@ -194,8 +194,8 @@ export default {
 							return 'Plan created successfully';
 						}
 					},
-					error: e => getToastErrorMessage(e)
-				}
+					error: (e) => getToastErrorMessage(e),
+				},
 			);
 		},
 
@@ -211,12 +211,12 @@ export default {
 				price_usd: 0,
 				features: [''],
 				title: '',
-				enabled: true
+				enabled: true,
 			});
 
 			this.$resources.updateAppPlan.error = null;
 			this.$resources.createAppPlan.error = null;
-		}
-	}
+		},
+	},
 };
 </script>

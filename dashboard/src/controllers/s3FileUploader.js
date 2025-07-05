@@ -12,7 +12,7 @@ export default class S3FileUploader {
 
 	trigger(event, data) {
 		let handlers = this.listeners[event] || [];
-		handlers.forEach(handler => {
+		handlers.forEach((handler) => {
 			handler.call(this, data);
 		});
 	}
@@ -22,7 +22,7 @@ export default class S3FileUploader {
 			async function getUploadLink() {
 				try {
 					let response = await fetch(
-						`/api/method/press.api.site.get_upload_link?file=${file.name}`
+						`/api/method/press.api.site.get_upload_link?file=${file.name}`,
 					);
 					let data = await response.json();
 					return data.message;
@@ -41,11 +41,11 @@ export default class S3FileUploader {
 			xhr.upload.addEventListener('loadstart', () => {
 				this.trigger('start');
 			});
-			xhr.upload.addEventListener('progress', e => {
+			xhr.upload.addEventListener('progress', (e) => {
 				if (e.lengthComputable) {
 					this.trigger('progress', {
 						uploaded: e.loaded,
-						total: e.total
+						total: e.total,
 					});
 				}
 			});
@@ -72,14 +72,14 @@ export default class S3FileUploader {
 								file: file.name,
 								path: file_path,
 								type: file.type,
-								size: file.size
+								size: file.size,
 							});
 						resolve(out || upload_link.fields.key);
 					} else {
 						// response from aws is in xml
 						let xmlDoc = new DOMParser().parseFromString(
 							xhr.responseText,
-							'text/xml'
+							'text/xml',
 						);
 						let code =
 							xmlDoc.getElementsByTagName('Code')[0].childNodes[0].nodeValue;

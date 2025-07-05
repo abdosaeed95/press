@@ -28,7 +28,7 @@ const tabs = [
 	{
 		label: 'Profile',
 		icon: icon('user'),
-		routeName: 'SettingsProfile'
+		routeName: 'SettingsProfile',
 	},
 	{
 		label: 'Team',
@@ -37,7 +37,7 @@ const tabs = [
 		condition: () =>
 			$team.doc?.user === $session.user ||
 			$session.isTeamAdmin ||
-			$session.isSystemUser
+			$session.isSystemUser,
 	},
 	{
 		label: 'Permissions',
@@ -45,17 +45,17 @@ const tabs = [
 		routeName: 'SettingsPermission',
 		childrenRoutes: [
 			'SettingsPermissionRoles',
-			'SettingsPermissionRolePermissions'
+			'SettingsPermissionRolePermissions',
 		],
 		condition: () =>
 			$team.doc?.user === $session.user ||
 			$session.isTeamAdmin ||
-			$session.isSystemUser
+			$session.isSystemUser,
 	},
 	{
 		label: 'Developer',
 		icon: icon('code'),
-		routeName: 'SettingsDeveloper'
-	}
+		routeName: 'SettingsDeveloper',
+	},
 ];
 </script>

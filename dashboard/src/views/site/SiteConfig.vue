@@ -15,13 +15,13 @@ import ConfigEditor from '@/components/ConfigEditor.vue';
 export default {
 	name: 'SiteConfig',
 	components: {
-		ConfigEditor
+		ConfigEditor,
 	},
 	props: ['site'],
 	data() {
 		return {
 			editMode: false,
-			isDirty: false
+			isDirty: false,
 		};
 	},
 	methods: {
@@ -30,7 +30,7 @@ export default {
 				url: 'press.api.site.site_config',
 				params: { name: this.site?.name },
 				auto: true,
-				initialData: []
+				initialData: [],
 			};
 		},
 		updateSiteConfig(updatedConfig) {
@@ -38,10 +38,10 @@ export default {
 				url: 'press.api.site.update_config',
 				params: {
 					name: this.site?.name,
-					config: JSON.stringify(updatedConfig)
-				}
+					config: JSON.stringify(updatedConfig),
+				},
 			};
-		}
-	}
+		},
+	},
 };
 </script>

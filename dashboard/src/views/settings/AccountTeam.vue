@@ -98,7 +98,7 @@ export default {
 			showManageTeamForm: false,
 			childTeamTitle: null,
 			newChildTeamMessage: 'A new team is created',
-			newChildTeamTitle: 'Team Created!'
+			newChildTeamTitle: 'Team Created!',
 		};
 	},
 	computed: {
@@ -109,7 +109,7 @@ export default {
 			const team = this.$account.team;
 			let show = this.$account.hasRole('Press Admin');
 			return show && !this.$account.parent_team;
-		}
+		},
 	},
 	resources: {
 		leaveTeam() {
@@ -120,16 +120,16 @@ export default {
 					notify({
 						title: 'Successfully Left Team',
 						icon: 'check',
-						color: 'green'
+						color: 'green',
 					});
 				},
 				onError() {
 					notify({
 						title: 'Cannot leave this Team.',
 						icon: 'x',
-						color: 'red'
+						color: 'red',
 					});
-				}
+				},
 			};
 		},
 		addChildTeam() {
@@ -143,9 +143,9 @@ export default {
 						title: this.newChildTeamTitle,
 						message: this.newChildTeamMessage,
 						color: 'green',
-						icon: 'check'
+						icon: 'check',
 					});
-				}
+				},
 			};
 		},
 		removeMember() {
@@ -153,21 +153,21 @@ export default {
 				url: 'press.api.account.remove_child_team',
 				onSuccess() {
 					this.$account.fetchAccount();
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		dropdownItems(team_name) {
 			return [
 				{
 					label: 'Switch to Team',
-					onClick: () => this.$account.switchToTeam(team_name)
+					onClick: () => this.$account.switchToTeam(team_name),
 				},
 				{
 					label: 'Leave Team',
-					onClick: () => this.confirmLeaveTeam(team_name)
-				}
+					onClick: () => this.confirmLeaveTeam(team_name),
+				},
 			];
 		},
 		confirmLeaveTeam(team_name) {
@@ -176,12 +176,12 @@ export default {
 				message: `Are you sure you want to leave team <strong>${team_name}</strong>?`,
 				actionLabel: 'Leave Team',
 				actionColor: 'red',
-				action: closeDialog => {
+				action: (closeDialog) => {
 					closeDialog();
 					this.$resources.leaveTeam.submit({ team: team_name });
-				}
+				},
 			});
-		}
-	}
+		},
+	},
 };
 </script>

@@ -5,14 +5,14 @@ export default {
 	name: 'SpacesList',
 	data() {
 		return {
-			recentlyCreatedSites: []
+			recentlyCreatedSites: [],
 		};
 	},
 	props: {
 		spaces: {
 			type: Object,
-			default: () => {}
-		}
-	}
+			default: () => {},
+		},
+	},
 };
 </script>

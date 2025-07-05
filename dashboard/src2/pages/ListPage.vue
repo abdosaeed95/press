@@ -67,37 +67,37 @@ export default {
 		Dropdown,
 		TextInput,
 		AlertBanner,
-		AlertAddPaymentMode: defineAsyncComponent(() =>
-			import('../components/AlertAddPaymentMode.vue')
+		AlertAddPaymentMode: defineAsyncComponent(
+			() => import('../components/AlertAddPaymentMode.vue'),
 		),
-		AlertCardExpired: defineAsyncComponent(() =>
-			import('../components/AlertCardExpired.vue')
+		AlertCardExpired: defineAsyncComponent(
+			() => import('../components/AlertCardExpired.vue'),
 		),
-		AlertAddressDetails: defineAsyncComponent(() =>
-			import('../components/AlertAddressDetails.vue')
+		AlertAddressDetails: defineAsyncComponent(
+			() => import('../components/AlertAddressDetails.vue'),
 		),
-		AlertMandateInfo: defineAsyncComponent(() =>
-			import('../components/AlertMandateInfo.vue')
+		AlertMandateInfo: defineAsyncComponent(
+			() => import('../components/AlertMandateInfo.vue'),
 		),
-		AlertUnpaidInvoices: defineAsyncComponent(() =>
-			import('../components/AlertUnpaidInvoices.vue')
-		)
+		AlertUnpaidInvoices: defineAsyncComponent(
+			() => import('../components/AlertUnpaidInvoices.vue'),
+		),
 	},
 	props: {
 		objectType: {
 			type: String,
-			required: true
-		}
+			required: true,
+		},
 	},
 	methods: {
 		getRoute(row) {
 			return {
 				name: `${this.object.doctype} Detail`,
 				params: {
-					name: row.name
-				}
+					name: row.name,
+				},
 			};
-		}
+		},
 	},
 	computed: {
 		object() {
@@ -107,7 +107,7 @@ export default {
 			return {
 				...this.object.list,
 				doctype: this.object.doctype,
-				route: this.object.detail ? this.getRoute : null
+				route: this.object.detail ? this.getRoute : null,
 			};
 		},
 		isCardExpired() {
@@ -130,22 +130,22 @@ export default {
 		},
 		hasUnpaidInvoices() {
 			return this.$resources.getAmountDue.data;
-		}
+		},
 	},
 	resources: {
 		banner() {
 			return {
 				type: 'document',
 				doctype: 'Dashboard Banner',
-				name: 'Dashboard Banner'
+				name: 'Dashboard Banner',
 			};
 		},
 		getAmountDue() {
 			return {
 				url: 'press.api.billing.total_unpaid_amount',
-				auto: true
+				auto: true,
 			};
-		}
-	}
+		},
+	},
 };
 </script>

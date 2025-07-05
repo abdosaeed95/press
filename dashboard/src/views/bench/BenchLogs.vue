@@ -49,9 +49,9 @@ export default {
 			return {
 				url: 'press.api.bench.logs',
 				params: { name: this.bench?.name, bench: this.instanceName },
-				auto: true
+				auto: true,
 			};
-		}
-	}
+		},
+	},
 };
 </script>

@@ -2,15 +2,15 @@
 import { createResource } from 'frappe-ui';
 
 const props = defineProps({
-	appName: String
+	appName: String,
 });
 
 const appSubscriptions = createResource({
 	url: 'press.api.marketplace.get_subscriptions_list',
 	params: {
-		marketplace_app: props.appName
+		marketplace_app: props.appName,
 	},
-	auto: true
+	auto: true,
 });
 </script>
 

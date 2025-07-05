@@ -4,6 +4,6 @@
 <script>
 export default {
 	name: 'ListSelection',
-	props: ['options']
+	props: ['options'],
 };
 </script>

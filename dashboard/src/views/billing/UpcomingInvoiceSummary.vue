@@ -9,7 +9,7 @@ export default {
 	name: 'UpcomingInvoiceSummary',
 	props: ['invoiceDoc'],
 	components: {
-		InvoiceUsageTable
+		InvoiceUsageTable,
 	},
 	computed: {
 		subtitle() {
@@ -20,9 +20,9 @@ export default {
 			let end = this.$date(this.invoiceDoc.period_end);
 
 			return `Current month's total forecast (${start.toFormat(
-				'd MMM'
+				'd MMM',
 			)} - ${end.toFormat('d MMM yyyy')})`;
-		}
-	}
+		},
+	},
 };
 </script>

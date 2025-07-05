@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from setuptools import find_packages, setup
 
 # get version from __version__ variable in press/__init__.py

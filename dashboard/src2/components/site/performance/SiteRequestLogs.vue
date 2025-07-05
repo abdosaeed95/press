@@ -14,12 +14,12 @@ export default {
 	name: 'SiteRequestLogs',
 	props: ['name'],
 	components: {
-		PerformanceReport
+		PerformanceReport,
 	},
 	data() {
 		return {
 			date: null,
-			start: 0
+			start: 0,
 		};
 	},
 	computed: {
@@ -28,7 +28,7 @@ export default {
 				resource: () => {
 					return {
 						url: 'press.api.analytics.request_logs',
-						makeParams: params => {
+						makeParams: (params) => {
 							// for filterControls to work
 							if (params) return params;
 
@@ -37,13 +37,13 @@ export default {
 								timezone: dayjs.tz.guess(),
 								sort: 'CPU Time (Descending)',
 								date: this.today,
-								start: this.start
+								start: this.start,
 							};
 						},
 						auto: true,
 						initialData: [],
-						transform: data => {
-							return data.map(log => {
+						transform: (data) => {
+							return data.map((log) => {
 								log.time = dayjs(log.timestamp).format('HH:mm:ss z');
 								log.method = log.request.method;
 								log.path = log.request.path;
@@ -51,7 +51,7 @@ export default {
 								log.cpu_time = log.duration / 1000000;
 								return log;
 							});
-						}
+						},
 					};
 				},
 				columns: [
@@ -62,7 +62,7 @@ export default {
 						label: 'Status Code',
 						fieldname: 'status',
 						width: 0.5,
-						align: 'right'
+						align: 'right',
 					},
 					{
 						label: 'CPU Time (seconds)',
@@ -70,8 +70,8 @@ export default {
 						width: 1,
 						class: 'text-gray-600',
 						align: 'right',
-						format: value => value.toFixed(2)
-					}
+						format: (value) => value.toFixed(2),
+					},
 				],
 				filterControls: () => [
 					{
@@ -82,23 +82,23 @@ export default {
 						options: [
 							'Time (Ascending)',
 							'Time (Descending)',
-							'CPU Time (Descending)'
+							'CPU Time (Descending)',
 						],
-						default: 'CPU Time (Descending)'
+						default: 'CPU Time (Descending)',
 					},
 					{
 						type: 'date',
 						label: 'Date',
 						fieldname: 'date',
 						class: !this.$isMobile ? 'w-48' : '',
-						default: this.today
-					}
-				]
+						default: this.today,
+					},
+				],
 			};
 		},
 		today() {
 			return dayjs().format('YYYY-MM-DD');
-		}
-	}
+		},
+	},
 };
 </script>

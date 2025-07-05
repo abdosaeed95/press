@@ -9,13 +9,13 @@ import CodeServerOverviewInfo from './CodeServerOverviewInfo.vue';
 export default {
 	name: 'CodeServerOverview',
 	components: {
-		CodeServerOverviewInfo
+		CodeServerOverviewInfo,
 	},
 	props: {
 		codeServer: {
 			type: Object,
-			default: () => {}
-		}
-	}
+			default: () => {},
+		},
+	},
 };
 </script>

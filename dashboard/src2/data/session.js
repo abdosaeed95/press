@@ -9,9 +9,9 @@ export let session = reactive({
 		makeParams({ email, password }) {
 			return {
 				usr: email,
-				pwd: password
+				pwd: password,
 			};
-		}
+		},
 	}),
 	logout: createResource({
 		url: 'logout',
@@ -28,7 +28,7 @@ export let session = reactive({
 			clear();
 
 			window.location.reload();
-		}
+		},
 	}),
 	logoutWithoutReload: createResource({
 		url: 'logout',
@@ -41,57 +41,57 @@ export let session = reactive({
 			}
 
 			clear();
-		}
+		},
 	}),
 	roles: createResource({
 		url: 'press.api.account.get_permission_roles',
 		cache: ['roles', localStorage.getItem('current_team')],
-		initialData: []
+		initialData: [],
 	}),
 	isTeamAdmin: computed(
 		() =>
 			session.roles.data.length
-				? session.roles.data.some(role => role.admin_access)
-				: false // if no roles, assume not admin and has member access
+				? session.roles.data.some((role) => role.admin_access)
+				: false, // if no roles, assume not admin and has member access
 	),
 	hasBillingAccess: computed(() =>
 		session.roles.data.length
-			? session.roles.data.some(role => role.allow_billing)
-			: true
+			? session.roles.data.some((role) => role.allow_billing)
+			: true,
 	),
 	hasWebhookConfigurationAccess: computed(() =>
 		session.roles.data.length
-			? session.roles.data.some(role => role.allow_webhook_configuration)
-			: true
+			? session.roles.data.some((role) => role.allow_webhook_configuration)
+			: true,
 	),
 	hasAppsAccess: computed(() =>
 		session.roles.data.length
-			? session.roles.data.some(role => role.allow_apps)
-			: true
+			? session.roles.data.some((role) => role.allow_apps)
+			: true,
 	),
 	hasPartnerAccess: computed(() =>
 		session.roles.data.length
-			? session.roles.data.some(role => role.allow_partner)
-			: true
+			? session.roles.data.some((role) => role.allow_partner)
+			: true,
 	),
 	hasSiteCreationAccess: computed(() =>
 		session.roles.data.length
-			? session.roles.data.some(role => role.allow_site_creation)
-			: true
+			? session.roles.data.some((role) => role.allow_site_creation)
+			: true,
 	),
 	hasBenchCreationAccess: computed(() =>
 		session.roles.data.length
-			? session.roles.data.some(role => role.allow_bench_creation)
-			: true
+			? session.roles.data.some((role) => role.allow_bench_creation)
+			: true,
 	),
 	hasServerCreationAccess: computed(() =>
 		session.roles.data.length
-			? session.roles.data.some(role => role.allow_server_creation)
-			: true
+			? session.roles.data.some((role) => role.allow_server_creation)
+			: true,
 	),
 	user: getSessionUser(),
 	isLoggedIn: computed(() => !!session.user),
-	isSystemUser: getSessionCookies().get('system_user') === 'yes'
+	isSystemUser: getSessionCookies().get('system_user') === 'yes',
 });
 
 export default session;

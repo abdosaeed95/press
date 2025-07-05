@@ -39,17 +39,17 @@ export default {
 	name: 'AccountBillingDetails',
 	emits: ['updated'],
 	components: {
-		UpdateBillingDetails: defineAsyncComponent(() =>
-			import('../../../src2/components/UpdateBillingDetails.vue')
-		)
+		UpdateBillingDetails: defineAsyncComponent(
+			() => import('../../../src2/components/UpdateBillingDetails.vue'),
+		),
 	},
 	resources: {
-		billingDetails: 'press.api.billing.details'
+		billingDetails: 'press.api.billing.details',
 	},
 	data() {
 		return {
-			editBillingDetails: false
+			editBillingDetails: false,
 		};
-	}
+	},
 };
 </script>

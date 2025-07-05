@@ -21,20 +21,20 @@ export default {
 	emits: ['update:selectedSubscription', 'update:step'],
 	props: {
 		data: {
-			default: []
+			default: [],
 		},
 		step: {
-			default: 1
+			default: 1,
 		},
 		selectedSubscription: {
-			default: ''
-		}
+			default: '',
+		},
 	},
 	methods: {
 		selectSubscription(sub) {
 			this.$emit('update:selectedSubscription', sub);
 			this.$emit('update:step', 2);
-		}
-	}
+		},
+	},
 };
 </script>

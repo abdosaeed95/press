@@ -31,7 +31,7 @@
 							$date(invoice.date).toLocaleString({
 								month: 'long',
 								day: 'numeric',
-								year: 'numeric'
+								year: 'numeric',
 							})
 						}}
 					</div>
@@ -48,7 +48,7 @@
 						{{
 							$date(invoice.period_end).toLocaleString({
 								month: 'long',
-								year: 'numeric'
+								year: 'numeric',
 							})
 						}}
 					</Link>
@@ -79,7 +79,7 @@
 							$date(invoice.payment_date).toLocaleString({
 								month: 'long',
 								day: 'numeric',
-								year: 'numeric'
+								year: 'numeric',
 							})
 						}}
 					</span>
@@ -115,7 +115,7 @@ export default {
 	name: 'AccountBillingPayments',
 	props: ['invoiceName'],
 	components: {
-		InvoiceUsageCard
+		InvoiceUsageCard,
 	},
 	data() {
 		return {
@@ -123,17 +123,17 @@ export default {
 			selectItems: [
 				{
 					label: 'All Invoices',
-					value: ''
+					value: '',
 				},
 				{
 					label: 'Unpaid Invoices',
-					value: 'Unpaid'
+					value: 'Unpaid',
 				},
 				{
 					label: 'Paid Invoices',
-					value: 'Paid'
-				}
-			]
+					value: 'Paid',
+				},
+			],
 		};
 	},
 	created() {
@@ -141,7 +141,7 @@ export default {
 			this.invoiceStatus = this.$route.query.invoiceStatus;
 	},
 	resources: {
-		pastInvoices: 'press.api.billing.invoices_and_payments'
+		pastInvoices: 'press.api.billing.invoices_and_payments',
 	},
 	computed: {
 		filteredInvoices() {
@@ -149,7 +149,7 @@ export default {
 				return this.$resources.pastInvoices.data;
 			} else {
 				return this.$resources.pastInvoices.data.filter(
-					invoice => invoice.status === this.invoiceStatus
+					(invoice) => invoice.status === this.invoiceStatus,
 				);
 			}
 		},
@@ -161,15 +161,15 @@ export default {
 				return `History of your ${this.invoiceStatus} invoice payments`;
 			}
 			return `No ${this.invoiceStatus} invoices have been generated yet`;
-		}
+		},
 	},
 	methods: {
 		async refreshLink(invoiceName) {
 			let refreshed_link = await this.$call(
 				'press.api.billing.refresh_invoice_link',
 				{
-					invoice: invoiceName
-				}
+					invoice: invoiceName,
+				},
 			);
 			if (refreshed_link) {
 				window.open(refreshed_link, '_blank');
@@ -181,7 +181,7 @@ export default {
 			} else {
 				window.open(invoice.stripe_invoice_url, '_blank');
 			}
-		}
-	}
+		},
+	},
 };
 </script>

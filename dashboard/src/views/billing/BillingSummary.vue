@@ -122,36 +122,36 @@ export default {
 		InvoiceUsageTable,
 		PlanIcon,
 		UpcomingInvoiceSummary,
-		PrepaidCreditsDialog: defineAsyncComponent(() =>
-			import('@/components/PrepaidCreditsDialog.vue')
+		PrepaidCreditsDialog: defineAsyncComponent(
+			() => import('@/components/PrepaidCreditsDialog.vue'),
 		),
-		ChangePaymentModeDialog: defineAsyncComponent(() =>
-			import('@/components/ChangePaymentModeDialog.vue')
+		ChangePaymentModeDialog: defineAsyncComponent(
+			() => import('@/components/ChangePaymentModeDialog.vue'),
 		),
-		UpdateBillingDetails: defineAsyncComponent(() =>
-			import('../../../src2/components/UpdateBillingDetails.vue')
-		)
+		UpdateBillingDetails: defineAsyncComponent(
+			() => import('../../../src2/components/UpdateBillingDetails.vue'),
+		),
 	},
 	resources: {
 		upcomingInvoice: { url: 'press.api.billing.upcoming_invoice', auto: true },
 		unpaidAmountDue() {
 			return {
 				url: 'press.api.billing.total_unpaid_amount',
-				auto: true
+				auto: true,
 			};
 		},
-		billingDetails: 'press.api.billing.details'
+		billingDetails: 'press.api.billing.details',
 	},
 	data() {
 		return {
 			showPrepaidCreditsDialog: false,
 			showChangeModeDialog: false,
-			showAddressDialog: false
+			showAddressDialog: false,
 		};
 	},
 	mounted() {
 		this.$socket.on('balance_updated', () =>
-			this.$resources.upcomingInvoice.reload()
+			this.$resources.upcomingInvoice.reload(),
 		);
 	},
 	unmounted() {
@@ -160,24 +160,24 @@ export default {
 	computed: {
 		cardBrand() {
 			return {
-				'master-card': defineAsyncComponent(() =>
-					import('@/components/icons/cards/MasterCard.vue')
+				'master-card': defineAsyncComponent(
+					() => import('@/components/icons/cards/MasterCard.vue'),
 				),
-				visa: defineAsyncComponent(() =>
-					import('@/components/icons/cards/Visa.vue')
+				visa: defineAsyncComponent(
+					() => import('@/components/icons/cards/Visa.vue'),
 				),
-				amex: defineAsyncComponent(() =>
-					import('@/components/icons/cards/Amex.vue')
+				amex: defineAsyncComponent(
+					() => import('@/components/icons/cards/Amex.vue'),
 				),
-				jcb: defineAsyncComponent(() =>
-					import('@/components/icons/cards/JCB.vue')
+				jcb: defineAsyncComponent(
+					() => import('@/components/icons/cards/JCB.vue'),
 				),
-				generic: defineAsyncComponent(() =>
-					import('@/components/icons/cards/Generic.vue')
+				generic: defineAsyncComponent(
+					() => import('@/components/icons/cards/Generic.vue'),
 				),
-				'union-pay': defineAsyncComponent(() =>
-					import('@/components/icons/cards/UnionPay.vue')
-				)
+				'union-pay': defineAsyncComponent(
+					() => import('@/components/icons/cards/UnionPay.vue'),
+				),
 			};
 		},
 		minimumAmount() {
@@ -202,7 +202,7 @@ export default {
 			return endDate.toLocaleString({
 				month: 'short',
 				day: 'numeric',
-				year: 'numeric'
+				year: 'numeric',
 			});
 		},
 		paymentModeDescription() {
@@ -227,16 +227,16 @@ export default {
 		},
 		loading() {
 			return this.$resources.upcomingInvoice.loading;
-		}
+		},
 	},
 	methods: {
 		dateShort(date) {
 			return this.$date(date).toLocaleString({
 				month: 'short',
 				day: 'numeric',
-				year: 'numeric'
+				year: 'numeric',
 			});
-		}
-	}
+		},
+	},
 };
 </script>

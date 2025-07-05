@@ -1,7 +1,7 @@
 <template>
 	<Dialog
 		:options="{
-			title: 'Settings'
+			title: 'Settings',
 		}"
 		v-model="show"
 	>
@@ -23,7 +23,7 @@ import { Switch } from 'frappe-ui';
 export default {
 	data() {
 		return {
-			show: true
+			show: true,
 		};
 	},
 	components: { Switch },
@@ -34,8 +34,8 @@ export default {
 			},
 			set(value) {
 				this.$team.setValue.submit({ enforce_2fa: value });
-			}
-		}
-	}
+			},
+		},
+	},
 };
 </script>

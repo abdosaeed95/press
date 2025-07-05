@@ -107,7 +107,7 @@
 				@click="
 					$resources.checkDNS.submit({
 						name: site.name,
-						domain: newDomain
+						domain: newDomain,
 					})
 				"
 			>
@@ -121,7 +121,7 @@
 				@click="
 					$resources.addDomain.submit({
 						name: site.name,
-						domain: newDomain
+						domain: newDomain,
 					})
 				"
 			>
@@ -138,14 +138,14 @@ export default {
 	props: {
 		site: {
 			type: Object,
-			required: true
-		}
+			required: true,
+		},
 	},
 	emits: ['domainAdded'],
 	data() {
 		return {
 			showDialog: true,
-			newDomain: null
+			newDomain: null,
 		};
 	},
 	resources: {
@@ -153,7 +153,7 @@ export default {
 			url: 'press.api.site.check_dns',
 			validate() {
 				if (!this.newDomain) throw new DashboardError('Domain cannot be empty');
-			}
+			},
 		},
 		addDomain: {
 			url: 'press.api.site.add_domain',
@@ -161,15 +161,15 @@ export default {
 				this.$resources.checkDNS.reset();
 				this.$emit('domainAdded');
 				this.showDialog = false;
-			}
+			},
 		},
 		retryAddDomain: {
 			url: 'press.api.site.retry_add_domain',
 			onSuccess() {
 				this.$emit('domainAdded');
 				// this.$resources.domains.fetch();
-			}
-		}
+			},
+		},
 	},
 	computed: {
 		dnsVerified() {
@@ -177,7 +177,7 @@ export default {
 		},
 		dnsResult() {
 			return this.$resources.checkDNS.data;
-		}
-	}
+		},
+	},
 };
 </script>

@@ -5,7 +5,7 @@
 		class="grid"
 		:class="{ 'hover:bg-gray-100': row.route }"
 		:style="{
-			gridTemplateColumns: columns.map(col => col.width + 'fr').join(' ')
+			gridTemplateColumns: columns.map((col) => col.width + 'fr').join(' '),
 		}"
 	>
 		<slot />
@@ -16,6 +16,6 @@
 export default {
 	name: 'TableRow',
 	props: ['row'],
-	inject: ['columns']
+	inject: ['columns'],
 };
 </script>

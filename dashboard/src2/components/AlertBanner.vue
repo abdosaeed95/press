@@ -21,7 +21,7 @@ const colors = {
 	info: 'blue',
 	success: 'green',
 	error: 'red',
-	warning: 'amber'
+	warning: 'amber',
 };
 
 export default {
@@ -30,17 +30,17 @@ export default {
 		title: String,
 		type: {
 			type: String,
-			default: 'info'
+			default: 'info',
 		},
 		showIcon: {
 			type: Boolean,
-			default: true
-		}
+			default: true,
+		},
 	},
 	computed: {
 		color() {
 			return colors[this.type] ?? 'gray';
-		}
-	}
+		},
+	},
 };
 </script>

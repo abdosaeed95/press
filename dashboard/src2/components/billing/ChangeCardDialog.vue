@@ -46,9 +46,9 @@
 									{
 										label: 'Set as default',
 										onClick: () => setAsDefault(card.name),
-										condition: () => !card.is_default
+										condition: () => !card.is_default,
 									},
-									{ label: 'Remove', onClick: () => removeCard(card.name) }
+									{ label: 'Remove', onClick: () => removeCard(card.name) },
 								]"
 							>
 								<Button icon="more-horizontal" variant="ghost" />
@@ -80,7 +80,7 @@ import {
 	Dialog,
 	Button,
 	FeatherIcon,
-	createResource
+	createResource,
 } from 'frappe-ui';
 import { cardBrandIcon, confirmDialog } from '../../utils/components';
 import { ref } from 'vue';
@@ -92,10 +92,10 @@ const show = defineModel();
 const cards = createResource({
 	url: 'press.api.billing.get_payment_methods',
 	cache: 'cards',
-	auto: true
+	auto: true,
 });
 
-const setAsDefault = card => {
+const setAsDefault = (card) => {
 	createResource({
 		url: 'press.api.billing.set_as_default',
 		params: { name: card },
@@ -103,12 +103,12 @@ const setAsDefault = card => {
 		onSuccess: () => {
 			cards.reload();
 			emit('success');
-		}
+		},
 	});
 };
 
 const confirmDialogOpened = ref(false);
-const removeCard = card => {
+const removeCard = (card) => {
 	confirmDialogOpened.value = true;
 	confirmDialog({
 		title: 'Remove Card',
@@ -126,13 +126,13 @@ const removeCard = card => {
 						cards.reload();
 						confirmDialogOpened.value = false;
 						hide();
-					}
+					},
 				});
-			}
+			},
 		},
 		onSuccess: () => {
 			confirmDialogOpened.value = false;
-		}
+		},
 	});
 };
 </script>

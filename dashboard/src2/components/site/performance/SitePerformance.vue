@@ -7,7 +7,7 @@ import ObjectList from '../../ObjectList.vue';
 export default {
 	props: ['name'],
 	components: {
-		ObjectList
+		ObjectList,
 	},
 	computed: {
 		options() {
@@ -17,42 +17,42 @@ export default {
 						title: 'Request Log Report',
 						description:
 							'View detailed logs of all HTTP requests made to the website.',
-						route: 'Site Performance Request Logs'
+						route: 'Site Performance Request Logs',
 					},
 					{
 						title: 'Binary Log Report',
 						description:
 							'Analyze changes made to the database, including data changes and schema alterations.',
-						route: 'Site Performance Binary Logs'
+						route: 'Site Performance Binary Logs',
 					},
 					{
 						title: 'Process List Report',
 						description:
 							'Monitor active database processes, their status, and resource usage.',
-						route: 'Site Performance Process List'
+						route: 'Site Performance Process List',
 					},
 					{
 						title: 'Slow Queries Report',
 						description:
 							'Identify and optimize slow-running database queries to improve performance.',
-						route: 'Site Performance Slow Queries'
+						route: 'Site Performance Slow Queries',
 					},
 					{
 						title: 'Deadlock Report',
 						description: 'Shows database conflicts that block transactions.',
-						route: 'Site Performance Deadlock Report'
-					}
+						route: 'Site Performance Deadlock Report',
+					},
 				],
 				columns: [
 					{
 						label: 'Title',
 						fieldname: 'title',
-						width: 0.3
+						width: 0.3,
 					},
 					{
 						label: 'Description',
 						fieldname: 'description',
-						class: 'text-gray-700'
+						class: 'text-gray-700',
 					},
 					{
 						label: '',
@@ -67,13 +67,13 @@ export default {
 								iconRight: 'arrow-right',
 								onClick: () => {
 									this.$router.push({ name: row.route });
-								}
+								},
 							};
-						}
-					}
-				]
+						},
+					},
+				],
 			};
-		}
-	}
+		},
+	},
 };
 </script>

@@ -8,7 +8,7 @@ export function pollJobStatus(jobId, stopFunction) {
 	}
 	let state = states[jobId];
 	state.loading = true;
-	fetchJobStatus(jobId).then(status => {
+	fetchJobStatus(jobId).then((status) => {
 		state.status = status;
 	});
 	if (stopFunction(state.status)) {
@@ -24,15 +24,15 @@ export function pollJobStatus(jobId, stopFunction) {
 function fetchJobStatus(jobId) {
 	return frappeRequest({
 		url: 'press.api.site.get_job_status',
-		params: { job_name: jobId }
-	}).then(result => result.status);
+		params: { job_name: jobId },
+	}).then((result) => result.status);
 }
 
 let runningJobs = reactive({});
 export function subscribeToJobUpdates(socket) {
 	// listening to site's doc_update event
 	// check agent_job.py for more details
-	socket.on('doc_update', data => {
+	socket.on('doc_update', (data) => {
 		let job = runningJobs[data.id];
 		if (!job) {
 			job = data;
@@ -47,16 +47,16 @@ export function getRunningJobs({ id, name, site, bench, server }) {
 		return runningJobs[id];
 	}
 	if (name) {
-		return Object.values(runningJobs).filter(job => job.name === name);
+		return Object.values(runningJobs).filter((job) => job.name === name);
 	}
 	if (site) {
-		return Object.values(runningJobs).filter(job => job.site === site);
+		return Object.values(runningJobs).filter((job) => job.site === site);
 	}
 	if (bench) {
-		return Object.values(runningJobs).filter(job => job.bench === bench);
+		return Object.values(runningJobs).filter((job) => job.bench === bench);
 	}
 	if (server) {
-		return Object.values(runningJobs).filter(job => job.server === server);
+		return Object.values(runningJobs).filter((job) => job.server === server);
 	}
 	return runningJobs;
 }

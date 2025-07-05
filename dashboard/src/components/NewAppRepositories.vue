@@ -74,14 +74,14 @@ export default {
 	emits: [
 		'update:selectRepo',
 		'update:selectedBranch',
-		'update:selectedInstallation'
+		'update:selectedInstallation',
 	],
 	props: [
 		'options',
 		'repositoryResource',
 		'selectedRepo',
 		'selectedInstallation',
-		'selectedBranch'
+		'selectedBranch',
 	],
 	methods: {
 		selectRepo(repo, installation) {
@@ -89,20 +89,20 @@ export default {
 			this.$emit('update:selectedRepo', repo);
 			this.$emit('update:selectedInstallation', installation);
 			this.$emit('update:selectedBranch', null);
-		}
+		},
 	},
 	computed: {
 		branchOptions() {
 			if (this.repositoryResource.loading || !this.repositoryResource.data) {
 				return [];
 			}
-			return (this.repositoryResource.data.branches || []).map(d => {
+			return (this.repositoryResource.data.branches || []).map((d) => {
 				return {
 					label: d.name,
-					onClick: () => this.$emit('update:selectedBranch', d.name)
+					onClick: () => this.$emit('update:selectedBranch', d.name),
 				};
 			});
-		}
-	}
+		},
+	},
 };
 </script>

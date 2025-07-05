@@ -34,16 +34,16 @@ import PublisherPayoutInfoCard from '@/components/marketplace/PublisherPayoutInf
 export default {
 	data() {
 		return {
-			showEditDialog: false
+			showEditDialog: false,
 		};
 	},
 	resources: {
 		getPublisherProfileInfo() {
 			return {
 				url: 'press.api.marketplace.get_publisher_profile_info',
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	computed: {
 		publisherProfileInfo() {
@@ -54,8 +54,8 @@ export default {
 				return;
 			}
 			return this.$resources.getPublisherProfileInfo.data;
-		}
+		},
 	},
-	components: { PublisherProfileCard, PublisherPayoutInfoCard }
+	components: { PublisherProfileCard, PublisherPayoutInfoCard },
 };
 </script>

@@ -42,12 +42,12 @@ import { DashboardError } from '../../utils/error';
 const props = defineProps({
 	amount: {
 		type: Number,
-		default: 0
+		default: 0,
 	},
 	minimumAmount: {
 		type: Number,
-		default: 0
-	}
+		default: 0,
+	},
 });
 
 const emit = defineEmits(['success']);
@@ -62,7 +62,7 @@ onMounted(() => {
 	razorpayCheckoutJS.value = document.createElement('script');
 	razorpayCheckoutJS.value.setAttribute(
 		'src',
-		'https://checkout.razorpay.com/v1/checkout.js'
+		'https://checkout.razorpay.com/v1/checkout.js',
 	);
 	razorpayCheckoutJS.value.async = true;
 	document.head.appendChild(razorpayCheckoutJS.value);
@@ -75,21 +75,21 @@ onBeforeUnmount(() => {
 const createRazorpayOrder = createResource({
 	url: 'press.api.billing.create_razorpay_order',
 	params: {
-		amount: props.amount
+		amount: props.amount,
 	},
-	onSuccess: data => processOrder(data),
+	onSuccess: (data) => processOrder(data),
 	validate: () => {
 		if (props.amount < props.minimumAmount) {
 			throw new DashboardError('Amount less than minimum amount required');
 		}
-	}
+	},
 });
 
 const handlePaymentFailed = createResource({
 	url: 'press.api.billing.handle_razorpay_payment_failed',
 	onSuccess: () => {
 		console.log('Payment Failed.');
-	}
+	},
 });
 
 function processOrder(data) {
@@ -100,7 +100,7 @@ function processOrder(data) {
 		image: 'https://frappe.io/files/cloud.png',
 		prefill: { email: team.doc?.user },
 		handler: handlePaymentSuccess,
-		theme: { color: '#171717' }
+		theme: { color: '#171717' },
 	};
 
 	const rzp = new Razorpay(options);

@@ -3,7 +3,7 @@
 		class="flex w-full flex-row items-center justify-between rounded-lg border border-gray-100 px-4 py-2 shadow focus:outline-none"
 		:class="[
 			selected || uninstall ? 'ring-2 ring-inset ring-gray-600' : '',
-			selectable ? 'hover:border-gray-300' : 'cursor-default'
+			selectable ? 'hover:border-gray-300' : 'cursor-default',
 		]"
 		ref="card"
 	>
@@ -67,8 +67,8 @@ export default {
 				return app.branch;
 			}
 			return app.next_tag || app.next_hash.slice(0, 7);
-		}
+		},
 	},
-	components: { CommitTag }
+	components: { CommitTag },
 };
 </script>

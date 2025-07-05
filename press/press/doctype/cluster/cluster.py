@@ -8,8 +8,9 @@ import ipaddress
 import re
 import time
 import typing
+from collections.abc import Generator
 from textwrap import wrap
-from typing import ClassVar, Generator
+from typing import ClassVar
 
 import boto3
 import frappe

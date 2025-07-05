@@ -14,7 +14,7 @@
 							:class="[
 								isTabSelected(tab)
 									? 'border-brand border-gray-900 text-gray-900'
-									: 'border-transparent text-gray-600 hover:text-gray-900'
+									: 'border-transparent text-gray-600 hover:text-gray-900',
 							]"
 							:href="href"
 							@click="navigate"
@@ -32,7 +32,7 @@
 			</ul>
 			<select
 				class="form-select block w-full sm:hidden"
-				@change="e => changeTab(e.target.value)"
+				@change="(e) => changeTab(e.target.value)"
 			>
 				<option
 					v-for="tab in tabs"
@@ -60,7 +60,7 @@ export default {
 		},
 		isTabSelected(tab) {
 			return this.$route.path.startsWith(tab.route);
-		}
-	}
+		},
+	},
 };
 </script>

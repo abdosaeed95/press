@@ -100,9 +100,9 @@ export default {
 				},
 				onSuccess() {
 					this.lastLoaded = Date.now();
-				}
+				},
 			};
-		}
+		},
 	},
 	computed: {
 		object() {
@@ -120,16 +120,16 @@ export default {
 					onClick: () => {
 						window.open(
 							`${window.location.protocol}//${window.location.host}/app/ansible-play/${this.id}`,
-							'_blank'
+							'_blank',
 						);
-					}
-				}
-			].filter(option => option.condition?.() ?? true);
-		}
+					},
+				},
+			].filter((option) => option.condition?.() ?? true);
+		},
 	},
 	mounted() {
 		this.$socket.emit('doc_subscribe', 'Ansible Play', this.id);
-		this.$socket.on('ansible_play_update', data => {
+		this.$socket.on('ansible_play_update', (data) => {
 			if (data.id === this.id) {
 				this.reload();
 			}
@@ -153,7 +153,7 @@ export default {
 			) {
 				this.$resources.play.reload();
 			}
-		}
-	}
+		},
+	},
 };
 </script>

@@ -9,11 +9,11 @@
 					loading: $resources.submitFeedback.loading,
 					onClick: () => {
 						$resources.submitFeedback.submit({
-							feedback: this.feedback
+							feedback: this.feedback,
 						});
-					}
-				}
-			]
+					},
+				},
+			],
 		}"
 		v-model="show"
 	>
@@ -60,7 +60,7 @@ export default {
 	emits: ['updated'],
 	props: ['team'],
 	components: {
-		StarRatingInput
+		StarRatingInput,
 	},
 	data() {
 		return {
@@ -68,7 +68,7 @@ export default {
 			route: '',
 			note: '',
 			show: true,
-			rating: 0
+			rating: 0,
 		};
 	},
 	resources: {
@@ -81,7 +81,7 @@ export default {
 						message: this.feedback,
 						route: this.$route?.name,
 						note: this.note,
-						rating: this.rating
+						rating: this.rating,
 					};
 				},
 				validate() {
@@ -97,7 +97,7 @@ export default {
 						[
 							'Payment issues',
 							'Features were missing',
-							'My reason is not listed here'
+							'My reason is not listed here',
 						].includes(this.feedback) &&
 						!this.note
 					) {
@@ -111,9 +111,9 @@ export default {
 					setTimeout(() => {
 						window.location.href = '/dashboard';
 					}, 1000);
-				}
+				},
 			};
-		}
+		},
 	},
 	computed: {
 		options() {
@@ -126,9 +126,9 @@ export default {
 				'Frappe Cloud is too expensive for me',
 				'Payment issues',
 				'Features were missing',
-				'My reason is not listed here'
+				'My reason is not listed here',
 			];
-		}
-	}
+		},
+	},
 };
 </script>

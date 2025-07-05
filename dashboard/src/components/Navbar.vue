@@ -32,7 +32,7 @@
 						:class="[
 							(item.route == '/' ? isExactActive : isActive)
 								? 'bg-gray-200'
-								: 'text-gray-900 hover:bg-gray-50'
+								: 'text-gray-900 hover:bg-gray-50',
 						]"
 						:href="href"
 						@click="navigate"
@@ -93,11 +93,11 @@ import FrappeCloudLogo from '@/components/icons/FrappeCloudLogo.vue';
 
 export default {
 	components: {
-		FrappeCloudLogo
+		FrappeCloudLogo,
 	},
 	data() {
 		return {
-			mobileMenuOpen: false
+			mobileMenuOpen: false,
 		};
 	},
 	computed: {
@@ -108,14 +108,14 @@ export default {
 					route: '/sites',
 					highlight: () => {
 						return this.$route.fullPath.endsWith('/sites');
-					}
+					},
 				},
 				{
 					label: 'Benches',
 					route: '/groups',
 					highlight: () => {
 						return this.$route.fullPath.endsWith('/sites');
-					}
+					},
 				},
 				{
 					label: 'Apps',
@@ -123,21 +123,21 @@ export default {
 					highlight: () => {
 						return this.$route.fullPath.includes('/marketplace');
 					},
-					condition: () => this.$account.team?.is_developer
+					condition: () => this.$account.team?.is_developer,
 				},
 				{
 					label: 'Billing',
 					route: '/billing',
 					highlight: () => {
 						return this.$route.fullPath.endsWith('/sites');
-					}
+					},
 				},
 				{
 					label: 'Settings',
-					route: '/settings/profile'
-				}
-			].filter(d => (d.condition ? d.condition() : true));
-		}
-	}
+					route: '/settings/profile',
+				},
+			].filter((d) => (d.condition ? d.condition() : true));
+		},
+	},
 };
 </script>

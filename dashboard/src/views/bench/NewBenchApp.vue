@@ -5,7 +5,7 @@
 			<p class="text-base text-gray-700">Add an app to your bench</p>
 		</div>
 
-		<SelectAppFromGithub @onSelect="d => (app = d)" />
+		<SelectAppFromGithub @onSelect="(d) => (app = d)" />
 
 		<ErrorMessage :message="$resources.addApp.error" />
 
@@ -26,12 +26,12 @@ export default {
 	name: 'NewBenchApp',
 	components: {
 		WizardCard,
-		SelectAppFromGithub
+		SelectAppFromGithub,
 	},
 	props: ['benchName'],
 	data() {
 		return {
-			app: null
+			app: null,
 		};
 	},
 	resources: {
@@ -45,14 +45,14 @@ export default {
 						repository_url: this.app?.repository_url,
 						branch: this.app?.branch,
 						github_installation_id: this.app?.github_installation_id,
-						group: this.benchName
-					}
+						group: this.benchName,
+					},
 				},
 				onSuccess() {
 					this.$router.push(`/groups/${this.benchName}`);
-				}
+				},
 			};
-		}
-	}
+		},
+	},
 };
 </script>

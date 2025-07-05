@@ -2,7 +2,7 @@
 	<div
 		class="grid border-b"
 		:style="{
-			gridTemplateColumns: columns.map(col => col.width + 'fr').join(' ')
+			gridTemplateColumns: columns.map((col) => col.width + 'fr').join(' '),
 		}"
 	>
 		<div
@@ -18,6 +18,6 @@
 <script>
 export default {
 	name: 'TableHeader',
-	inject: ['columns']
+	inject: ['columns'],
 };
 </script>

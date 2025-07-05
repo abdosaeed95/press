@@ -14,18 +14,18 @@ export default {
 	name: 'MarketpalceAppReview',
 	props: ['appName', 'app'],
 	components: {
-		MarketplaceAppReviewStages
+		MarketplaceAppReviewStages,
 	},
 	resources: {
 		reviewStages() {
 			return {
 				url: 'press.api.marketplace.review_steps',
 				params: {
-					name: this.appName
+					name: this.appName,
 				},
-				auto: true
+				auto: true,
 			};
-		}
-	}
+		},
+	},
 };
 </script>

@@ -4,7 +4,7 @@
 			title: selectedWebhookAttemptId
 				? `Webhook Attempt - ${selectedWebhookAttemptId}`
 				: 'Webhook Attempts',
-			size: '4xl'
+			size: '4xl',
 		}"
 	>
 		<template #body-content>
@@ -41,11 +41,11 @@ export default {
 		Header,
 		Breadcrumbs,
 		ObjectList,
-		WebhookAttemptDetails
+		WebhookAttemptDetails,
 	},
 	data() {
 		return {
-			selectedWebhookAttemptId: null
+			selectedWebhookAttemptId: null,
 		};
 	},
 	resources: {
@@ -53,12 +53,12 @@ export default {
 			return {
 				url: 'press.api.webhook.attempts',
 				params: {
-					webhook: this.$props.name
+					webhook: this.$props.name,
 				},
 				inititalData: [],
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	computed: {
 		listOptions() {
@@ -68,13 +68,13 @@ export default {
 					{
 						label: 'Event',
 						fieldname: 'event',
-						width: 0.25
+						width: 0.25,
 					},
 					{
 						label: 'Endpoint',
 						fieldname: 'endpoint',
 						width: 0.5,
-						format: value => value.substring(0, 50)
+						format: (value) => value.substring(0, 50),
 					},
 					{
 						label: 'Status',
@@ -85,23 +85,23 @@ export default {
 							return row.status === 'Sent'
 								? h(Badge, {
 										label: row.status,
-										theme: 'green'
-								  })
+										theme: 'green',
+									})
 								: h(Badge, {
 										label: row.status,
-										theme: 'red'
-								  });
-						}
+										theme: 'red',
+									});
+						},
 					},
 					{
 						label: 'Code',
 						fieldname: 'response_status_code',
 						width: 0.1,
-						format: val => {
+						format: (val) => {
 							if (!val || parseInt(val) === 0) return '-';
 							return val;
 						},
-						align: 'center'
+						align: 'center',
 					},
 					{
 						label: 'Timestamp',
@@ -109,14 +109,14 @@ export default {
 						width: 0.3,
 						format(value) {
 							return new Date(value).toLocaleString();
-						}
-					}
+						},
+					},
 				],
-				onRowClick: row => {
+				onRowClick: (row) => {
 					this.selectedWebhookAttemptId = row.name;
-				}
+				},
 			};
-		}
-	}
+		},
+	},
 };
 </script>

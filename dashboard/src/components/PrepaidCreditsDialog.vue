@@ -99,20 +99,20 @@ import BuyPrepaidCredits from './BuyPrepaidCredits.vue';
 export default {
 	name: 'PrepaidCreditsDialog',
 	components: {
-		BuyPrepaidCredits
+		BuyPrepaidCredits,
 	},
 	data() {
 		return {
 			paymentGateway: null,
 			creditsToBuy: this.minimumAmount,
-			total: this.minimumAmount
+			total: this.minimumAmount,
 		};
 	},
 	mounted() {
 		const razorpayCheckoutJS = document.createElement('script');
 		razorpayCheckoutJS.setAttribute(
 			'src',
-			'https://checkout.razorpay.com/v1/checkout.js'
+			'https://checkout.razorpay.com/v1/checkout.js',
 		);
 		razorpayCheckoutJS.async = true;
 		document.head.appendChild(razorpayCheckoutJS);
@@ -129,16 +129,16 @@ export default {
 	watch: {
 		creditsToBuy() {
 			this.updateTotal();
-		}
+		},
 	},
 	props: {
 		modelValue: {
-			default: true
+			default: true,
 		},
 		minimumAmount: {
 			type: Number,
-			default: 0
-		}
+			default: 0,
+		},
 	},
 	emits: ['update:show', 'success'],
 	resources: {
@@ -146,7 +146,7 @@ export default {
 			return {
 				url: 'press.api.billing.create_razorpay_order',
 				params: {
-					amount: this.creditsToBuy
+					amount: this.creditsToBuy,
 				},
 				onSuccess(data) {
 					this.processOrder(data);
@@ -155,7 +155,7 @@ export default {
 					if (this.creditsToBuy < this.minimumAmount) {
 						return 'Amount less than minimum amount required';
 					}
-				}
+				},
 			};
 		},
 		handlePaymentSuccess() {
@@ -163,7 +163,7 @@ export default {
 				url: 'press.api.billing.handle_razorpay_payment_success',
 				onSuccess() {
 					this.$emit('success');
-				}
+				},
 			};
 		},
 		handlePaymentFailed() {
@@ -171,9 +171,9 @@ export default {
 				url: 'press.api.billing.handle_razorpay_payment_failed',
 				onSuccess() {
 					console.log('Payment Failed.');
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		updateTotal() {
@@ -182,7 +182,7 @@ export default {
 					(
 						this.creditsToBuy +
 						this.creditsToBuy * this.$account.billing_info.gst_percentage
-					).toFixed(2)
+					).toFixed(2),
 				);
 			} else {
 				this.total = this.creditsToBuy;
@@ -198,10 +198,10 @@ export default {
 				name: 'Frappe Cloud',
 				image: '/assets/press/images/frappe-cloud-logo.png',
 				prefill: {
-					email: this.$account.team.user
+					email: this.$account.team.user,
 				},
 				theme: { color: '#2490EF' },
-				handler: this.handlePaymentSuccess
+				handler: this.handlePaymentSuccess,
 			};
 
 			const rzp = new Razorpay(options);
@@ -219,7 +219,7 @@ export default {
 
 		handlePaymentFailed(response) {
 			this.$resources.handlePaymentFailed.submit({ response });
-		}
-	}
+		},
+	},
 };
 </script>

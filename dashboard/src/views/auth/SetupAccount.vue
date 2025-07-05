@@ -108,7 +108,7 @@ export default {
 	components: {
 		LoginBox,
 		Link,
-		Form
+		Form,
 	},
 	props: ['requestKey', 'joinRequest'],
 	data() {
@@ -127,7 +127,7 @@ export default {
 			invitedByParentTeam: false,
 			countries: [],
 			saasProduct: null,
-			signupValues: {}
+			signupValues: {},
 		};
 	},
 	resources: {
@@ -138,7 +138,7 @@ export default {
 					key: this.requestKey,
 					timezone: window.Intl
 						? Intl.DateTimeFormat().resolvedOptions().timeZone
-						: null
+						: null,
 				},
 				auto: true,
 				onSuccess(res) {
@@ -155,7 +155,7 @@ export default {
 						this.countries = res.countries;
 						this.saasProduct = res.product_trial;
 					}
-				}
+				},
 			};
 		},
 		setupAccount() {
@@ -172,16 +172,16 @@ export default {
 					invited_by_parent_team: this.invitedByParentTeam,
 					accepted_user_terms: this.termsAccepted,
 					oauth_signup: this.oauthSignup,
-					signup_values: this.signupValues
+					signup_values: this.signupValues,
 				},
 				onSuccess(res) {
 					if (res) {
 						this.$router.push(res.dashboard_route || '/');
 					}
 					window.location.reload();
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		showFormFields() {
@@ -189,22 +189,22 @@ export default {
 			show = !this.userExists;
 			show = this.oauthSignup == 0;
 			return show;
-		}
+		},
 	},
 	computed: {
 		signupFields() {
 			let fields = this.saasProduct?.signup_fields || [];
-			return fields.map(df => {
+			return fields.map((df) => {
 				if (df.fieldtype == 'Select') {
 					df.options = df.options
 						.split('\n')
-						.map(o => o.trim())
+						.map((o) => o.trim())
 						.filter(Boolean);
 				}
 				df.required = true;
 				return df;
 			});
-		}
-	}
+		},
+	},
 };
 </script>

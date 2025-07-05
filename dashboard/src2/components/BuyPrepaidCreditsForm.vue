@@ -44,7 +44,7 @@
 				class="flex h-10 items-center justify-center rounded border"
 				:class="{
 					'border-gray-300': paymentGateway !== 'Razorpay',
-					'border-gray-900 ring-1 ring-gray-900': paymentGateway === 'Razorpay'
+					'border-gray-900 ring-1 ring-gray-900': paymentGateway === 'Razorpay',
 				}"
 			>
 				<img
@@ -59,7 +59,7 @@
 				class="flex h-10 items-center justify-center rounded border"
 				:class="{
 					'border-gray-300': paymentGateway !== 'Stripe',
-					'border-gray-900 ring-1 ring-gray-900': paymentGateway === 'Stripe'
+					'border-gray-900 ring-1 ring-gray-900': paymentGateway === 'Stripe',
 				}"
 			>
 				<img
@@ -96,12 +96,12 @@ export default {
 	name: 'BuyPrepaidCreditsForm',
 	components: {
 		BuyPrepaidCreditsStripe,
-		BuyPrepaidCreditsRazorpay
+		BuyPrepaidCreditsRazorpay,
 	},
 	data() {
 		return {
 			paymentGateway: null,
-			creditsToBuy: this.minimumAmount
+			creditsToBuy: this.minimumAmount,
 		};
 	},
 	mounted() {
@@ -111,22 +111,22 @@ export default {
 	},
 	props: {
 		modelValue: {
-			default: false
+			default: false,
 		},
 		minimumAmount: {
 			type: Number,
-			default: 0
+			default: 0,
 		},
 		isOnboarding: {
 			type: Boolean,
-			default: false
-		}
+			default: false,
+		},
 	},
 	emits: ['success'],
 	methods: {
 		onSuccess() {
 			this.$emit('success');
-		}
+		},
 	},
 	computed: {
 		totalAmount() {
@@ -139,7 +139,7 @@ export default {
 			} else {
 				return creditsToBuy;
 			}
-		}
-	}
+		},
+	},
 };
 </script>

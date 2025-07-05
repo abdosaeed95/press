@@ -31,19 +31,19 @@ export default {
 	props: {
 		show: {
 			type: Boolean,
-			default: false
+			default: false,
 		},
 		dismissable: {
 			type: Boolean,
-			default: true
+			default: true,
 		},
 		width: {
-			default: 'auto'
-		}
+			default: 'auto',
+		},
 	},
 	created() {
 		if (!this.dismissable) return;
-		this.escapeListener = e => {
+		this.escapeListener = (e) => {
 			if (e.key === 'Escape') {
 				this.hide();
 			}
@@ -60,7 +60,7 @@ export default {
 		},
 		hide() {
 			this.$emit('update:show', false);
-		}
+		},
 	},
 	computed: {
 		widthClasses() {
@@ -73,7 +73,7 @@ export default {
 			} else {
 				return [];
 			}
-		}
-	}
+		},
+	},
 };
 </script>

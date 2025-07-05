@@ -37,7 +37,7 @@
 				title:
 					step == 'Apps'
 						? 'Select the apps you want to update'
-						: 'Select the sites you want to update'
+						: 'Select the sites you want to update',
 			}"
 			v-model="showDeployDialog"
 		>
@@ -88,7 +88,7 @@ export default {
 	components: {
 		BenchAppUpdates,
 		BenchSiteUpdates,
-		SwitchTeamDialog
+		SwitchTeamDialog,
 	},
 	data() {
 		return {
@@ -96,7 +96,7 @@ export default {
 			showTeamSwitcher: false,
 			selectedApps: [],
 			selectedSites: [],
-			step: 'Apps'
+			step: 'Apps',
 		};
 	},
 	resources: {
@@ -104,9 +104,9 @@ export default {
 			return {
 				url: 'press.api.bench.deploy_information',
 				params: {
-					name: this.bench?.name
+					name: this.bench?.name,
 				},
-				auto: true
+				auto: true,
 			};
 		},
 		deploy() {
@@ -115,7 +115,7 @@ export default {
 				params: {
 					name: this.bench?.name,
 					apps: this.selectedApps,
-					sites: this.selectedSites
+					sites: this.selectedSites,
 				},
 				validate() {
 					if (
@@ -130,16 +130,16 @@ export default {
 					this.$resources.deployInformation.setData({
 						...this.$resources.deployInformation.data,
 						deploy_in_progress: true,
-						last_deploy: { name: new_candidate_name, status: 'Running' }
+						last_deploy: { name: new_candidate_name, status: 'Running' },
 					});
 					notify({
 						title: 'Updates scheduled successfully',
 						icon: 'check',
-						color: 'green'
+						color: 'green',
 					});
-				}
+				},
 			};
-		}
+		},
 	},
 	computed: {
 		show() {
@@ -166,7 +166,7 @@ export default {
 				return 'Deploy in Progress';
 			}
 			return this.bench.status == 'Active' ? 'Update Available' : 'Deploy';
-		}
-	}
+		},
+	},
 };
 </script>

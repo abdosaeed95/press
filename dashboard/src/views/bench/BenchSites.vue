@@ -7,7 +7,7 @@
 				{ label: 'Region', name: 'region' },
 				{ label: 'Tags', name: 'tags' },
 				{ label: 'Plan', name: 'plan' },
-				{ label: '', name: 'actions', width: 0.5 }
+				{ label: '', name: 'actions', width: 0.5 },
 			]"
 			:rows="versions"
 			v-slot="{ rows, columns }"
@@ -32,7 +32,7 @@
 						:title="
 							group.deployed_on
 								? 'Deployed on ' +
-								  formatDate(group.deployed_on, 'DATETIME_SHORT', true)
+									formatDate(group.deployed_on, 'DATETIME_SHORT', true)
 								: ''
 						"
 					>
@@ -97,7 +97,7 @@
 								row.plan
 									? `${$planTitle(row.plan)}${
 											row.plan.price_usd > 0 ? '/mo' : ''
-									  }`
+										}`
 									: ''
 							}}
 						</span>
@@ -168,9 +168,9 @@
 				{
 					label: 'Proceed',
 					variant: 'solid',
-					onClick: proceedWithLoginAsAdmin
-				}
-			]
+					onClick: proceedWithLoginAsAdmin,
+				},
+			],
 		}"
 		v-model="showReasonForAdminLoginDialog"
 	>
@@ -265,7 +265,7 @@ export default {
 		TableCell,
 		ClickToCopyField,
 		CommitTag,
-		CodeServer
+		CodeServer,
 	},
 	data() {
 		return {
@@ -276,7 +276,7 @@ export default {
 			showCodeServerDialog: false,
 			showAppsDialog: false,
 			showReasonForAdminLoginDialog: false,
-			siteForLogin: null
+			siteForLogin: null,
 		};
 	},
 	resources: {
@@ -284,14 +284,14 @@ export default {
 			return {
 				url: 'press.api.bench.versions',
 				params: {
-					name: this.benchName
+					name: this.benchName,
 				},
-				auto: true
+				auto: true,
 			};
 		},
 		versionApps() {
 			return {
-				url: 'press.api.bench.get_installed_apps_in_version'
+				url: 'press.api.bench.get_installed_apps_in_version',
 			};
 		},
 		loginAsAdmin() {
@@ -301,7 +301,7 @@ export default {
 			return {
 				url: 'press.api.bench.certificate',
 				params: { name: this.benchName },
-				auto: true
+				auto: true,
 			};
 		},
 		generateCertificate() {
@@ -310,23 +310,23 @@ export default {
 				params: { name: this.bench?.name },
 				onSuccess() {
 					this.$resources.getCertificate.reload();
-				}
+				},
 			};
 		},
 		restartBench() {
 			return {
 				url: 'press.api.bench.restart',
 				params: {
-					name: this.versions[this.selectedVersionIndex]?.name
-				}
+					name: this.versions[this.selectedVersionIndex]?.name,
+				},
 			};
 		},
 		rebuildBench() {
 			return {
 				url: 'press.api.bench.rebuild',
 				params: {
-					name: this.versions[this.selectedVersionIndex]?.name
-				}
+					name: this.versions[this.selectedVersionIndex]?.name,
+				},
 			};
 		},
 		updateAllSites() {
@@ -339,7 +339,7 @@ export default {
 							this.versions[this.selectedVersionIndex]?.name
 						} will be updated to the latest version`,
 						icon: 'check',
-						color: 'green'
+						color: 'green',
 					});
 				},
 				onError(e) {
@@ -347,11 +347,11 @@ export default {
 						title: 'Error',
 						message: e.messages.join(', '),
 						icon: 'x',
-						color: 'red'
+						color: 'red',
 					});
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		dropdownItems(site) {
@@ -360,21 +360,21 @@ export default {
 					label: 'Visit Site',
 					onClick: () => {
 						window.open(`https://${site.name}/apps`, '_blank');
-					}
+					},
 				},
 				{
 					label: 'Login As Admin',
 					onClick: () => {
 						if (this.$account.team.name === site.team) {
 							return this.$resources.loginAsAdmin.submit({
-								name: site.name
+								name: site.name,
 							});
 						}
 
 						this.siteForLogin = site.name;
 						this.showReasonForAdminLoginDialog = true;
-					}
-				}
+					},
+				},
 			];
 		},
 		benchDropdownItems(i) {
@@ -384,10 +384,10 @@ export default {
 					onClick: () => {
 						window.open(
 							`${window.location.protocol}//${window.location.host}/app/bench/${this.versions[i].name}`,
-							'_blank'
+							'_blank',
 						);
 					},
-					condition: () => this.$account.user.user_type === 'System User'
+					condition: () => this.$account.user.user_type === 'System User',
 				},
 				{
 					label: 'SSH Access',
@@ -399,28 +399,28 @@ export default {
 						this.versions[i].status === 'Active' &&
 						this.$account.ssh_key &&
 						this.versions[i].is_ssh_proxy_setup &&
-						this.permissions.sshAccess
+						this.permissions.sshAccess,
 				},
 				{
 					label: 'View Logs',
 					onClick: () => {
 						this.$router.push(
-							`/groups/${this.bench.name}/logs/${this.versions[i].name}/`
+							`/groups/${this.bench.name}/logs/${this.versions[i].name}/`,
 						);
 					},
-					condition: () => this.versions[i].status === 'Active'
+					condition: () => this.versions[i].status === 'Active',
 				},
 				{
 					label: 'Update All Sites',
 					onClick: () => {
 						this.$resources.updateAllSites.submit({
-							name: this.versions[i]?.name
+							name: this.versions[i]?.name,
 						});
 					},
 					condition: () =>
 						this.versions[i].status === 'Active' &&
 						i > 0 &&
-						this.versions[i].sites.length > 0
+						this.versions[i].sites.length > 0,
 				},
 				{
 					label: 'Restart Bench',
@@ -430,7 +430,7 @@ export default {
 					},
 					condition: () =>
 						this.versions[i].status === 'Active' &&
-						this.permissions.restartBench
+						this.permissions.restartBench,
 				},
 				{
 					label: 'Build Assets',
@@ -442,7 +442,7 @@ export default {
 						this.versions[i].status === 'Active' &&
 						(Number(this.versions[i].version.split(' ')[1] > 13) ||
 							this.versions[i].version === 'Nightly') &&
-						this.permissions.rebuildBench
+						this.permissions.rebuildBench,
 				},
 				{
 					label: 'Create Code Server',
@@ -450,9 +450,9 @@ export default {
 						this.selectedVersionIndex = i;
 						this.showCodeServerDialog = true;
 					},
-					condition: () => this.$account.team.code_servers_enabled
-				}
-			].filter(d => (d.condition ? d.condition() : true));
+					condition: () => this.$account.team.code_servers_enabled,
+				},
+			].filter((d) => (d.condition ? d.condition() : true));
 		},
 		proceedWithLoginAsAdmin() {
 			this.errorMessage = '';
@@ -464,7 +464,7 @@ export default {
 
 			this.$resources.loginAsAdmin.submit({
 				name: this.siteForLogin,
-				reason: this.reasonForAdminLogin
+				reason: this.reasonForAdminLogin,
 			});
 
 			this.showReasonForAdminLoginDialog = false;
@@ -478,10 +478,10 @@ export default {
 				`,
 				actionLabel: 'Restart Bench',
 				actionColor: 'red',
-				action: closeDialog => {
+				action: (closeDialog) => {
 					this.$resources.restartBench.submit();
 					closeDialog();
-				}
+				},
 			});
 		},
 		confirmRebuild() {
@@ -493,28 +493,28 @@ export default {
 				`,
 				actionLabel: 'Build Assets',
 				actionColor: 'red',
-				action: closeDialog => {
+				action: (closeDialog) => {
 					this.$resources.rebuildBench.submit();
 					closeDialog();
-				}
+				},
 			});
-		}
+		},
 	},
 	computed: {
 		permissions() {
 			return {
 				restartBench: this.$account.hasPermission(
 					this.benchName,
-					'press.api.bench.restart'
+					'press.api.bench.restart',
 				),
 				rebuildBench: this.$account.hasPermission(
 					this.benchName,
-					'press.api.bench.rebuild'
+					'press.api.bench.rebuild',
 				),
 				sshAccess: this.$account.hasPermission(
 					this.benchName,
-					'press.api.bench.generate_certificate'
-				)
+					'press.api.bench.generate_certificate',
+				),
 			};
 		},
 		versions() {
@@ -525,8 +525,8 @@ export default {
 					site.route = {
 						name: 'SiteOverview',
 						params: {
-							siteName: site.name
-						}
+							siteName: site.name,
+						},
 					};
 				}
 			}
@@ -551,7 +551,7 @@ export default {
 				}-cert.pub`;
 			}
 			return null;
-		}
-	}
+		},
+	},
 };
 </script>

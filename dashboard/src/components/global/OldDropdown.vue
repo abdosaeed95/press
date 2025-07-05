@@ -67,33 +67,33 @@ export default {
 	props: {
 		items: {
 			type: Array,
-			default: () => []
+			default: () => [],
 		},
 		groups: {
 			type: Array,
-			default: null
+			default: null,
 		},
 		right: {
 			type: Boolean,
-			default: false
+			default: false,
 		},
 		isLoading: {
 			type: Boolean,
-			default: false
+			default: false,
 		},
 		dropdownWidthFull: {
 			type: Boolean,
-			default: false
-		}
+			default: false,
+		},
 	},
 	components: {
-		Popover
+		Popover,
 	},
 	data() {
 		return {
 			targetWidth: undefined,
 			isShown: false,
-			highlightedIndex: -1
+			highlightedIndex: -1,
 		};
 	},
 	computed: {
@@ -103,9 +103,9 @@ export default {
 			}
 			let groupNames = uniq(
 				this.items
-					.map(d => d.group)
+					.map((d) => d.group)
 					.filter(Boolean)
-					.sort()
+					.sort(),
 			);
 			if (groupNames.length > 0) {
 				return groupNames;
@@ -115,7 +115,7 @@ export default {
 		dropdownItems() {
 			let items = this.items
 				.filter(Boolean)
-				.filter(d => (d.condition ? d.condition() : true));
+				.filter((d) => (d.condition ? d.condition() : true));
 
 			if (this.sortedGroups) {
 				let itemsByGroup = {};
@@ -130,7 +130,7 @@ export default {
 				let i = 0;
 				for (let group of this.sortedGroups) {
 					let groupItems = itemsByGroup[group];
-					groupItems = groupItems.map(d => {
+					groupItems = groupItems.map((d) => {
 						d.index = i;
 						i++;
 						return d;
@@ -138,9 +138,9 @@ export default {
 					items = items.concat(
 						{
 							label: group,
-							isGroup: true
+							isGroup: true,
 						},
-						groupItems
+						groupItems,
 					);
 				}
 
@@ -151,7 +151,7 @@ export default {
 				d.index = i;
 				return d;
 			});
-		}
+		},
 	},
 	methods: {
 		selectItem(d) {
@@ -205,7 +205,7 @@ export default {
 			this.$nextTick(() => {
 				this.targetWidth = this.$refs.target.clientWidth;
 			});
-		}
-	}
+		},
+	},
 };
 </script>

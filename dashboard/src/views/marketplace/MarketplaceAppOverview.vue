@@ -16,13 +16,13 @@ import MarketplaceAppScreenshots from '@/components/MarketplaceAppScreenshots.vu
 export default {
 	name: 'MarketplaceAppOverview',
 	props: {
-		app: Object
+		app: Object,
 	},
 	components: {
 		MarketplaceAppProfile,
 		MarketplaceAppLinks,
 		MarketplaceAppDescriptions,
-		MarketplaceAppScreenshots
-	}
+		MarketplaceAppScreenshots,
+	},
 };
 </script>

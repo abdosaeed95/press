@@ -45,9 +45,9 @@
 						variant: 'solid',
 						label: 'Save Changes',
 						loading: $resources.updatePublisherProfile.loading,
-						onClick: () => $resources.updatePublisherProfile.submit()
-					}
-				]
+						onClick: () => $resources.updatePublisherProfile.submit(),
+					},
+				],
 			}"
 			v-model="showEditProfileDialog"
 		>
@@ -113,7 +113,7 @@ export default {
 			acNumber: '',
 			acName: '',
 			gstin: '',
-			otherDetails: ''
+			otherDetails: '',
 		};
 	},
 	mounted() {},
@@ -128,15 +128,15 @@ export default {
 						bank_account_number: this.acNumber,
 						bank_account_holder_name: this.acName,
 						gstin: this.gstin,
-						other_bank_details: this.otherDetails
-					}
+						other_bank_details: this.otherDetails,
+					},
 				},
 				onSuccess() {
 					this.showEditProfileDialog = false;
 					this.$emit('profileUpdated');
-				}
+				},
 			};
-		}
+		},
 	},
 	watch: {
 		profileData(data) {
@@ -148,7 +148,7 @@ export default {
 				this.gstin = data.profile_info.gstin;
 				this.otherDetails = data.profile_info.other_bank_details;
 			}
-		}
-	}
+		},
+	},
 };
 </script>

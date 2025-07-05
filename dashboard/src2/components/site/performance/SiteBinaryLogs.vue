@@ -21,14 +21,14 @@ export default {
 			start_time: dayjs().subtract(2, 'hour').format('YYYY-MM-DD HH:mm:ss'),
 			end_time: dayjs().format('YYYY-MM-DD HH:mm:ss'),
 			pattern: '.*',
-			max_lines: 50
+			max_lines: 50,
 		};
 	},
 	resources: {
 		binaryLogs() {
 			return {
 				url: 'press.api.analytics.binary_logs',
-				makeParams: params => {
+				makeParams: (params) => {
 					if (params) return params;
 
 					return {
@@ -36,7 +36,7 @@ export default {
 						start_time: this.start_time,
 						end_time: this.end_time,
 						pattern: this.pattern,
-						max_lines: this.max_lines
+						max_lines: this.max_lines,
 					};
 				},
 				validate() {
@@ -63,15 +63,15 @@ export default {
 				auto: false,
 				pageLength: 10,
 				keepData: true,
-				initialData: []
+				initialData: [],
 			};
-		}
+		},
 	},
 	computed: {
 		binaryLogsOptions() {
 			return {
 				data: () => this.$resources.binaryLogs.data,
-				updateFilters: params => {
+				updateFilters: (params) => {
 					if (!params) return;
 					for (const [key, value] of Object.entries(params)) {
 						if (key === 'start_time') this.start_time = value;
@@ -85,11 +85,11 @@ export default {
 						label: 'Timestamp',
 						fieldname: 'timestamp',
 						width: '12rem',
-						format: value => {
+						format: (value) => {
 							return this.$format.date(value, 'YYYY-MM-DD HH:mm:ss');
-						}
+						},
 					},
-					{ label: 'Query', fieldname: 'query', class: 'font-mono' }
+					{ label: 'Query', fieldname: 'query', class: 'font-mono' },
 				],
 				filterControls: () => {
 					return [
@@ -97,24 +97,24 @@ export default {
 							type: 'datetime',
 							label: 'Start Time',
 							fieldname: 'start_time',
-							default: this.start_time
+							default: this.start_time,
 						},
 						{
 							type: 'datetime',
 							label: 'End Time',
 							fieldname: 'end_time',
-							default: this.end_time
+							default: this.end_time,
 						},
 						{
 							label: 'Pattern',
 							fieldname: 'pattern',
-							default: this.pattern
+							default: this.pattern,
 						},
 						{
 							label: 'Max Lines',
 							fieldname: 'max_lines',
-							default: this.max_lines
-						}
+							default: this.max_lines,
+						},
 					];
 				},
 				actions: () => [
@@ -123,11 +123,11 @@ export default {
 						variant: 'solid',
 						loading: this.$resources.binaryLogs.loading,
 						loadingText: 'Loading',
-						onClick: () => this.$resources.binaryLogs.reload()
-					}
-				]
+						onClick: () => this.$resources.binaryLogs.reload(),
+					},
+				],
 			};
-		}
-	}
+		},
+	},
 };
 </script>

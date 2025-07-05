@@ -14,18 +14,18 @@ export default {
 	props: {
 		amount: {
 			type: Number,
-			required: true
+			required: true,
 		},
 		currency: {
-			type: String
-		}
+			type: String,
+		},
 	},
 	computed: {
 		outstandingBalanceMessage() {
 			return `Your account currently has an outstanding balance of ${this.$format.userCurrency(
-				this.amount
+				this.amount,
 			)}. Please settle the balance to avoid any site suspension.`;
-		}
-	}
+		},
+	},
 };
 </script>

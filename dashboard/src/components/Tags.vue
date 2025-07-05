@@ -57,7 +57,7 @@ export default {
 			chosenTag: '',
 			newTag: '',
 			addedTags: [],
-			createErrorMessage: ''
+			createErrorMessage: '',
 		};
 	},
 	resources: {
@@ -67,27 +67,27 @@ export default {
 				params: {
 					name: this.name,
 					doctype: this.doctype,
-					tag: this.newTag
+					tag: this.newTag,
 				},
 				validate() {
-					if (this.addedTags.find(t => t.name == this.newTag)) {
+					if (this.addedTags.find((t) => t.name == this.newTag)) {
 						return 'Tag already added';
 					}
 				},
 				onSuccess(d) {
-					this.addedTags.push(this.tags.find(t => t.name == d));
+					this.addedTags.push(this.tags.find((t) => t.name == d));
 					this.showAddDialog = false;
 					this.newTag = '';
 					this.chosenTag = '';
-				}
+				},
 			};
 		},
 		removeTag() {
 			return {
 				url: 'press.api.dashboard.remove_tag',
 				onSuccess(d) {
-					this.addedTags = this.addedTags.filter(t => t.name != d);
-				}
+					this.addedTags = this.addedTags.filter((t) => t.name != d);
+				},
 			};
 		},
 		createTag() {
@@ -96,10 +96,10 @@ export default {
 				params: {
 					name: this.name,
 					doctype: this.doctype,
-					tag: this.newTag
+					tag: this.newTag,
 				},
 				validate() {
-					if (this.tags.find(t => t.tag === this.newTag)) {
+					if (this.tags.find((t) => t.tag === this.newTag)) {
 						return 'Tag already exists';
 					}
 				},
@@ -108,9 +108,9 @@ export default {
 					this.showNewTagInput = false;
 					this.newTag = '';
 					this.chosenTag = '';
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		addTag() {
@@ -125,7 +125,7 @@ export default {
 			this.$resources.removeTag.submit({
 				name: this.name,
 				doctype: this.doctype,
-				tag: tagName
+				tag: tagName,
 			});
 		},
 		handleAutocompleteSelection() {
@@ -135,7 +135,7 @@ export default {
 				this.newTag = this.chosenTag.value;
 				this.showNewTagInput = false;
 			}
-		}
+		},
 	},
 	mounted() {
 		this.addedTags = this.resourceTags;
@@ -145,14 +145,14 @@ export default {
 			return [
 				{
 					group: 'New Tag',
-					items: [{ label: 'Create a New Tag', value: 'new_tag' }]
+					items: [{ label: 'Create a New Tag', value: 'new_tag' }],
 				},
 				{
 					group: 'Existing Tags',
-					items: this.tags.map(t => ({ label: t.tag, value: t.name }))
-				}
+					items: this.tags.map((t) => ({ label: t.tag, value: t.name })),
+				},
 			];
-		}
-	}
+		},
+	},
 };
 </script>

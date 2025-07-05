@@ -41,7 +41,7 @@ export default {
 		OnboardingStepCreateAccount,
 		OnboardingStepSetupPayment,
 		OnboardingStepCreateSite,
-		OnboardingStepSelectSitePlan
+		OnboardingStepSelectSitePlan,
 	},
 	watch: {
 		'$account.onboarding.complete': {
@@ -50,8 +50,8 @@ export default {
 					this.$router.replace('/sites');
 				}
 			},
-			immediate: true
-		}
-	}
+			immediate: true,
+		},
+	},
 };
 </script>

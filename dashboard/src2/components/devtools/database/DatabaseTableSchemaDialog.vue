@@ -2,7 +2,7 @@
 	<Dialog
 		:options="{
 			title: 'Browse Schema',
-			size: '2xl'
+			size: '2xl',
 		}"
 	>
 		<template #body-content>
@@ -62,29 +62,29 @@ export default {
 	props: {
 		site: {
 			type: String,
-			required: true
+			required: true,
 		},
 		tableSchemas: {
 			type: Object,
-			required: true
+			required: true,
 		},
 		showSQLActions: {
 			type: Boolean,
-			default: false
+			default: false,
 		},
 		preSelectedSchema: {
 			type: String,
-			default: null
-		}
+			default: null,
+		},
 	},
 	emits: ['runSQLQuery'],
 	components: {
 		FormControl,
-		ObjectList
+		ObjectList,
 	},
 	data() {
 		return {
-			selectedSchema: null
+			selectedSchema: null,
 		};
 	},
 	mounted() {
@@ -93,16 +93,16 @@ export default {
 	watch: {
 		preSelectedSchema() {
 			this.preSelectSchema();
-		}
+		},
 	},
 	computed: {
 		autocompleteOptions() {
-			return Object.keys(this.tableSchemas).map(x => ({
+			return Object.keys(this.tableSchemas).map((x) => ({
 				label:
 					this.tableSchemas[x].size.total_size > 0.01
 						? `${x} (${this.bytesToMB(this.tableSchemas[x].size.total_size)}MB)`
 						: x,
-				value: x
+				value: x,
 			}));
 		},
 		listOptions() {
@@ -128,23 +128,23 @@ export default {
 											navigator.clipboard.writeText(row.column);
 											toast.success('Copied to clipboard');
 										}
-									}
+									},
 								},
-								[row.column]
+								[row.column],
 							);
-						}
+						},
 					},
 					{
 						label: 'Data Type',
 						fieldname: 'data_type',
 						width: 0.2,
-						align: 'center'
+						align: 'center',
 					},
 					{
 						label: 'Default',
 						fieldname: 'default',
 						width: 0.3,
-						align: 'center'
+						align: 'center',
 					},
 					{
 						label: 'Nullable',
@@ -154,7 +154,7 @@ export default {
 						Icon(value) {
 							return value ? 'check' : 'x';
 						},
-						align: 'center'
+						align: 'center',
 					},
 					{
 						label: 'Is Indexed',
@@ -165,11 +165,11 @@ export default {
 							return row.index_info.is_indexed
 								? icon('check', 'w-4 w-4')
 								: icon('x', 'w-4 w-4');
-						}
-					}
-				]
+						},
+					},
+				],
 			};
-		}
+		},
 	},
 	methods: {
 		copyTableNameToClipboard() {
@@ -181,19 +181,19 @@ export default {
 		viewTop100Rows() {
 			this.$emit(
 				'runSQLQuery',
-				`SELECT * FROM \`${this.selectedSchema.value}\` LIMIT 100;`
+				`SELECT * FROM \`${this.selectedSchema.value}\` LIMIT 100;`,
 			);
 		},
 		viewLast100Rows() {
 			this.$emit(
 				'runSQLQuery',
-				`SELECT * FROM \`${this.selectedSchema.value}\` ORDER BY name DESC LIMIT 100;`
+				`SELECT * FROM \`${this.selectedSchema.value}\` ORDER BY name DESC LIMIT 100;`,
 			);
 		},
 		viewAllRows() {
 			this.$emit(
 				'runSQLQuery',
-				`SELECT * FROM \`${this.selectedSchema.value}\`;`
+				`SELECT * FROM \`${this.selectedSchema.value}\`;`,
 			);
 		},
 		bytesToMB(bytes) {
@@ -205,9 +205,9 @@ export default {
 			if (this.autocompleteOptions.length == 0) return;
 			this.selectedSchema = {
 				label: this.preSelectedSchema,
-				value: this.preSelectedSchema
+				value: this.preSelectedSchema,
 			};
-		}
-	}
+		},
+	},
 };
 </script>

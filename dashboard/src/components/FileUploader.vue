@@ -17,7 +17,7 @@
 				error,
 				total,
 				success,
-				openFileSelector
+				openFileSelector,
 			}"
 		/>
 	</div>
@@ -40,7 +40,7 @@ export default {
 			message: '',
 			total: 0,
 			file: null,
-			finishedUploading: false
+			finishedUploading: false,
 		};
 	},
 	computed: {
@@ -50,7 +50,7 @@ export default {
 		},
 		success() {
 			return this.finishedUploading && !this.error;
-		}
+		},
 	},
 	methods: {
 		openFileSelector() {
@@ -80,7 +80,7 @@ export default {
 			this.uploader.on('start', () => {
 				this.uploading = true;
 			});
-			this.uploader.on('progress', data => {
+			this.uploader.on('progress', (data) => {
 				this.uploaded = data.uploaded;
 				this.total = data.total;
 			});
@@ -94,15 +94,15 @@ export default {
 			});
 			this.uploader
 				.upload(file, this.uploadArgs || {})
-				.then(data => {
+				.then((data) => {
 					this.$emit('success', data);
 				})
-				.catch(error => {
+				.catch((error) => {
 					this.uploading = false;
 					let errorMessage = 'Error Uploading File';
 					if (error._server_messages) {
 						errorMessage = JSON.parse(
-							JSON.parse(error._server_messages)[0]
+							JSON.parse(error._server_messages)[0],
 						).message;
 					} else if (error.exc) {
 						errorMessage = JSON.parse(error.exc)[0]
@@ -112,7 +112,7 @@ export default {
 					this.error = errorMessage;
 					this.$emit('failure', errorMessage);
 				});
-		}
-	}
+		},
+	},
 };
 </script>

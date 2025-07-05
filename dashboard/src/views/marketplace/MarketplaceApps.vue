@@ -33,7 +33,7 @@ import MarketplaceAppCard from '@/components/MarketplaceAppCard.vue';
 export default {
 	name: 'MarketplaceApps',
 	components: {
-		MarketplaceAppCard
+		MarketplaceAppCard,
 	},
 	activated() {
 		this.$resources.apps.fetch();
@@ -43,9 +43,9 @@ export default {
 			return {
 				url: 'press.api.marketplace.get_apps',
 				cache: ['MarketplaceAppList', this.$account.team.name],
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	methods: {
 		routeToAppPage(appName, status) {
@@ -54,18 +54,18 @@ export default {
 			} else {
 				this.$router.push(`/marketplace/apps/${appName}`);
 			}
-		}
+		},
 	},
 	computed: {
 		apps() {
 			if (!this.$resources.apps.data) return [];
 
-			let apps = this.$resources.apps.data.filter(app =>
-				this.$account.hasPermission(app.name, '', true)
+			let apps = this.$resources.apps.data.filter((app) =>
+				this.$account.hasPermission(app.name, '', true),
 			);
 
 			return apps;
-		}
-	}
+		},
+	},
 };
 </script>

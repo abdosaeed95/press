@@ -16,6 +16,6 @@
 <script>
 export default {
 	name: 'SiteConsole',
-	props: ['site']
+	props: ['site'],
 };
 </script>

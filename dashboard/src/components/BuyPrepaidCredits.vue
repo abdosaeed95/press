@@ -14,7 +14,7 @@
 			class="block"
 			:class="{
 				'h-0.5 opacity-0': step != 'Add Card Details',
-				'mt-4': step == 'Add Card Details'
+				'mt-4': step == 'Add Card Details',
 			}"
 		>
 			<span class="text-sm leading-4 text-gray-700">
@@ -76,12 +76,12 @@ import { loadStripe } from '@stripe/stripe-js';
 export default {
 	name: 'BuyPrepaidCredits',
 	components: {
-		StripeLogo
+		StripeLogo,
 	},
 	props: {
 		minimumAmount: {
-			default: 0
-		}
+			default: 0,
+		},
 	},
 	mounted() {
 		this.updateTotal();
@@ -89,7 +89,7 @@ export default {
 	watch: {
 		creditsToBuy() {
 			this.updateTotal();
-		}
+		},
 	},
 	data() {
 		return {
@@ -99,7 +99,7 @@ export default {
 			total: this.minimumAmount,
 			cardErrorMessage: null,
 			errorMessage: null,
-			paymentInProgress: false
+			paymentInProgress: false,
 		};
 	},
 	resources: {
@@ -107,7 +107,7 @@ export default {
 			return {
 				url: 'press.api.billing.create_payment_intent_for_buying_credits',
 				params: {
-					amount: this.creditsToBuy
+					amount: this.creditsToBuy,
 				},
 				validate() {
 					if (
@@ -131,21 +131,21 @@ export default {
 							fontSmoothing: 'antialiased',
 							fontSize: '13px',
 							'::placeholder': {
-								color: theme.colors.gray['400']
-							}
+								color: theme.colors.gray['400'],
+							},
 						},
 						invalid: {
 							color: theme.colors.red['600'],
-							iconColor: theme.colors.red['600']
-						}
+							iconColor: theme.colors.red['600'],
+						},
 					};
 					this.card = this.elements.create('card', {
 						hidePostalCode: true,
 						style: style,
 						classes: {
 							complete: '',
-							focus: 'bg-gray-100'
-						}
+							focus: 'bg-gray-100',
+						},
 					});
 
 					this.step = 'Add Card Details';
@@ -153,15 +153,15 @@ export default {
 						this.card.mount(this.$refs['card-element']);
 					});
 
-					this.card.addEventListener('change', event => {
+					this.card.addEventListener('change', (event) => {
 						this.cardErrorMessage = event.error?.message || null;
 					});
 					this.card.addEventListener('ready', () => {
 						this.ready = true;
 					});
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		updateTotal() {
@@ -170,7 +170,7 @@ export default {
 					(
 						this.creditsToBuy +
 						this.creditsToBuy * this.$account.billing_info.gst_percentage
-					).toFixed(2)
+					).toFixed(2),
 				);
 			} else {
 				this.total = this.creditsToBuy;
@@ -183,8 +183,8 @@ export default {
 			this.paymentInProgress = true;
 			let payload = await this.stripe.confirmCardPayment(this.clientSecret, {
 				payment_method: {
-					card: this.card
-				}
+					card: this.card,
+				},
 			});
 
 			this.paymentInProgress = false;
@@ -195,7 +195,7 @@ export default {
 				this.errorMessage = null;
 				this.creditsToBuy = null;
 			}
-		}
-	}
+		},
+	},
 };
 </script>

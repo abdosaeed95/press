@@ -28,8 +28,8 @@ import { Dialog, FeatherIcon } from 'frappe-ui';
 const props = defineProps({
 	showMessage: {
 		type: Boolean,
-		default: false
-	}
+		default: false,
+	},
 });
 
 const emit = defineEmits(['success']);

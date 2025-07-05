@@ -51,9 +51,9 @@
 						label: 'Submit',
 						variant: 'solid',
 						loading: $resources.changePlan.loading,
-						onClick: () => $resources.changePlan.submit()
-					}
-				]
+						onClick: () => $resources.changePlan.submit(),
+					},
+				],
 			}"
 			v-model="showChangePlanDialog"
 		>
@@ -80,12 +80,12 @@ export default {
 	components: {
 		ServerPlansTable,
 		ProgressArc,
-		PlanIcon
+		PlanIcon,
 	},
 	data() {
 		return {
 			showChangePlanDialog: false,
-			selectedPlan: null
+			selectedPlan: null,
 		};
 	},
 	resources: {
@@ -93,10 +93,10 @@ export default {
 			return {
 				url: 'press.api.server.usage',
 				params: {
-					name: this.server?.name
+					name: this.server?.name,
 				},
 				initialData: {},
-				auto: true
+				auto: true,
 			};
 		},
 		plans() {
@@ -104,9 +104,9 @@ export default {
 				url: 'press.api.server.plans',
 				params: {
 					name: 'Server',
-					cluster: this.server.region_info.name
+					cluster: this.server.region_info.name,
 				},
-				initialData: []
+				initialData: [],
 			};
 		},
 		changePlan() {
@@ -114,13 +114,13 @@ export default {
 				url: 'press.api.server.change_plan',
 				params: {
 					name: this.server?.name,
-					plan: this.selectedPlan?.name
+					plan: this.selectedPlan?.name,
 				},
 				onSuccess() {
 					notify({
 						title: `Plan changed to ${this.selectedPlan.plan_title}`,
 						icon: 'check',
-						color: 'green'
+						color: 'green',
 					});
 					this.showChangePlanDialog = false;
 					this.selectedPlan = null;
@@ -132,11 +132,11 @@ export default {
 					notify({
 						title: error,
 						icon: 'x',
-						color: 'red'
+						color: 'red',
 					});
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		plan_title(plan) {
@@ -145,11 +145,11 @@ export default {
 			let price_field = india ? 'price_inr' : 'price_usd';
 			let price = plan[price_field];
 			return price > 0 ? `${currency}${price}` : plan.plan_title;
-		}
+		},
 	},
 	computed: {
 		plans() {
-			let processedPlans = this.$resources.plans.data.map(plan => {
+			let processedPlans = this.$resources.plans.data.map((plan) => {
 				if (this.plan.name === plan.name) {
 					plan.disabled = true;
 				}
@@ -169,30 +169,30 @@ export default {
 					value: `${this.used.vcpu} / ${this.plan.vcpu} ${this.$plural(
 						this.plan.vcpu,
 						'vCPU',
-						'vCPUs'
+						'vCPUs',
 					)}`,
-					percentage: (this.used.vcpu / this.plan.vcpu) * 100
+					percentage: (this.used.vcpu / this.plan.vcpu) * 100,
 				},
 				{
 					label: 'Memory',
 					value: `${this.formatBytes(
 						this.used.memory,
 						0,
-						2
+						2,
 					)} / ${this.formatBytes(this.plan.memory, 0, 2)}`,
-					percentage: (this.used.memory / this.plan.memory) * 100
+					percentage: (this.used.memory / this.plan.memory) * 100,
 				},
 				{
 					label: 'Storage',
 					value: `${this.formatBytes(
 						this.used.disk,
 						0,
-						3
+						3,
 					)} / ${this.formatBytes(this.plan.disk, 0, 3)}`,
-					percentage: (this.used.disk / this.plan.disk) * 100
-				}
+					percentage: (this.used.disk / this.plan.disk) * 100,
+				},
 			];
-		}
-	}
+		},
+	},
 };
 </script>

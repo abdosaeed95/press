@@ -49,7 +49,7 @@
 							:class="{
 								'border-green-500 bg-green-50': step.completed,
 								'border-red-500 bg-red-50': step.status === 'Failure',
-								'border-gray-500 bg-gray-50': step.status === 'Skipped'
+								'border-gray-500 bg-gray-50': step.status === 'Skipped',
 							}"
 						>
 							<FeatherIcon
@@ -66,7 +66,7 @@
 								:class="{
 									'text-green-500': step.completed,
 									'text-red-500': step.status === 'Failure',
-									'text-gray-500': step.status === 'Skipped'
+									'text-gray-500': step.status === 'Skipped',
 								}"
 								:stroke-width="3"
 								class="h-3 w-3"
@@ -103,7 +103,7 @@ export default {
 	name: 'StepsDetail',
 	props: ['showDetails', 'title', 'subtitle', 'loading', 'steps'],
 	components: {
-		CardDetails
+		CardDetails,
 	},
 	inject: ['viewportWidth'],
 	mounted() {
@@ -115,8 +115,8 @@ export default {
 				const el = this.$refs.openedSummary;
 				if (el) el[0].scrollIntoView({ behavior: 'smooth' });
 			}, 1000);
-		}
-	}
+		},
+	},
 };
 </script>
 

@@ -11,9 +11,9 @@
 					onClick: () => {
 						$emit('plan-select', selectedPlan);
 						show = false;
-					}
-				}
-			]
+					},
+				},
+			],
 		}"
 		v-model="show"
 	>
@@ -30,11 +30,11 @@ export default {
 	props: ['app', 'modelValue', 'currentPlan'],
 	emits: ['plan-select', 'update:modelValue'],
 	components: {
-		PlansCards
+		PlansCards,
 	},
 	data() {
 		return {
-			selectedPlan: this.currentPlan
+			selectedPlan: this.currentPlan,
 		};
 	},
 	computed: {
@@ -45,10 +45,10 @@ export default {
 			set(val) {
 				this.$emit('update:modelValue', val);
 				if (!val) this.selectedPlan = null;
-			}
+			},
 		},
 		plans() {
-			return this.app.plans.map(plan => {
+			return this.app.plans.map((plan) => {
 				return {
 					label:
 						plan.price_inr === 0 || plan.price_usd === 0
@@ -56,17 +56,17 @@ export default {
 							: `${this.$format.userCurrency(
 									this.$team.doc.currency === 'INR'
 										? plan.price_inr
-										: plan.price_usd
-							  )}/mo`,
+										: plan.price_usd,
+								)}/mo`,
 					sublabel: ' ',
 					...plan,
-					features: plan.features.map(f => ({
+					features: plan.features.map((f) => ({
 						value: f,
-						icon: 'check-circle'
-					}))
+						icon: 'check-circle',
+					})),
 				};
 			});
-		}
-	}
+		},
+	},
 };
 </script>

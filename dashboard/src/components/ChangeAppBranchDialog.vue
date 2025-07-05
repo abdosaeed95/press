@@ -46,13 +46,13 @@ export default {
 	props: ['bench', 'app'],
 	data() {
 		return {
-			selectedBranch: null
+			selectedBranch: null,
 		};
 	},
 	resources: {
 		branches() {
 			return {
-				url: 'press.api.bench.branch_list'
+				url: 'press.api.bench.branch_list',
 			};
 		},
 		changeBranch() {
@@ -65,9 +65,9 @@ export default {
 					if (this.selectedBranch == this.app.branch) {
 						return 'Please select a different branch';
 					}
-				}
+				},
 			};
-		}
+		},
 	},
 	watch: {
 		app(value) {
@@ -75,10 +75,10 @@ export default {
 				this.selectedBranch = value.branch;
 				this.$resources.branches.submit({
 					name: this.bench,
-					app: value.name
+					app: value.name,
 				});
 			}
-		}
+		},
 	},
 	methods: {
 		branchList() {
@@ -86,19 +86,19 @@ export default {
 				return [];
 			}
 
-			return this.$resources.branches.data.map(d => d.name);
+			return this.$resources.branches.data.map((d) => d.name);
 		},
 		changeBranch() {
 			this.$resources.changeBranch.submit({
 				name: this.bench,
 				app: this.app.name,
-				to_branch: this.selectedBranch
+				to_branch: this.selectedBranch,
 			});
 		},
 		dialogClosed() {
 			this.$emit('update:app', null);
 			this.$resources.changeBranch.reset();
-		}
+		},
 	},
 	computed: {
 		show: {
@@ -109,8 +109,8 @@ export default {
 				if (!value) {
 					this.dialogClosed();
 				}
-			}
-		}
-	}
+			},
+		},
+	},
 };
 </script>

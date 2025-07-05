@@ -7,9 +7,9 @@
 					label: 'Update',
 					variant: 'solid',
 					loading: $resources.editTitle.loading,
-					onClick: () => $resources.editTitle.submit()
-				}
-			]
+					onClick: () => $resources.editTitle.submit(),
+				},
+			],
 		}"
 		v-model="show"
 	>
@@ -26,7 +26,7 @@ export default {
 	emits: ['update:modelValue'],
 	data() {
 		return {
-			serverTitle: this.server.title
+			serverTitle: this.server.title,
 		};
 	},
 	resources: {
@@ -35,7 +35,7 @@ export default {
 				url: 'press.api.server.rename',
 				params: {
 					name: this.server?.name,
-					title: this.serverTitle
+					title: this.serverTitle,
 				},
 				validate() {
 					if (this.serverTitle === this.server?.title) {
@@ -45,9 +45,9 @@ export default {
 				onSuccess() {
 					this.show = false;
 					this.server.title = this.serverTitle;
-				}
+				},
 			};
-		}
+		},
 	},
 	computed: {
 		show: {
@@ -56,8 +56,8 @@ export default {
 			},
 			set(value) {
 				this.$emit('update:modelValue', value);
-			}
-		}
-	}
+			},
+		},
+	},
 };
 </script>

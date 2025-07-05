@@ -37,7 +37,7 @@ export default {
 	data() {
 		return {
 			subdomainAvailable: false,
-			errorMessage: null
+			errorMessage: null,
 		};
 	},
 	methods: {
@@ -50,7 +50,7 @@ export default {
 			if (!error) {
 				let subdomainTaken = await this.$call('press.api.spaces.exists', {
 					subdomain,
-					domain: this.domain
+					domain: this.domain,
 				});
 				if (subdomainTaken) {
 					error = `${subdomain}.${this.domain} already exists.`;
@@ -75,7 +75,7 @@ export default {
 				return 'Subdomain contains invalid characters. Use lowercase characters, numbers and hyphens';
 			}
 			return null;
-		}
-	}
+		},
+	},
 };
 </script>

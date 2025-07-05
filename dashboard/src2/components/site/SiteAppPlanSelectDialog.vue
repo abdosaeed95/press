@@ -14,19 +14,19 @@ import { toast } from 'vue-sonner';
 
 export default {
 	components: {
-		SiteAppPlanSelectorDialog
+		SiteAppPlanSelectorDialog,
 	},
 	props: ['app', 'currentPlan'],
 	emits: ['plan-changed', 'plan-selected'],
 	data() {
 		return {
-			showDialog: true
+			showDialog: true,
 		};
 	},
 	resources: {
 		changeAppPlan: {
-			url: 'press.api.marketplace.change_app_plan'
-		}
+			url: 'press.api.marketplace.change_app_plan',
+		},
 	},
 	methods: {
 		onPlanSelect(plan) {
@@ -36,7 +36,7 @@ export default {
 				toast.promise(
 					this.$resources.changeAppPlan.submit({
 						subscription: this.app.subscription.name,
-						new_plan: plan.name
+						new_plan: plan.name,
 					}),
 					{
 						loading: 'Changing plan...',
@@ -44,11 +44,11 @@ export default {
 							this.$emit('plan-changed', plan);
 							return 'Plan changed successfully';
 						},
-						error: e => getToastErrorMessage(e)
-					}
+						error: (e) => getToastErrorMessage(e),
+					},
 				);
 			else this.$emit('plan-selected', plan);
-		}
-	}
+		},
+	},
 };
 </script>

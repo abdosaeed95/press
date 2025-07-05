@@ -37,9 +37,9 @@ export default {
 			iconMap: {
 				Running: 'loader',
 				Success: 'check',
-				Pending: 'minus'
+				Pending: 'minus',
 			},
-			creationJob: null
+			creationJob: null,
 		};
 	},
 	mounted() {
@@ -68,9 +68,9 @@ export default {
 		},
 		async fetchJob() {
 			let jobs = await this.$call('press.api.server.press_jobs', {
-				name: this.server.name
+				name: this.server.name,
 			});
-			jobs.forEach(job => {
+			jobs.forEach((job) => {
 				if (job.job_type === 'Create Server') {
 					this.creationJob = job;
 					this.$socket.emit('doc_subscribe', 'Press Job', job.name);
@@ -79,8 +79,8 @@ export default {
 			if (this.creationJob?.status === 'Success') {
 				this.$router.replace(`/servers/${this.server.name}/overview`);
 			}
-		}
-	}
+		},
+	},
 };
 </script>
 

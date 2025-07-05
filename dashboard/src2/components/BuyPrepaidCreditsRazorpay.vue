@@ -33,26 +33,26 @@ export default {
 	name: 'BuyPrepaidCreditsRazorpay',
 	props: {
 		amount: {
-			default: 0
+			default: 0,
 		},
 		minimumAmount: {
-			default: 0
+			default: 0,
 		},
 		isOnboarding: {
-			default: false
-		}
+			default: false,
+		},
 	},
 	data() {
 		return {
 			isPaymentComplete: false,
-			isVerifyingPayment: false
+			isVerifyingPayment: false,
 		};
 	},
 	mounted() {
 		this.razorpayCheckoutJS = document.createElement('script');
 		this.razorpayCheckoutJS.setAttribute(
 			'src',
-			'https://checkout.razorpay.com/v1/checkout.js'
+			'https://checkout.razorpay.com/v1/checkout.js',
 		);
 		this.razorpayCheckoutJS.async = true;
 		document.head.appendChild(this.razorpayCheckoutJS);
@@ -62,7 +62,7 @@ export default {
 			return {
 				url: 'press.api.billing.create_razorpay_order',
 				params: {
-					amount: this.amount
+					amount: this.amount,
 				},
 				onSuccess(data) {
 					this.processOrder(data);
@@ -70,10 +70,10 @@ export default {
 				validate() {
 					if (this.amount < this.minimumAmount) {
 						throw new DashboardError(
-							'Amount less than minimum amount required'
+							'Amount less than minimum amount required',
 						);
 					}
-				}
+				},
 			};
 		},
 		handlePaymentFailed() {
@@ -81,9 +81,9 @@ export default {
 				url: 'press.api.billing.handle_razorpay_payment_failed',
 				onSuccess() {
 					console.log('Payment Failed.');
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		buyCreditsWithRazorpay() {
@@ -96,10 +96,10 @@ export default {
 				name: 'Frappe Cloud',
 				image: '/assets/press/images/frappe-cloud-logo.png',
 				prefill: {
-					email: this.$team.doc.user
+					email: this.$team.doc.user,
 				},
 				handler: this.handlePaymentSuccess,
-				theme: { color: '#171717' }
+				theme: { color: '#171717' },
 			};
 
 			const rzp = new Razorpay(options);
@@ -133,10 +133,10 @@ export default {
 				this.isVerifyingPayment = false;
 				this.$emit('success');
 			}
-		}
+		},
 	},
 	beforeUnmount() {
 		this.razorpayCheckoutJS?.remove();
-	}
+	},
 };
 </script>

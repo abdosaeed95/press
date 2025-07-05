@@ -11,7 +11,7 @@
 				:filters="filters"
 				:columns="[
 					{ label: 'Timestamp', name: 'timestamp', class: 'w-2/12' },
-					{ label: 'Query', name: 'query', class: 'w-10/12' }
+					{ label: 'Query', name: 'query', class: 'w-10/12' },
 				]"
 				:data="formatDeadlockData"
 				title="MariaDB Deadlock Report"
@@ -61,7 +61,7 @@ export default {
 	name: 'SiteDeadlockReport',
 	props: ['site'],
 	components: {
-		Report
+		Report,
 	},
 	data() {
 		return {
@@ -70,11 +70,11 @@ export default {
 					name: 'start_datetime',
 					label: 'From:',
 					type: 'date',
-					value: this.today
+					value: this.today,
 				},
-				{ name: 'end_datetime', label: 'To:', type: 'date', value: this.today }
+				{ name: 'end_datetime', label: 'To:', type: 'date', value: this.today },
 			],
-			max_lines: 20
+			max_lines: 20,
 		};
 	},
 	watch: {
@@ -83,7 +83,7 @@ export default {
 		},
 		endTime() {
 			this.reset();
-		}
+		},
 	},
 	resources: {
 		deadlockReport() {
@@ -93,28 +93,28 @@ export default {
 					site: this.site?.name,
 					start: this.startTime || this.today,
 					end: this.endTime || this.today,
-					max_lines: this.max_lines
+					max_lines: this.max_lines,
 				},
 				auto: true,
 				pageLength: 10,
 				keepData: true,
-				initialData: []
+				initialData: [],
 			};
 		},
 		getPlan() {
 			return {
 				url: 'press.api.site.current_plan',
 				params: {
-					name: this.site?.name
+					name: this.site?.name,
 				},
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	methods: {
 		reset() {
 			this.$resources.deadlockReport.reset();
-		}
+		},
 	},
 	computed: {
 		today() {
@@ -128,20 +128,20 @@ export default {
 		},
 		formatDeadlockData() {
 			let data = [];
-			this.$resources.deadlockReport.data.forEach(row => {
+			this.$resources.deadlockReport.data.forEach((row) => {
 				let timestamp = this.formatDate(
 					row.timestamp,
-					'TIME_24_WITH_SHORT_OFFSET'
+					'TIME_24_WITH_SHORT_OFFSET',
 				);
 				let out = [
 					{ name: 'Timestamp', value: timestamp, class: 'w-2/12' },
-					{ name: 'Query', value: row.query, class: 'w-10/12' }
+					{ name: 'Query', value: row.query, class: 'w-10/12' },
 				];
 				data.push(out);
 			});
 
 			return data;
-		}
-	}
+		},
+	},
 };
 </script>

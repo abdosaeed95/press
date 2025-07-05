@@ -10,27 +10,27 @@ const currentEditingPlan = reactive({
 	price_usd: 0,
 	features: [''],
 	plan_title: '',
-	enabled: true
+	enabled: true,
 });
 
 const props = defineProps({
-	app: Object
+	app: Object,
 });
 
 const appPlans = createResource({
 	url: 'press.api.marketplace.get_app_plans',
 	params: {
 		app: props.app?.name,
-		include_disabled: true
+		include_disabled: true,
 	},
-	auto: true
+	auto: true,
 });
 
 const updateAppPlan = createResource({
 	url: 'press.api.marketplace.update_app_plan',
 	onSuccess() {
 		refreshState();
-	}
+	},
 });
 
 const createAppPlan = createResource({
@@ -42,7 +42,7 @@ const createAppPlan = createResource({
 	},
 	onSuccess() {
 		refreshState();
-	}
+	},
 });
 
 function editPlan(plan) {
@@ -66,12 +66,12 @@ function savePlan() {
 	if (currentEditingPlan.name) {
 		updateAppPlan.submit({
 			app_plan_name: currentEditingPlan.name,
-			updated_plan_data: currentEditingPlan
+			updated_plan_data: currentEditingPlan,
 		});
 	} else {
 		createAppPlan.submit({
 			plan_data: currentEditingPlan,
-			marketplace_app: props.app?.name
+			marketplace_app: props.app?.name,
 		});
 	}
 }
@@ -88,7 +88,7 @@ function resetCurrentEditingPlan() {
 		price_usd: 0,
 		features: [''],
 		plan_title: '',
-		enabled: true
+		enabled: true,
 	});
 
 	updateAppPlan.error = null;

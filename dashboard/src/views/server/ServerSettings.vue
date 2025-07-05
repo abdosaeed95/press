@@ -17,7 +17,7 @@ export default {
 	name: 'ServerSettings',
 	props: ['server'],
 	components: {
-		Tags
-	}
+		Tags,
+	},
 };
 </script>

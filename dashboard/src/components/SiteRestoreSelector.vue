@@ -12,8 +12,8 @@
 						sites.length > 1 && ![sites.length - 1, 0].includes(index),
 					'rounded-b-md': sites.length > 1 && index === sites.length - 1,
 					'rounded-t-md border-b-0': sites.length > 1 && index === 0,
-					'rounded-md border': sites.length == 1
-				}
+					'rounded-md border': sites.length == 1,
+				},
 			]"
 		>
 			<div class="flex flex-row items-center gap-2">
@@ -29,6 +29,6 @@
 export default {
 	name: 'SiteRestoreSelector',
 	props: ['sites', 'selectedSite'],
-	emits: ['update:selectedSite']
+	emits: ['update:selectedSite'],
 };
 </script>

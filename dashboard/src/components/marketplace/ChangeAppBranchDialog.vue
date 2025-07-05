@@ -8,9 +8,9 @@
 					label: 'Change Branch',
 					variant: 'solid',
 					loading: $resources.changeBranch.loading,
-					onClick: () => $resources.changeBranch.submit()
-				}
-			]
+					onClick: () => $resources.changeBranch.submit(),
+				},
+			],
 		}"
 		:modelValue="show"
 	>
@@ -29,7 +29,7 @@ export default {
 	name: 'ChangeAppBranchDialog',
 	data() {
 		return {
-			selectedBranch: null
+			selectedBranch: null,
 		};
 	},
 	props: ['show', 'app', 'source', 'version', 'activeBranch'],
@@ -38,9 +38,9 @@ export default {
 			return {
 				url: 'press.api.marketplace.branches',
 				params: {
-					name: this.source
+					name: this.source,
 				},
-				auto: true
+				auto: true,
 			};
 		},
 		changeBranch() {
@@ -50,7 +50,7 @@ export default {
 					name: this.app,
 					source: this.source,
 					version: this.version,
-					to_branch: this.selectedBranch
+					to_branch: this.selectedBranch,
 				},
 				onSuccess() {
 					window.location.reload();
@@ -59,20 +59,20 @@ export default {
 					if (this.selectedBranch == this.app.branch) {
 						return 'Please select a different branch';
 					}
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		branchList() {
 			if (this.$resources.branches.loading || !this.$resources.branches.data) {
 				return [];
 			}
-			return this.$resources.branches.data.map(d => d.name);
-		}
+			return this.$resources.branches.data.map((d) => d.name);
+		},
 	},
 	mounted() {
 		this.selectedBranch = this.activeBranch;
-	}
+	},
 };
 </script>

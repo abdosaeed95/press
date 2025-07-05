@@ -34,11 +34,11 @@ export default {
 	props: ['address'],
 	emits: ['update:address'],
 	components: {
-		Form
+		Form,
 	},
 	data() {
 		return {
-			gstApplicable: false
+			gstApplicable: false,
 		};
 	},
 	mounted() {
@@ -56,12 +56,12 @@ export default {
 			if (gstApplicable) {
 				this.update(
 					'gstin',
-					this.address.gstin === 'Not Applicable' ? '' : this.address.gstin
+					this.address.gstin === 'Not Applicable' ? '' : this.address.gstin,
 				);
 			} else {
 				this.update('gstin', 'Not Applicable');
 			}
-		}
+		},
 	},
 	resources: {
 		countryList: {
@@ -70,35 +70,35 @@ export default {
 			onSuccess() {
 				let userCountry = this.$team?.doc.country;
 				if (userCountry) {
-					let country = this.countryList.find(d => d.label === userCountry);
+					let country = this.countryList.find((d) => d.label === userCountry);
 					if (country) {
 						this.update('country', country.value);
 					}
 				}
-			}
+			},
 		},
 		validateGST() {
 			return {
 				url: 'press.api.billing.validate_gst',
 				makeParams() {
 					return {
-						address: this.address
+						address: this.address,
 					};
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		update(key, value) {
 			this.$emit('update:address', {
 				...this.address,
-				[key]: value
+				[key]: value,
 			});
 		},
 		async validateGST() {
 			this.update(
 				'gstin',
-				this.gstApplicable ? this.address.gstin : 'Not Applicable'
+				this.gstApplicable ? this.address.gstin : 'Not Applicable',
 			);
 			await this.$resources.validateGST.submit();
 		},
@@ -107,8 +107,8 @@ export default {
 			let is_india = country == 'India';
 			let values = this.fields
 				.flat()
-				.filter(df => df.fieldname != 'gstin' || is_india)
-				.map(df => this.address[df.fieldname]);
+				.filter((df) => df.fieldname != 'gstin' || is_india)
+				.map((df) => this.address[df.fieldname]);
 
 			if (!values.every(Boolean)) {
 				throw new DashboardError('Please fill required values');
@@ -119,19 +119,19 @@ export default {
 			} catch (error) {
 				throw new DashboardError(error.messages?.join('\n'));
 			}
-		}
+		},
 	},
 	computed: {
 		countryList() {
-			return (this.$resources.countryList.data || []).map(d => ({
+			return (this.$resources.countryList.data || []).map((d) => ({
 				label: d.name,
-				value: d.name
+				value: d.name,
 			}));
 		},
 		indianStates() {
-			return indianStates.map(d => ({
+			return indianStates.map((d) => ({
 				label: d,
-				value: d
+				value: d,
 			}));
 		},
 		fields() {
@@ -141,35 +141,35 @@ export default {
 					label: 'Country',
 					fieldname: 'country',
 					options: this.countryList,
-					required: 1
+					required: 1,
 				},
 				{
 					fieldtype: 'Data',
 					label: 'Address',
 					fieldname: 'address',
-					required: 1
+					required: 1,
 				},
 				{
 					fieldtype: 'Data',
 					label: 'City',
 					fieldname: 'city',
-					required: 1
+					required: 1,
 				},
 				{
 					fieldtype: this.address.country === 'India' ? 'Select' : 'Data',
 					label: 'State / Province / Region',
 					fieldname: 'state',
 					required: 1,
-					options: this.address.country === 'India' ? this.indianStates : null
+					options: this.address.country === 'India' ? this.indianStates : null,
 				},
 				{
 					fieldtype: 'Data',
 					label: 'Postal Code',
 					fieldname: 'postal_code',
-					required: 1
-				}
+					required: 1,
+				},
 			];
-		}
-	}
+		},
+	},
 };
 </script>

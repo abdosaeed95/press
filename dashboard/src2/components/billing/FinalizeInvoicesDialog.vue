@@ -14,7 +14,7 @@
 						{{
 							date(invoice.period_end).toLocaleString({
 								month: 'long',
-								year: 'numeric'
+								year: 'numeric',
 							})
 						}}
 						-
@@ -49,11 +49,11 @@ import { toast } from 'vue-sonner';
 export default {
 	name: 'FinalizeInvoicesDialog',
 	props: {
-		msg: String
+		msg: String,
 	},
 	data() {
 		return {
-			showDialog: true
+			showDialog: true,
 		};
 	},
 	resources: {
@@ -62,15 +62,15 @@ export default {
 			onSuccess() {
 				this.showDialog = false;
 				toast.success('Invoices finalized successfully');
-			}
+			},
 		},
 		unpaidInvoices: {
 			url: 'press.api.billing.unpaid_invoices',
-			auto: true
-		}
+			auto: true,
+		},
 	},
 	methods: {
-		date
-	}
+		date,
+	},
 };
 </script>

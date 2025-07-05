@@ -6,7 +6,7 @@
 			{ label: 'Version', name: 'version' },
 			{ label: 'Tags', name: 'tags' },
 			{ label: 'Stats', name: 'stats' },
-			{ label: '', name: 'actions', width: 0.5 }
+			{ label: '', name: 'actions', width: 0.5 },
 		]"
 		:rows="benches"
 		v-slot="{ rows, columns }"
@@ -49,7 +49,7 @@
 						`${row.stats.number_of_sites} ${$plural(
 							row.stats.number_of_sites,
 							'Site',
-							'Sites'
+							'Sites',
 						)}`
 					}}
 					&middot;
@@ -57,7 +57,7 @@
 						`${row.stats.number_of_apps} ${$plural(
 							row.stats.number_of_apps,
 							'App',
-							'Apps'
+							'Apps',
 						)}`
 					}}
 				</div>
@@ -91,7 +91,7 @@ export default {
 		Table,
 		TableHeader,
 		TableRow,
-		TableCell
+		TableCell,
 	},
 	props: ['server', 'serverName'],
 	resources: {
@@ -99,11 +99,11 @@ export default {
 			return {
 				url: 'press.api.server.groups',
 				params: {
-					name: this.serverName
+					name: this.serverName,
 				},
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	computed: {
 		benches() {
@@ -111,19 +111,19 @@ export default {
 				return [];
 			}
 
-			return this.$resources.benches.data.map(bench => ({
+			return this.$resources.benches.data.map((bench) => ({
 				name: bench.name,
 				title: bench.title,
 				status: bench.status,
 				version: bench.version,
 				stats: {
 					number_of_sites: bench.number_of_sites,
-					number_of_apps: bench.number_of_apps
+					number_of_apps: bench.number_of_apps,
 				},
 				tags: bench.tags,
-				route: { name: 'BenchSiteList', params: { benchName: bench.name } }
+				route: { name: 'BenchSiteList', params: { benchName: bench.name } },
 			}));
-		}
+		},
 	},
 	methods: {
 		dropdownItems(bench) {
@@ -132,16 +132,16 @@ export default {
 					label: 'New Site',
 					onClick: () => {
 						this.$router.push(`/${bench.name}/new`);
-					}
+					},
 				},
 				{
 					label: 'View Versions',
 					onClick: () => {
 						this.$router.push(`/groups/${bench.name}/versions`);
-					}
-				}
+					},
+				},
 			];
-		}
-	}
+		},
+	},
 };
 </script>

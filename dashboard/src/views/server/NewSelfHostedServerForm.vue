@@ -56,12 +56,12 @@ export default {
 		'update:appPrivateIP',
 		'update:dbPublicIP',
 		'update:dbPrivateIP',
-		'update:error'
+		'update:error',
 	],
 	watch: {
 		hasError() {
 			this.$emit('update:error', this.hasError);
-		}
+		},
 	},
 	mounted() {
 		this.$emit('update:error', this.hasError);
@@ -86,7 +86,7 @@ export default {
 				this.dbPublicIpErrorMessage !== null ||
 				this.dbPrivateIpErrorMessage !== null
 			);
-		}
+		},
 	},
 	methods: {
 		validateIP(ip, type) {
@@ -98,7 +98,7 @@ export default {
 			} catch {
 				return `${type} IP cannot be blank`;
 			}
-		}
-	}
+		},
+	},
 };
 </script>

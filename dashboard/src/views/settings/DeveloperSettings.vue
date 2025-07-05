@@ -15,13 +15,13 @@ export default {
 	name: 'DeveloperSettings',
 	pageMeta() {
 		return {
-			title: 'Settings - Developer'
+			title: 'Settings - Developer',
 		};
 	},
 	components: {
 		AccountAPI,
 		AccountSSHKey,
-		FeatureFlags
-	}
+		FeatureFlags,
+	},
 };
 </script>

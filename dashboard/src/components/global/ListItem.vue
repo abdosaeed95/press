@@ -25,7 +25,7 @@ export default {
 		secondaryText() {
 			let text = this.subtitle || this.description || '';
 			return text.replace('\n', '<br>');
-		}
-	}
+		},
+	},
 };
 </script>

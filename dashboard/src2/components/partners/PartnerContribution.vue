@@ -10,11 +10,11 @@ export default {
 	name: 'PartnerContribution',
 	props: ['partnerEmail'],
 	components: {
-		GenericList
+		GenericList,
 	},
 	data() {
 		return {
-			partnerContributions: []
+			partnerContributions: [],
 		};
 	},
 	resources: {
@@ -23,22 +23,22 @@ export default {
 				url: 'press.api.partner.get_partner_contribution_list',
 				auto: true,
 				params: {
-					partner_email: this.partnerEmail
+					partner_email: this.partnerEmail,
 				},
 				onSuccess(data) {
-					this.partnerContributions = data.map(d => {
+					this.partnerContributions = data.map((d) => {
 						return {
 							customer_name: d.customer_name,
 							status: d.status,
 							due_date: d.due_date,
 							currency: d.currency,
 							total: d.total_before_discount,
-							partner_total: d.partner_total
+							partner_total: d.partner_total,
 						};
 					});
-				}
+				},
 			};
-		}
+		},
 	},
 	computed: {
 		partnerContributionsList() {
@@ -48,12 +48,12 @@ export default {
 				columns: [
 					{
 						label: 'Customer',
-						fieldname: 'customer_name'
+						fieldname: 'customer_name',
 					},
 					{
 						label: 'Status',
 						fieldname: 'status',
-						width: 0.5
+						width: 0.5,
 					},
 					{
 						label: 'Date',
@@ -62,16 +62,16 @@ export default {
 							return Intl.DateTimeFormat('en-US', {
 								year: 'numeric',
 								month: 'short',
-								day: 'numeric'
+								day: 'numeric',
 							}).format(new Date(value));
 						},
-						width: 0.6
+						width: 0.6,
 					},
 					{
 						label: 'Currency',
 						fieldname: 'currency',
 						width: 0.5,
-						align: 'center'
+						align: 'center',
 					},
 					{
 						label: 'Total',
@@ -83,7 +83,7 @@ export default {
 							return currency(value, columns.currency);
 						},
 						align: 'right',
-						width: 0.6
+						width: 0.6,
 					},
 					{
 						label: 'Partner Total',
@@ -92,11 +92,11 @@ export default {
 							return userCurrency(value);
 						},
 						align: 'right',
-						width: 0.6
-					}
-				]
+						width: 0.6,
+					},
+				],
 			};
-		}
-	}
+		},
+	},
 };
 </script>

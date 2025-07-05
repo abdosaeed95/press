@@ -47,9 +47,9 @@
 					label: 'Create Group',
 					variant: 'solid',
 					loading: $resources.addGroup.loading,
-					onClick: () => $resources.addGroup.submit({ title: groupName })
-				}
-			]
+					onClick: () => $resources.addGroup.submit({ title: groupName }),
+				},
+			],
 		}"
 		v-model="showAddGroupDialog"
 	>
@@ -67,7 +67,7 @@ export default {
 	name: 'AccountGroups',
 	components: {
 		EditPermissions,
-		ManageGroupMembers
+		ManageGroupMembers,
 	},
 	data() {
 		return {
@@ -78,13 +78,13 @@ export default {
 			showManageMemberDialog: false,
 			showEditMemberDialog: false,
 			group: { name: '', title: '' },
-			showAddMemberForm: false
+			showAddMemberForm: false,
 		};
 	},
 	resources: {
 		groups: {
 			url: 'press.api.account.groups',
-			auto: true
+			auto: true,
 		},
 		addMember: {
 			url: 'press.api.account.add_team_member',
@@ -95,9 +95,9 @@ export default {
 					title: 'Invite Sent!',
 					message: 'They will receive an email shortly to join your team.',
 					color: 'green',
-					icon: 'check'
+					icon: 'check',
 				});
-			}
+			},
 		},
 		addGroup: {
 			url: 'press.api.account.add_permission_group',
@@ -112,12 +112,12 @@ export default {
 					title: 'Group Created!',
 					message: 'You can now assign this group to your team members',
 					color: 'green',
-					icon: 'check'
+					icon: 'check',
 				});
 				this.group = r;
 				this.showAddGroupDialog = false;
 				this.showGroupMemberDialog = true;
-			}
+			},
 		},
 		removeGroup: {
 			url: 'press.api.account.remove_permission_group',
@@ -127,10 +127,10 @@ export default {
 					title: 'Group Removed!',
 					message: 'Permissions have been removed from all team members',
 					color: 'green',
-					icon: 'check'
+					icon: 'check',
 				});
-			}
-		}
+			},
+		},
 	},
 	methods: {
 		removeGroup(group) {
@@ -139,10 +139,10 @@ export default {
 				message: `Are you sure you want to remove ${group.title} ?`,
 				actionLabel: 'Remove',
 				actionColor: 'red',
-				action: closeDialog => {
+				action: (closeDialog) => {
 					this.$resources.removeGroup.submit({ name: group.name });
 					closeDialog();
-				}
+				},
 			});
 		},
 		dropdownItems(group) {
@@ -153,7 +153,7 @@ export default {
 					onClick: () => {
 						this.group = group;
 						this.showGroupMemberDialog = true;
-					}
+					},
 				},
 				{
 					label: 'Edit Permissions',
@@ -161,15 +161,15 @@ export default {
 					onClick: () => {
 						this.group = group;
 						this.showEditMemberDialog = true;
-					}
+					},
 				},
 				{
 					label: 'Remove',
 					icon: 'trash-2',
-					onClick: () => this.removeGroup(group)
-				}
+					onClick: () => this.removeGroup(group),
+				},
 			];
-		}
+		},
 	},
 	computed: {
 		showManageTeamButton() {
@@ -187,7 +187,7 @@ export default {
 		groups() {
 			if (!this.$resources.groups.data) return [];
 			return this.$resources.groups.data;
-		}
-	}
+		},
+	},
 };
 </script>

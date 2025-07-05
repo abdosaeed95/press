@@ -20,7 +20,7 @@ import ClickToCopyField from '@/components/ClickToCopyField.vue';
 export default {
 	name: 'PartnerReferral',
 	components: {
-		ClickToCopyField
+		ClickToCopyField,
 	},
 	computed: {
 		referralCode() {
@@ -31,7 +31,7 @@ export default {
 				return this.$account.team.partner_referral_code;
 			}
 			return '';
-		}
-	}
+		},
+	},
 };
 </script>

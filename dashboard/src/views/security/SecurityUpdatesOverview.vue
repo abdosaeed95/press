@@ -50,14 +50,14 @@ export default {
 				orderBy: 'priority_level asc',
 				pageLength: 3,
 				start: 0,
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	computed: {
 		securityUpdates() {
 			return this.$resources.securityUpdates;
-		}
+		},
 	},
 	methods: {
 		getDescription(a) {
@@ -77,7 +77,7 @@ export default {
 		},
 		updateRoute(sec_update) {
 			return `/security/${this.server.name}/security_update/${sec_update}`;
-		}
-	}
+		},
+	},
 };
 </script>

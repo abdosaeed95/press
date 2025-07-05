@@ -42,7 +42,7 @@ export default {
 				green: 'text-green-500',
 				yellow: 'text-yellow-500',
 				blue: 'text-blue-500',
-				gray: 'text-gray-500'
+				gray: 'text-gray-500',
 			}[this.color || 'gray'];
 		},
 		iconContainerClass() {
@@ -51,9 +51,9 @@ export default {
 				green: 'bg-green-100',
 				yellow: 'bg-yellow-100',
 				blue: 'bg-blue-100',
-				gray: 'bg-gray-100'
+				gray: 'bg-gray-100',
 			}[this.color || 'gray'];
-		}
-	}
+		},
+	},
 };
 </script>

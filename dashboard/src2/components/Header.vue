@@ -13,7 +13,7 @@
 defineProps({
 	sticky: {
 		type: Boolean,
-		default: false
-	}
+		default: false,
+	},
 });
 </script>

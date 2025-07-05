@@ -78,16 +78,16 @@ export default {
 			},
 			set(value) {
 				this.$emit('update:modelValue', value);
-			}
-		}
+			},
+		},
 	},
 	data() {
 		return {
-			selectedTeam: null
+			selectedTeam: null,
 		};
 	},
 	methods: {
-		switchToTeam
-	}
+		switchToTeam,
+	},
 };
 </script>

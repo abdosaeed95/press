@@ -789,10 +789,6 @@ class Site(Document, TagHelpers):
 		).insert(ignore_if_duplicate=True)
 
 	def after_insert(self):
-		from press.press.doctype.press_role.press_role import (
-			add_permission_for_newly_created_doc,
-		)
-
 		self.capture_signup_event("created_first_site")
 
 		if hasattr(self, "subscription_plan") and self.subscription_plan:
@@ -1431,8 +1427,8 @@ class Site(Document, TagHelpers):
 
 		self.db_set("host_name", None)
 
-		#self.delete_physical_backups()
-		#self.delete_offsite_backups()
+		# self.delete_physical_backups()
+		# self.delete_offsite_backups()
 		frappe.db.set_value(
 			"Site Backup",
 			{"site": self.name, "offsite": False},

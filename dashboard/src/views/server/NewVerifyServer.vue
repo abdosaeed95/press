@@ -78,9 +78,9 @@ export default {
 				price_inr:
 					this.selectedAppPlan.price_inr + this.selectedDBPlan.price_inr,
 				price_usd:
-					this.selectedAppPlan.price_usd + this.selectedDBPlan.price_usd
+					this.selectedAppPlan.price_usd + this.selectedDBPlan.price_usd,
 			};
-		}
-	}
+		},
+	},
 };
 </script>

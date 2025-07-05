@@ -44,7 +44,7 @@
 					v-if="team.doc.currency === 'INR' || team.doc.razorpay_enabled"
 					size="lg"
 					:class="{
-						'border-[1.5px] border-gray-700': paymentGateway === 'Razorpay'
+						'border-[1.5px] border-gray-700': paymentGateway === 'Razorpay',
 					}"
 					@click="paymentGateway = 'Razorpay'"
 				>
@@ -53,7 +53,7 @@
 				<Button
 					size="lg"
 					:class="{
-						'border-[1.5px] border-gray-700': paymentGateway === 'Stripe'
+						'border-[1.5px] border-gray-700': paymentGateway === 'Stripe',
 					}"
 					@click="paymentGateway = 'Stripe'"
 				>
@@ -97,7 +97,7 @@ const pressSettings = createDocumentResource({
 	doctype: 'Press Settings',
 	name: 'Press Settings',
 	auto: true,
-	initialData: {}
+	initialData: {},
 });
 
 const maximumAmount = computed(() => {

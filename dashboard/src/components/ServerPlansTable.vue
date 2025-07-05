@@ -6,12 +6,12 @@
 					v-for="c in [
 						{
 							name: 'Standard',
-							description: 'Includes standard support and SLAs'
+							description: 'Includes standard support and SLAs',
 						},
 						{
 							name: 'Premium',
-							description: 'Includes enterprise support and SLAs'
-						}
+							description: 'Includes enterprise support and SLAs',
+						},
 					]"
 					:key="c.name"
 					@click="planType = c.name"
@@ -19,7 +19,7 @@
 						planType === c.name
 							? 'border-gray-900 ring-1 ring-gray-900 hover:bg-gray-100'
 							: 'border-gray-400 bg-white text-gray-900 ring-gray-200 hover:bg-gray-50',
-						'flex w-full items-center rounded border p-3 text-left text-base text-gray-900'
+						'flex w-full items-center rounded border p-3 text-left text-base text-gray-900',
 					]"
 				>
 					<div class="flex w-full items-center justify-between space-x-2">
@@ -50,8 +50,8 @@
 				{
 					'rounded-b-md border-b': i === plans.length - 1,
 					'border-b-0': i !== plans.length - 1,
-					'pointer-events-none': plan.disabled
-				}
+					'pointer-events-none': plan.disabled,
+				},
 			]"
 			v-for="(plan, i) in planList"
 			:key="plan.name"
@@ -62,7 +62,7 @@
 					type="radio"
 					class="form-radio"
 					:checked="selectedPlan === plan"
-					@change="e => (selectedPlan = e.target.checked ? plan : null)"
+					@change="(e) => (selectedPlan = e.target.checked ? plan : null)"
 				/>
 			</div>
 			<div class="w-1/4 text-gray-900" :class="{ 'opacity-25': plan.disabled }">
@@ -98,12 +98,12 @@ export default {
 	emits: ['update:selectedPlan'],
 	data() {
 		return {
-			planType: 'Standard'
+			planType: 'Standard',
 		};
 	},
 	computed: {
 		planList() {
-			return this.plans.filter(p => {
+			return this.plans.filter((p) => {
 				if (this.planType === 'Standard') {
 					return p.premium == 0;
 				} else {
@@ -111,7 +111,7 @@ export default {
 				}
 				return False;
 			});
-		}
-	}
+		},
+	},
 };
 </script>

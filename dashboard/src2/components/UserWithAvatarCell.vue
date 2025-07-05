@@ -19,6 +19,6 @@ import { Avatar } from 'frappe-ui';
 const props = defineProps({
 	avatarImage: String,
 	fullName: String,
-	email: String
+	email: String,
 });
 </script>

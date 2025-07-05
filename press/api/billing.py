@@ -21,8 +21,8 @@ from press.api.regional_payments.mpesa.utils import (
 )
 from press.press.doctype.mpesa_setup.mpesa_connector import MpesaConnector
 from press.press.doctype.team.team import (
-	has_unsettled_invoices,
 	_enqueue_finalize_unpaid_invoices_for_team,
+	has_unsettled_invoices,
 )
 from press.utils import get_current_team
 from press.utils.billing import (

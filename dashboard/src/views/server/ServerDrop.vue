@@ -10,9 +10,9 @@
 						variant: 'solid',
 						theme: 'red',
 						loading: $resources.dropServer.loading,
-						onClick: () => $resources.dropServer.submit()
-					}
-				]
+						onClick: () => $resources.dropServer.submit(),
+					},
+				],
 			}"
 			v-model="dialogOpen"
 		>
@@ -40,7 +40,7 @@ export default {
 	data() {
 		return {
 			dialogOpen: false,
-			confirmServerName: null
+			confirmServerName: null,
 		};
 	},
 	resources: {
@@ -48,7 +48,7 @@ export default {
 			return {
 				url: 'press.api.server.archive',
 				params: {
-					name: this.server?.name
+					name: this.server?.name,
 				},
 				onSuccess() {
 					this.dialogOpen = false;
@@ -58,14 +58,14 @@ export default {
 					if (this.server?.name !== this.confirmServerName) {
 						return 'Please type the server name to confirm';
 					}
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		showDialog() {
 			this.dialogOpen = true;
-		}
-	}
+		},
+	},
 };
 </script>

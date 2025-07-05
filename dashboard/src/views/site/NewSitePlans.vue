@@ -12,7 +12,7 @@
 				v-if="plans"
 				:plans="plans"
 				:selectedPlan="selectedPlan"
-				@update:selectedPlan="plan => $emit('update:selectedPlan', plan)"
+				@update:selectedPlan="(plan) => $emit('update:selectedPlan', plan)"
 			/>
 		</div>
 	</div>
@@ -25,11 +25,11 @@ export default {
 	emits: ['update:selectedPlan'],
 	props: ['bench', 'selectedPlan', 'benchTeam'],
 	components: {
-		SitePlansTable
+		SitePlansTable,
 	},
 	data() {
 		return {
-			plans: null
+			plans: null,
 		};
 	},
 	resources: {
@@ -37,17 +37,17 @@ export default {
 			return {
 				url: 'press.api.site.get_plans',
 				params: {
-					rg: this.bench
+					rg: this.bench,
 				},
 				auto: true,
 				onSuccess(r) {
-					this.plans = r.map(plan => {
+					this.plans = r.map((plan) => {
 						plan.disabled = !this.$account.hasBillingInfo;
 						return plan;
 					});
-				}
+				},
 			};
-		}
-	}
+		},
+	},
 };
 </script>

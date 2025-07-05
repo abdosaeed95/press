@@ -112,33 +112,33 @@ import LineChart from '@/components/charts/LineChart.vue';
 export default {
 	name: 'MarketplaceAppAnalytics',
 	props: {
-		app: Object
+		app: Object,
 	},
 	components: {
-		LineChart
+		LineChart,
 	},
 	methods: {
 		formatDate(data) {
-			return data.map(d => d.date);
+			return data.map((d) => d.date);
 		},
 		getChartOptions(yFormatter) {
 			return {
 				axisOptions: {
 					xIsSeries: true,
-					shortenYAxisNumbers: 1
+					shortenYAxisNumbers: 1,
 				},
 				lineOptions: {
 					hideDots: true,
-					regionFill: true
+					regionFill: true,
 				},
 				tooltipOptions: {
-					formatTooltipX: d => {
+					formatTooltipX: (d) => {
 						return DateTime.fromISO(d).toLocaleString(DateTime.DATE_MED);
 					},
-					formatTooltipY: yFormatter
-				}
+					formatTooltipY: yFormatter,
+				},
 			};
-		}
+		},
 	},
 	resources: {
 		analytics() {
@@ -146,8 +146,8 @@ export default {
 				url: 'press.api.marketplace.analytics',
 				auto: true,
 				params: {
-					name: this.app?.app
-				}
+					name: this.app?.app,
+				},
 			};
 		},
 		plausible_analytics() {
@@ -155,10 +155,10 @@ export default {
 				url: 'press.api.analytics.plausible_analytics',
 				auto: true,
 				params: {
-					name: this.app?.app
-				}
+					name: this.app?.app,
+				},
 			};
-		}
+		},
 	},
 	computed: {
 		analytics() {
@@ -170,7 +170,7 @@ export default {
 				const {
 					total_installs,
 					num_installs_active_sites,
-					num_installs_active_benches
+					num_installs_active_benches,
 				} = analyticsData;
 
 				return [
@@ -179,22 +179,22 @@ export default {
 						value:
 							total_installs.toString() +
 							' ' +
-							(total_installs == 1 ? 'Site' : 'Sites')
+							(total_installs == 1 ? 'Site' : 'Sites'),
 					},
 					{
 						title: 'Active Sites with this App',
 						value:
 							num_installs_active_sites.toString() +
 							' ' +
-							(num_installs_active_sites == 1 ? 'Site' : 'Sites')
+							(num_installs_active_sites == 1 ? 'Site' : 'Sites'),
 					},
 					{
 						title: 'Active Benches with this App',
 						value:
 							num_installs_active_benches.toString() +
 							' ' +
-							(num_installs_active_benches == 1 ? 'Bench' : 'Benches')
-					}
+							(num_installs_active_benches == 1 ? 'Bench' : 'Benches'),
+					},
 				];
 			}
 		},
@@ -203,7 +203,7 @@ export default {
 			if (!pageViews) return;
 
 			return {
-				datasets: [pageViews.map(d => [+new Date(d.date), d.value])]
+				datasets: [pageViews.map((d) => [+new Date(d.date), d.value])],
 			};
 		},
 		visitorsData() {
@@ -211,7 +211,7 @@ export default {
 			if (!visitorsData) return;
 
 			return {
-				datasets: [visitorsData.map(d => [+new Date(d.date), d.value])]
+				datasets: [visitorsData.map((d) => [+new Date(d.date), d.value])],
 			};
 		},
 		paymentAnalytics() {
@@ -227,7 +227,7 @@ export default {
 							: 0.0,
 						inr: data.total_payout.inr_amount
 							? data.total_payout.inr_amount.toFixed(2)
-							: 0.0
+							: 0.0,
 					},
 					pending_payout: {
 						usd: data.pending_payout.usd_amount
@@ -235,7 +235,7 @@ export default {
 							: 0.0,
 						inr: data.pending_payout.inr_amount
 							? data.pending_payout.inr_amount.toFixed(2)
-							: 0.0
+							: 0.0,
 					},
 					commission: {
 						usd: data.commission.usd_amount
@@ -243,11 +243,11 @@ export default {
 							: 0.0,
 						inr: data.commission.inr_amount
 							? data.commission.inr_amount.toFixed(2)
-							: 0.0
-					}
+							: 0.0,
+					},
 				};
 			}
-		}
-	}
+		},
+	},
 };
 </script>

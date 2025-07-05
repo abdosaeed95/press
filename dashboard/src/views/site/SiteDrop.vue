@@ -10,9 +10,9 @@
 						variant: 'solid',
 						theme: 'red',
 						loading: $resources.dropSite.loading,
-						onClick: () => $resources.dropSite.submit()
-					}
-				]
+						onClick: () => $resources.dropSite.submit(),
+					},
+				],
 			}"
 			v-model="dialogOpen"
 		>
@@ -50,7 +50,7 @@ export default {
 		return {
 			dialogOpen: false,
 			confirmSiteName: null,
-			forceDrop: false
+			forceDrop: false,
 		};
 	},
 	resources: {
@@ -59,7 +59,7 @@ export default {
 				url: 'press.api.site.archive',
 				params: {
 					name: this.site?.name,
-					force: this.site.archive_failed == true ? true : this.forceDrop
+					force: this.site.archive_failed == true ? true : this.forceDrop,
 				},
 				onSuccess() {
 					this.dialogOpen = false;
@@ -69,14 +69,14 @@ export default {
 					if (this.site?.name !== this.confirmSiteName) {
 						return 'Please type the site name to confirm';
 					}
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		showDialog() {
 			this.dialogOpen = true;
-		}
-	}
+		},
+	},
 };
 </script>

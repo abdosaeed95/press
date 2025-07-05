@@ -52,7 +52,7 @@
 							class="flex w-full items-center rounded-md px-2 py-1"
 							:class="{
 								'bg-white shadow-sm':
-									this.$route.fullPath.startsWith('/notifications')
+									this.$route.fullPath.startsWith('/notifications'),
 							}"
 						>
 							<span class="mr-1.5">
@@ -90,7 +90,7 @@
 									: item.route == '/'
 							)
 								? 'bg-white shadow-sm'
-								: 'text-gray-900 hover:bg-gray-100'
+								: 'text-gray-900 hover:bg-gray-100',
 						]"
 						:href="href"
 						@click="navigate"
@@ -119,7 +119,7 @@ export default {
 	components: {
 		FCLogo,
 		SwitchTeamDialog,
-		CommandPalette
+		CommandPalette,
 	},
 	data() {
 		return {
@@ -129,23 +129,23 @@ export default {
 				{
 					label: 'Switch Team',
 					icon: 'command',
-					onClick: () => (this.showTeamSwitcher = true)
+					onClick: () => (this.showTeamSwitcher = true),
 				},
 				{
 					label: 'Support & Docs',
 					icon: 'help-circle',
-					onClick: () => (window.location.href = '/support')
+					onClick: () => (window.location.href = '/support'),
 				},
 				{
 					label: 'Logout',
 					icon: 'log-out',
-					onClick: () => this.$auth.logout()
-				}
-			]
+					onClick: () => this.$auth.logout(),
+				},
+			],
 		};
 	},
 	mounted() {
-		window.addEventListener('keydown', e => {
+		window.addEventListener('keydown', (e) => {
 			if (e.key === 'k' && (e.ctrlKey || e.metaKey)) {
 				this.showCommandPalette = !this.showCommandPalette;
 				e.preventDefault();
@@ -156,9 +156,9 @@ export default {
 		});
 
 		this.$socket.emit('doctype_subscribe', 'Press Notification');
-		this.$socket.on('press_notification', data => {
+		this.$socket.on('press_notification', (data) => {
 			if (data.team === this.$account.team.name) {
-				unreadNotificationsCount.setData(data => data + 1);
+				unreadNotificationsCount.setData((data) => data + 1);
 			}
 		});
 
@@ -180,7 +180,7 @@ export default {
 					highlight: () => {
 						return this.$route.fullPath.startsWith('/sites');
 					},
-					icon: FCIcons.SiteIcon
+					icon: FCIcons.SiteIcon,
 				},
 				{
 					label: 'Bench Groups',
@@ -188,7 +188,7 @@ export default {
 					highlight: () => {
 						return this.$route.fullPath.startsWith('/groups');
 					},
-					icon: FCIcons.BenchIcon
+					icon: FCIcons.BenchIcon,
 					//condition: () => this.$account.team?.benches_enabled
 				},
 				{
@@ -198,7 +198,7 @@ export default {
 						return this.$route.fullPath.startsWith('/servers');
 					},
 					icon: FCIcons.ServerIcon,
-					condition: () => this.$account.team?.servers_enabled
+					condition: () => this.$account.team?.servers_enabled,
 				},
 				{
 					label: 'Spaces',
@@ -207,7 +207,7 @@ export default {
 						return this.$route.fullPath.startsWith('/spaces');
 					},
 					icon: FCIcons.SpacesIcon,
-					condition: () => this.$account.team?.code_servers_enabled
+					condition: () => this.$account.team?.code_servers_enabled,
 				},
 				{
 					label: 'Apps',
@@ -216,7 +216,7 @@ export default {
 						return this.$route.fullPath.startsWith('/marketplace');
 					},
 					icon: FCIcons.AppsIcon,
-					condition: () => this.$account.team?.is_developer
+					condition: () => this.$account.team?.is_developer,
 				},
 				{
 					label: 'Security',
@@ -225,7 +225,7 @@ export default {
 						return this.$route.fullPath.startsWith('/security');
 					},
 					icon: FCIcons.SecurityIcon,
-					condition: () => this.$account.team?.security_portal_enabled
+					condition: () => this.$account.team?.security_portal_enabled,
 				},
 				{
 					label: 'Billing',
@@ -236,7 +236,7 @@ export default {
 					icon: FCIcons.BillingIcon,
 					condition: () =>
 						$account.user?.name === $account.team?.user ||
-						$account.user?.user_type === 'System User'
+						$account.user?.user_type === 'System User',
 				},
 				{
 					label: 'Settings',
@@ -244,10 +244,10 @@ export default {
 					highlight: () => {
 						return this.$route.fullPath.startsWith('/settings');
 					},
-					icon: FCIcons.SettingsIcon
-				}
-			].filter(d => (d.condition ? d.condition() : true));
-		}
-	}
+					icon: FCIcons.SettingsIcon,
+				},
+			].filter((d) => (d.condition ? d.condition() : true));
+		},
+	},
 };
 </script>

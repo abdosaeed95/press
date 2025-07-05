@@ -13,6 +13,6 @@ import AlertBanner from './AlertBanner.vue';
 
 export default {
 	name: 'AlertCardExpired',
-	components: { AlertBanner }
+	components: { AlertBanner },
 };
 </script>

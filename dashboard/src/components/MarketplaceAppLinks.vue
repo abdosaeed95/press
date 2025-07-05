@@ -11,9 +11,9 @@
 						variant: 'solid',
 						label: 'Save Changes',
 						loading: $resources.updateAppLinks.loading,
-						onClick: () => $resources.updateAppLinks.submit()
-					}
-				]
+						onClick: () => $resources.updateAppLinks.submit(),
+					},
+				],
 			}"
 			v-model="showEditLinksDialog"
 		>
@@ -63,11 +63,11 @@ import { notify } from '@/utils/toast';
 export default {
 	name: 'MarketplaceAppLinks',
 	props: {
-		app: Object
+		app: Object,
 	},
 	data() {
 		return {
-			showEditLinksDialog: false
+			showEditLinksDialog: false,
 		};
 	},
 	resources: {
@@ -81,19 +81,19 @@ export default {
 						support: this.app.support,
 						documentation: this.app.documentation,
 						privacy_policy: this.app.privacy_policy,
-						terms_of_service: this.app.terms_of_service
-					}
+						terms_of_service: this.app.terms_of_service,
+					},
 				},
 				onSuccess() {
 					this.showEditLinksDialog = false;
 					notify({
 						title: 'Links Updated!',
 						icon: 'check',
-						color: 'green'
+						color: 'green',
 					});
-				}
+				},
 			};
-		}
-	}
+		},
+	},
 };
 </script>

@@ -40,21 +40,21 @@ export default {
 	emits: ['update:title', 'error', 'update:selectedRegion'],
 	data() {
 		return {
-			errorMessage: null
+			errorMessage: null,
 		};
 	},
 	components: {
-		RichSelect
+		RichSelect,
 	},
 	computed: {
 		regionOptions() {
-			return this.options.regions.map(d => ({
+			return this.options.regions.map((d) => ({
 				label: d.title,
 				value: d.name,
 				image: d.image,
-				beta: d.beta
+				beta: d.beta,
 			}));
-		}
+		},
 	},
 	async mounted() {
 		if (this.regionOptions.length == 1) {
@@ -74,7 +74,7 @@ export default {
 				return 'Server name cannot be left blank';
 			}
 			return null;
-		}
-	}
+		},
+	},
 };
 </script>

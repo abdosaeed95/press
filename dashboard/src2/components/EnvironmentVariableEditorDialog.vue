@@ -11,9 +11,9 @@
 						: 'Add Environment Variable',
 					variant: 'solid',
 					loading: docResource?.updateEnvironmentVariable?.loading,
-					onClick: updateEnvironmentVariable
-				}
-			]
+					onClick: updateEnvironmentVariable,
+				},
+			],
 		}"
 		v-model="showDialog"
 	>
@@ -38,7 +38,7 @@ import {
 	Autocomplete,
 	ErrorMessage,
 	FormControl,
-	getCachedDocumentResource
+	getCachedDocumentResource,
 } from 'frappe-ui';
 
 export default {
@@ -47,7 +47,7 @@ export default {
 	components: {
 		Autocomplete,
 		FormControl,
-		ErrorMessage
+		ErrorMessage,
 	},
 	data() {
 		return {
@@ -55,7 +55,7 @@ export default {
 			showDialog: true,
 			key: null,
 			value: null,
-			error: null
+			error: null,
 		};
 	},
 	async mounted() {
@@ -69,7 +69,7 @@ export default {
 			if (this.group) {
 				this.docResource = getCachedDocumentResource(
 					'Release Group',
-					this.group
+					this.group,
 				);
 			}
 			if (!this.docResource) return;
@@ -82,11 +82,11 @@ export default {
 					onSuccess: () => {
 						this.$emit('success');
 						this.showDialog = false;
-					}
-				}
+					},
+				},
 			);
 			this.error = this.docResource.updateEnvironmentVariable.error;
-		}
-	}
+		},
+	},
 };
 </script>

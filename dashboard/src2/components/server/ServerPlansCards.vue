@@ -9,31 +9,31 @@ export default {
 	props: ['modelValue', 'plans'],
 	emits: ['update:modelValue'],
 	components: {
-		PlansCards
+		PlansCards,
 	},
 	computed: {
 		plansOption() {
-			return this.plans.map(plan => {
+			return this.plans.map((plan) => {
 				return {
 					...plan,
 					features: [
 						{
 							label: 'vCPUs',
-							value: plan.vcpu
+							value: plan.vcpu,
 						},
 						{
 							label: 'Memory',
-							value: this.$format.bytes(plan.memory, 0, 2)
+							value: this.$format.bytes(plan.memory, 0, 2),
 						},
 						{
 							label: 'Disk',
-							value: `${plan.disk} GB`
+							value: `${plan.disk} GB`,
 						},
 						{
 							label: 'Instance Type',
-							value: plan.instance_type
-						}
-					]
+							value: plan.instance_type,
+						},
+					],
 				};
 			});
 		},
@@ -43,8 +43,8 @@ export default {
 			},
 			set(value) {
 				this.$emit('update:modelValue', value);
-			}
-		}
-	}
+			},
+		},
+	},
 };
 </script>

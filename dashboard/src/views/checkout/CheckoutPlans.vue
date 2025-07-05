@@ -27,7 +27,7 @@
 				:disabled="subscription.current_plan === plan.name"
 				:class="{
 					'hover:bg-gray-900 hover:text-white':
-						subscription.current_plan != plan.name
+						subscription.current_plan != plan.name,
 				}"
 				@click="selectPlan(plan)"
 				:loading="$resources.changeSitePlan.loading"
@@ -46,7 +46,7 @@ import FeatureList from '@/components/FeatureList.vue';
 export default {
 	name: 'Apps',
 	components: {
-		FeatureList
+		FeatureList,
 	},
 	emits: ['update:selectedPlan', 'update:step'],
 	props: [
@@ -55,14 +55,14 @@ export default {
 		'step',
 		'secretKey',
 		'subscription',
-		'team'
+		'team',
 	],
 	resources: {
 		changeSitePlan() {
 			return {
-				url: 'press.api.developer.marketplace.change_site_plan'
+				url: 'press.api.developer.marketplace.change_site_plan',
 			};
-		}
+		},
 	},
 	methods: {
 		selectPlan(plan) {
@@ -73,7 +73,7 @@ export default {
 				if (this.subscription.has_billing_info) {
 					this.$resources.changeSitePlan.submit({
 						secret_key: this.secretKey,
-						plan: plan.name
+						plan: plan.name,
 					});
 					this.$emit('update:step', 4);
 				} else {
@@ -89,7 +89,7 @@ export default {
 					this.$plural(plan.cpu_time_per_day, 'hour', 'hours') +
 					' CPU per day',
 				this.formatBytes(plan.max_database_usage, 0, 2) + ' Database',
-				this.formatBytes(plan.max_storage_usage, 0, 2) + ' Storge'
+				this.formatBytes(plan.max_storage_usage, 0, 2) + ' Storge',
 			];
 			if (plan.support_included) {
 				features.push('Product warranty + Support');
@@ -99,10 +99,10 @@ export default {
 		capturePosthogEvent() {
 			if (window.posthog) {
 				window.posthog.capture('fc_subscribe_plan_selected', {
-					distinct_id: this.team
+					distinct_id: this.team,
 				});
 			}
-		}
-	}
+		},
+	},
 };
 </script>

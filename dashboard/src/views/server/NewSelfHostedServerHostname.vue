@@ -24,7 +24,7 @@ export default {
 	emits: ['update:title', 'error'],
 	data() {
 		return {
-			errorMessage: null
+			errorMessage: null,
 		};
 	},
 	methods: {
@@ -40,7 +40,7 @@ export default {
 				return 'Server name cannot be left blank';
 			}
 			return null;
-		}
-	}
+		},
+	},
 };
 </script>

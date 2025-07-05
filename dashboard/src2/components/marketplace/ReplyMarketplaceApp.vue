@@ -35,25 +35,25 @@ import { DashboardError } from '../../utils/error';
 export default {
 	props: {
 		marketplaceApp: { type: String, required: true },
-		reviewId: { type: String, required: true }
+		reviewId: { type: String, required: true },
 	},
 	data() {
 		return {
 			reply: {
 				review: this.reviewId,
-				reply: ''
-			}
+				reply: '',
+			},
 		};
 	},
 	computed: {
 		$app() {
 			let appDoc = getDocResource({
 				doctype: 'Marketplace App',
-				name: this.marketplaceApp
+				name: this.marketplaceApp,
 			});
 
 			return appDoc?.doc;
-		}
+		},
 	},
 	resources: {
 		submitReply: {
@@ -65,14 +65,14 @@ export default {
 				const team = getTeam();
 				if (!team.doc.is_developer) {
 					throw new DashboardError(
-						'You must be a developer to reply to reviews'
+						'You must be a developer to reply to reviews',
 					);
 				}
 			},
 			onSuccess() {
 				window.location.href = `/marketplace/apps/${this.marketplaceApp}`;
-			}
-		}
-	}
+			},
+		},
+	},
 };
 </script>

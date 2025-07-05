@@ -27,8 +27,8 @@ export default {
 	components: { AlertBanner, StripeCardDialog },
 	data() {
 		return {
-			showAddCardDialog: false
+			showAddCardDialog: false,
 		};
-	}
+	},
 };
 </script>

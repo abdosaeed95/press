@@ -8,8 +8,8 @@
 					{ label: 'Sites', route: { name: 'Sites' } },
 					{
 						label: site?.host_name || site?.name,
-						route: { name: 'SiteOverview', params: { siteName: site?.name } }
-					}
+						route: { name: 'SiteOverview', params: { siteName: site?.name } },
+					},
 				]"
 			>
 				<template #actions>
@@ -106,9 +106,9 @@
 					{
 						label: 'Proceed',
 						variant: 'solid',
-						onClick: proceedWithLoginAsAdmin
-					}
-				]
+						onClick: proceedWithLoginAsAdmin,
+					},
+				],
 			}"
 			v-model="showReasonForAdminLoginDialog"
 		>
@@ -163,7 +163,7 @@ export default {
 	name: 'Site',
 	pageMeta() {
 		return {
-			title: `Site - ${this.siteName} - Frappe Cloud`
+			title: `Site - ${this.siteName} - Frappe Cloud`,
 		};
 	},
 	props: ['siteName'],
@@ -174,7 +174,7 @@ export default {
 		SiteChangeGroupDialog,
 		SiteChangeRegionDialog,
 		SiteChangeServerDialog,
-		SiteVersionUpgradeDialog
+		SiteVersionUpgradeDialog,
 	},
 	data() {
 		return {
@@ -186,7 +186,7 @@ export default {
 			showChangeRegionDialog: false,
 			showChangeServerDialog: false,
 			showVersionUpgradeDialog: false,
-			errorMessage: ''
+			errorMessage: '',
 		};
 	},
 	resources: {
@@ -194,7 +194,7 @@ export default {
 			return {
 				url: 'press.api.site.get',
 				params: {
-					name: this.siteName
+					name: this.siteName,
 				},
 				auto: true,
 				onSuccess() {
@@ -207,14 +207,14 @@ export default {
 						return;
 
 					this.$call('press.api.site.setup_wizard_complete', {
-						name: this.siteName
+						name: this.siteName,
 					})
-						.then(complete => {
+						.then((complete) => {
 							this.site.setup_wizard_complete = Boolean(complete);
 						})
 						.catch(() => (this.site.setup_wizard_complete = false));
 				},
-				onError: this.$routeTo404PageIfNotFound
+				onError: this.$routeTo404PageIfNotFound,
 			};
 		},
 		loginAsAdmin() {
@@ -224,11 +224,11 @@ export default {
 			return {
 				url: 'press.api.site.current_plan',
 				params: {
-					name: this.siteName
+					name: this.siteName,
 				},
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	activated() {
 		this.setupAgentJobUpdate();
@@ -250,7 +250,7 @@ export default {
 			if (this._agentJobUpdateSet) return;
 			this._agentJobUpdateSet = true;
 
-			this.$socket.on('agent_job_update', data => {
+			this.$socket.on('agent_job_update', (data) => {
 				if (data.name === 'New Site' || data.name === 'New Site from Backup') {
 					if (data.status === 'Success' && data.site === this.siteName) {
 						setTimeout(() => {
@@ -283,7 +283,7 @@ export default {
 
 			this.$resources.loginAsAdmin.submit({
 				name: this.siteName,
-				reason: this.reasonForAdminLogin
+				reason: this.reasonForAdminLogin,
 			});
 
 			this.showReasonForAdminLoginDialog = false;
@@ -297,21 +297,21 @@ export default {
 				title: 'Activate Site',
 				message: `Are you sure you want to activate this site?`,
 				actionLabel: 'Activate',
-				action: () => this.activate()
+				action: () => this.activate(),
 			});
 		},
 		activate() {
 			this.$call('press.api.site.activate', {
-				name: this.site.name
+				name: this.site.name,
 			});
 			notify({
 				title: 'Site activated successfully!',
 				message: 'You can now access your site',
 				icon: 'check',
-				color: 'green'
+				color: 'green',
 			});
 			setTimeout(() => window.location.reload(), 1000);
-		}
+		},
 	},
 	computed: {
 		site() {
@@ -333,9 +333,9 @@ export default {
 					onClick: () => {
 						window.open(
 							`${window.location.protocol}//${window.location.host}/app/site/${this.site?.name}`,
-							'_blank'
+							'_blank',
 						);
-					}
+					},
 				},
 				{
 					label: 'Manage Bench',
@@ -344,7 +344,7 @@ export default {
 					condition: () => this.site?.group,
 					onClick: () => {
 						this.$router.push(`/groups/${this.site?.group}`);
-					}
+					},
 				},
 				{
 					label: 'Login As Administrator',
@@ -354,12 +354,12 @@ export default {
 					onClick: () => {
 						if (this.$account.team.name == this.site?.notify_email) {
 							return this.$resources.loginAsAdmin.submit({
-								name: this.siteName
+								name: this.siteName,
 							});
 						}
 
 						this.showReasonForAdminLoginDialog = true;
-					}
+					},
 				},
 				{
 					label: 'Impersonate Team',
@@ -371,9 +371,9 @@ export default {
 							title: 'Switched Team',
 							message: `Switched to ${this.site?.team}`,
 							icon: 'check',
-							color: 'green'
+							color: 'green',
 						});
-					}
+					},
 				},
 				{
 					label: 'Transfer Site',
@@ -382,33 +382,33 @@ export default {
 						this.site?.status === 'Active' && !this.$account.parent_team,
 					onClick: () => {
 						this.showTransferSiteDialog = true;
-					}
+					},
 				},
 				{
 					label: 'Change Bench',
 					icon: 'package',
 					condition: () => this.site?.status === 'Active',
-					onClick: () => (this.showChangeGroupDialog = true)
+					onClick: () => (this.showChangeGroupDialog = true),
 				},
 				{
 					label: 'Change Region',
 					icon: 'globe',
 					condition: () => this.site?.status === 'Active',
-					onClick: () => (this.showChangeRegionDialog = true)
+					onClick: () => (this.showChangeRegionDialog = true),
 				},
 				{
 					label: 'Upgrade Version',
 					icon: 'arrow-up',
 					condition: () => this.site?.status === 'Active',
-					onClick: () => (this.showVersionUpgradeDialog = true)
+					onClick: () => (this.showVersionUpgradeDialog = true),
 				},
 				{
 					label: 'Change Server',
 					icon: 'server',
 					condition: () =>
 						this.site?.status === 'Active' && !this.site?.is_public,
-					onClick: () => (this.showChangeServerDialog = true)
-				}
+					onClick: () => (this.showChangeServerDialog = true),
+				},
 			];
 		},
 
@@ -419,7 +419,7 @@ export default {
 		tabs() {
 			let siteConfig = '';
 			let siteMonitorTab = '';
-			let tabRoute = subRoute => `/sites/${this.siteName}/${subRoute}`;
+			let tabRoute = (subRoute) => `/sites/${this.siteName}/${subRoute}`;
 			let tabs = [
 				{ label: 'Overview', route: 'overview' },
 				{ label: 'Apps', route: 'apps' },
@@ -429,7 +429,7 @@ export default {
 				{ label: 'Config', route: 'site-config' },
 				{ label: 'Jobs', route: 'jobs', showRedDot: this.runningJob },
 				{ label: 'Logs', route: 'logs' },
-				{ label: 'Settings', route: 'settings' }
+				{ label: 'Settings', route: 'settings' },
 			];
 
 			if (this.site && this.site?.hide_config !== 1) {
@@ -451,7 +451,7 @@ export default {
 					'Logs',
 					'Request Logs',
 					'Settings',
-					siteMonitorTab
+					siteMonitorTab,
 				],
 				Inactive: [
 					'Overview',
@@ -460,7 +460,7 @@ export default {
 					siteConfig,
 					'Jobs',
 					'Logs',
-					'Settings'
+					'Settings',
 				],
 				Installing: ['Jobs'],
 				Pending: ['Jobs'],
@@ -472,7 +472,7 @@ export default {
 					'Jobs',
 					'Logs',
 					'Settings',
-					siteMonitorTab
+					siteMonitorTab,
 				],
 				Suspended: [
 					'Overview',
@@ -481,23 +481,23 @@ export default {
 					'Jobs',
 					'Plan',
 					'Logs',
-					'Settings'
-				]
+					'Settings',
+				],
 			};
 			if (this.site) {
 				let tabsToShow = tabsByStatus[this.site?.status];
 				if (tabsToShow?.length) {
-					tabs = tabs.filter(tab => tabsToShow.includes(tab.label));
+					tabs = tabs.filter((tab) => tabsToShow.includes(tab.label));
 				}
-				return tabs.map(tab => {
+				return tabs.map((tab) => {
 					return {
 						...tab,
-						route: tabRoute(tab.route)
+						route: tabRoute(tab.route),
 					};
 				});
 			}
 			return [];
-		}
-	}
+		},
+	},
 };
 </script>

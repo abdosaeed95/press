@@ -65,13 +65,13 @@
 							$resources.paymentMethods.reload();
 							this.showRemoveCardDialog = false;
 						});
-					}
+					},
 				},
 				{
 					label: 'Cancel',
-					onClick: () => (this.showRemoveCardDialog = false)
-				}
-			]
+					onClick: () => (this.showRemoveCardDialog = false),
+				},
+			],
 		}"
 		v-model="showRemoveCardDialog"
 	>
@@ -104,33 +104,33 @@ export default {
 			showAddCardDialog: false,
 			showRemoveCardDialog: false,
 			showFinalizeDialog: false,
-			cardToRemove: null
+			cardToRemove: null,
 		};
 	},
 	resources: {
 		paymentMethods: {
 			url: 'press.api.billing.get_payment_methods',
-			auto: true
+			auto: true,
 		},
 		setAsDefault: {
-			url: 'press.api.billing.set_as_default'
+			url: 'press.api.billing.set_as_default',
 		},
 		remove() {
 			return {
 				url: 'press.api.billing.remove_payment_method',
-				onSuccess: data => {
+				onSuccess: (data) => {
 					if (data === 'Unpaid Invoices') {
 						this.showFinalizeDialog = true;
 					}
-				}
+				},
 			};
-		}
+		},
 	},
 	components: {
-		StripeCard: defineAsyncComponent(() =>
-			import('@/components/StripeCard.vue')
+		StripeCard: defineAsyncComponent(
+			() => import('@/components/StripeCard.vue'),
 		),
-		FinalizeInvoicesDialog
+		FinalizeInvoicesDialog,
 	},
 	computed: {
 		subtitle() {
@@ -144,41 +144,41 @@ export default {
 		},
 		cardBrand() {
 			return {
-				mastercard: defineAsyncComponent(() =>
-					import('@/components/icons/cards/MasterCard.vue')
+				mastercard: defineAsyncComponent(
+					() => import('@/components/icons/cards/MasterCard.vue'),
 				),
-				visa: defineAsyncComponent(() =>
-					import('@/components/icons/cards/Visa.vue')
+				visa: defineAsyncComponent(
+					() => import('@/components/icons/cards/Visa.vue'),
 				),
-				amex: defineAsyncComponent(() =>
-					import('@/components/icons/cards/Amex.vue')
+				amex: defineAsyncComponent(
+					() => import('@/components/icons/cards/Amex.vue'),
 				),
-				jcb: defineAsyncComponent(() =>
-					import('@/components/icons/cards/JCB.vue')
+				jcb: defineAsyncComponent(
+					() => import('@/components/icons/cards/JCB.vue'),
 				),
-				generic: defineAsyncComponent(() =>
-					import('@/components/icons/cards/Generic.vue')
+				generic: defineAsyncComponent(
+					() => import('@/components/icons/cards/Generic.vue'),
 				),
-				'union-pay': defineAsyncComponent(() =>
-					import('@/components/icons/cards/UnionPay.vue')
-				)
+				'union-pay': defineAsyncComponent(
+					() => import('@/components/icons/cards/UnionPay.vue'),
+				),
 			};
-		}
+		},
 	},
 	methods: {
 		dropdownItems(card) {
 			return [
 				!card.is_default && {
 					label: 'Set as default',
-					onClick: () => this.confirmSetAsDefault(card)
+					onClick: () => this.confirmSetAsDefault(card),
 				},
 				{
 					label: 'Remove',
 					onClick: () => {
 						this.cardToRemove = card;
 						this.showRemoveCardDialog = true;
-					}
-				}
+					},
+				},
 			];
 		},
 		confirmSetAsDefault(card) {
@@ -187,14 +187,14 @@ export default {
 				message: 'Set this card as the default payment method?',
 				actionLabel: 'Set as default',
 				resource: this.$resources.setAsDefault,
-				action: closeDialog => {
+				action: (closeDialog) => {
 					this.$resources.setAsDefault.submit({ name: card.name }).then(() => {
 						this.$resources.paymentMethods.reload();
 						closeDialog();
 					});
-				}
+				},
 			});
-		}
-	}
+		},
+	},
 };
 </script>

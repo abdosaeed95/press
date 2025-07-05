@@ -30,35 +30,35 @@ export default {
 	props: {
 		title: {
 			type: String,
-			required: true
+			required: true,
 		},
 		site: {
 			type: String,
-			required: true
+			required: true,
 		},
 		reportOptions: {
 			type: Object,
-			required: true
-		}
+			required: true,
+		},
 	},
 	components: {
-		ObjectList
+		ObjectList,
 	},
 	computed: {
 		$site() {
 			return getCachedDocumentResource('Site', this.site);
-		}
+		},
 	},
 	methods: {
 		showPlanChangeDialog() {
-			const SitePlansDialog = defineAsyncComponent(() =>
-				import('../../ManageSitePlansDialog.vue')
+			const SitePlansDialog = defineAsyncComponent(
+				() => import('../../ManageSitePlansDialog.vue'),
 			);
 			renderDialog(h(SitePlansDialog, { site: this.site }));
 		},
 		goBack() {
 			this.$router.go(-1);
-		}
-	}
+		},
+	},
 };
 </script>

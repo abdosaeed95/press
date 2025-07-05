@@ -9,7 +9,7 @@
 		<FormControl
 			class="my-2"
 			placeholder="Search for Bench"
-			v-on:input="e => updateSearchTerm(e.target.value)"
+			v-on:input="(e) => updateSearchTerm(e.target.value)"
 		/>
 		<div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
 			<div
@@ -19,7 +19,7 @@
 				:class="[
 					modelValue && modelValue.name == group.name
 						? 'relative ring-2 ring-inset ring-blue-500'
-						: ''
+						: '',
 				]"
 			>
 				{{ group.title }}
@@ -37,7 +37,7 @@ export default {
 	emits: ['update:modelValue', 'error'],
 	data() {
 		return {
-			filteredOptions: []
+			filteredOptions: [],
 		};
 	},
 	resources: {
@@ -47,17 +47,17 @@ export default {
 				auto: true,
 				onSuccess(data) {
 					this.fuse = new Fuse(data, {
-						keys: ['title']
+						keys: ['title'],
 					});
 					this.filteredOptions = data;
-				}
+				},
 			};
-		}
+		},
 	},
 	computed: {
 		groups() {
 			return this.$resources.options.data;
-		}
+		},
 	},
 	methods: {
 		selectGroup(group) {
@@ -67,11 +67,11 @@ export default {
 			if (value) {
 				this.filteredOptions = this.fuse
 					.search(value)
-					.map(result => result.item);
+					.map((result) => result.item);
 			} else {
 				this.filteredOptions = this.$resources.options.data;
 			}
-		}
-	}
+		},
+	},
 };
 </script>

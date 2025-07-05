@@ -52,11 +52,11 @@ export default {
 				url: 'press.api.site.log',
 				params: {
 					name: this.siteName,
-					log: this.logName
+					log: this.logName,
 				},
-				auto: Boolean(this.logName)
+				auto: Boolean(this.logName),
 			};
-		}
+		},
 	},
 	computed: {
 		log() {
@@ -65,7 +65,7 @@ export default {
 		logLines() {
 			if (this.log && this.logName) return this.log.split('\n');
 			return [];
-		}
-	}
+		},
+	},
 };
 </script>

@@ -9,7 +9,7 @@ export default {
 	name: 'BillingBalances',
 	props: ['tab'],
 	components: {
-		ObjectList
+		ObjectList,
 	},
 	computed: {
 		options() {
@@ -24,9 +24,9 @@ export default {
 							return Intl.DateTimeFormat('en-US', {
 								year: 'numeric',
 								month: 'long',
-								day: 'numeric'
+								day: 'numeric',
 							}).format(new Date(value));
-						}
+						},
 					},
 					{
 						label: 'Description',
@@ -36,28 +36,28 @@ export default {
 							}
 
 							return row.amount < 0 ? row.type : row.source;
-						}
+						},
 					},
 					{
 						label: 'Amount',
 						fieldname: 'amount',
 						align: 'right',
-						format: this.formatCurrency
+						format: this.formatCurrency,
 					},
 					{
 						label: 'Balance',
 						fieldname: 'ending_balance',
 						align: 'right',
-						format: this.formatCurrency
-					}
+						format: this.formatCurrency,
+					},
 				],
 				filters: {
 					docstatus: 1,
-					team: this.$team.name
+					team: this.$team.name,
 				},
-				orderBy: 'creation desc'
+				orderBy: 'creation desc',
 			};
-		}
+		},
 	},
 	methods: {
 		formatCurrency(value) {
@@ -65,7 +65,7 @@ export default {
 				return '';
 			}
 			return this.$format.userCurrency(value);
-		}
-	}
+		},
+	},
 };
 </script>

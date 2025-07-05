@@ -19,12 +19,12 @@ export default {
 	name: 'AccountSettings',
 	pageMeta() {
 		return {
-			title: 'Settings - Team'
+			title: 'Settings - Team',
 		};
 	},
 	components: {
 		AccountMembers,
-		AccountGroups
-	}
+		AccountGroups,
+	},
 };
 </script>

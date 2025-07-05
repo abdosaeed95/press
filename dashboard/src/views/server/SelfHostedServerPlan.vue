@@ -11,7 +11,7 @@
 			<ServerPlansTable
 				:plans="planOptions"
 				:selectedPlan="selectedPlan"
-				@update:selectedPlan="plan => $emit('update:selectedPlan', plan)"
+				@update:selectedPlan="(plan) => $emit('update:selectedPlan', plan)"
 			/>
 		</div>
 	</div>
@@ -26,12 +26,12 @@ export default {
 	props: ['options', 'selectedPlan'],
 	components: {
 		ServerPlansTable,
-		AlertBillingInformation
+		AlertBillingInformation,
 	},
 	computed: {
 		planOptions() {
 			return this.options;
-		}
-	}
+		},
+	},
 };
 </script>

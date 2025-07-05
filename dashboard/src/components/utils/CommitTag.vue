@@ -7,6 +7,6 @@
 <script>
 export default {
 	name: 'CommitTag',
-	props: ['tag', 'link']
+	props: ['tag', 'link'],
 };
 </script>

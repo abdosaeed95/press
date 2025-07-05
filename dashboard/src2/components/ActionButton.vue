@@ -19,7 +19,7 @@ export default {
 	name: 'ActionButton',
 	components: {
 		Button,
-		Dropdown
+		Dropdown,
 	},
 	computed: {
 		buttonProps() {
@@ -37,14 +37,14 @@ export default {
 					label: 'Options',
 					variant: 'ghost',
 					slots: {
-						icon: icon('more-horizontal')
-					}
+						icon: icon('more-horizontal'),
+					},
 				},
 				...this.$attrs,
 				label: this.$attrs.label,
-				options: this.$attrs.options
+				options: this.$attrs.options,
 			};
-		}
-	}
+		},
+	},
 };
 </script>

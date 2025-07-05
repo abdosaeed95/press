@@ -54,7 +54,7 @@ export default class Account {
 	}
 
 	hasRole(role) {
-		let roles = this.user.roles.map(d => d.role);
+		let roles = this.user.roles.map((d) => d.role);
 		return roles.includes(role);
 	}
 

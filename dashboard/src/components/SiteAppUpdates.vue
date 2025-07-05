@@ -21,12 +21,12 @@ export default {
 	name: 'SiteAppUpdates',
 	props: ['apps'],
 	components: {
-		SiteAppUpdateCard
+		SiteAppUpdateCard,
 	},
 	computed: {
 		appsWithUpdates() {
-			return this.apps.filter(app => app.update_available);
-		}
-	}
+			return this.apps.filter((app) => app.update_available);
+		},
+	},
 };
 </script>

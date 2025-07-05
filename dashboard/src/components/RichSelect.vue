@@ -46,17 +46,17 @@ export default {
 	computed: {
 		selectedOption() {
 			if (!this.value) return null;
-			return this.options.find(d => d.value === this.value);
+			return this.options.find((d) => d.value === this.value);
 		},
 		dropdownOptions() {
-			return this.options.map(d => {
+			return this.options.map((d) => {
 				return {
 					...d,
 					action: () => this.$emit('change', d.value),
-					component: this.getDropdownItemComponent(d)
+					component: this.getDropdownItemComponent(d),
 				};
 			});
-		}
+		},
 	},
 	methods: {
 		getDropdownItemComponent(option) {
@@ -65,24 +65,24 @@ export default {
 					return h(
 						'div',
 						{
-							class: 'flex items-center'
+							class: 'flex items-center',
 						},
 						[
 							option.image
 								? h('img', {
 										class: ['h-4 mr-2', this.$attrs.class],
-										src: option.image
-								  })
+										src: option.image,
+									})
 								: null,
 							h('span', option.label),
 							option.beta
 								? h(Badge, { theme: 'subtle', class: 'ml-auto', label: 'Beta' })
-								: null
-						]
+								: null,
+						],
 					);
-				}
+				},
 			};
-		}
-	}
+		},
+	},
 };
 </script>

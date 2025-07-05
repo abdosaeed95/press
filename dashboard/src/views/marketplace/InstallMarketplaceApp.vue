@@ -74,7 +74,7 @@
 			v-model="showPlanSelectionDialog"
 			:options="{
 				title: 'Select app plan',
-				size: 'xl'
+				size: 'xl',
 			}"
 		>
 			<template v-slot:body-content>
@@ -82,7 +82,7 @@
 					v-if="marketplaceApp"
 					:app="marketplaceApp"
 					class="mb-9"
-					@change="plan => (selectedPlan = plan.name)"
+					@change="(plan) => (selectedPlan = plan.name)"
 				/>
 				<ErrorMessage :message="$resources.installAppOnSite.error" />
 			</template>
@@ -110,20 +110,20 @@ export default {
 			showPlanSelectionDialog: false,
 			selectedSite: null,
 			selectedBench: null,
-			selectedPlan: null
+			selectedPlan: null,
 		};
 	},
 	components: {
-		ChangeAppPlanSelector
+		ChangeAppPlanSelector,
 	},
 	resources: {
 		optionsForQuickInstall() {
 			return {
 				url: 'press.api.marketplace.options_for_quick_install',
 				params: {
-					marketplace_app: this.marketplaceApp
+					marketplace_app: this.marketplaceApp,
 				},
-				auto: true
+				auto: true,
 			};
 		},
 		addAppToBench() {
@@ -133,11 +133,11 @@ export default {
 					notify({
 						title: 'App added successfully!',
 						icon: 'check',
-						color: 'green'
+						color: 'green',
 					});
 
 					this.$router.push(`/groups/${this.selectedBench}/apps`);
-				}
+				},
 			};
 		},
 		installAppOnSite() {
@@ -152,16 +152,16 @@ export default {
 					notify({
 						title: 'App installed successfully!',
 						icon: 'check',
-						color: 'green'
+						color: 'green',
 					});
 
 					this.selectedPlan = null;
 					this.selectedSite = null;
 					this.showPlanSelectionDialog = false;
 					this.$resources.optionsForQuickInstall.fetch();
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		addAppToBench(group) {
@@ -170,7 +170,7 @@ export default {
 			this.$resources.addAppToBench.submit({
 				name: group.name,
 				source: group.source,
-				app: this.options.app_name
+				app: this.options.app_name,
 			});
 		},
 
@@ -186,9 +186,9 @@ export default {
 			this.$resources.installAppOnSite.submit({
 				name: site,
 				app: this.options.app_name,
-				plan: this.selectedPlan
+				plan: this.selectedPlan,
 			});
-		}
+		},
 	},
 	computed: {
 		options() {
@@ -200,7 +200,7 @@ export default {
 			}
 
 			return null;
-		}
-	}
+		},
+	},
 };
 </script>

@@ -5,11 +5,11 @@ import { createResource } from 'frappe-ui';
 import AlertSiteUpdate from '@/components/AlertSiteUpdate.vue';
 import AlertSiteActivation from '@/components/AlertSiteActivation.vue';
 
-const SitePlansDialog = defineAsyncComponent(() =>
-	import('./SitePlansDialog.vue')
+const SitePlansDialog = defineAsyncComponent(
+	() => import('./SitePlansDialog.vue'),
 );
-const BillingInformationDialog = defineAsyncComponent(() =>
-	import('@/components/BillingInformationDialog.vue')
+const BillingInformationDialog = defineAsyncComponent(
+	() => import('@/components/BillingInformationDialog.vue'),
 );
 
 const props = defineProps({ site: Object, plan: Object });
@@ -21,13 +21,15 @@ const showChangePlanDialog = ref(false);
 const closeToLimits = computed(() => {
 	if (!(props.site && props.plan)) return false;
 	let usage = props.plan.usage_in_percent;
-	return [usage.cpu, usage.database, usage.disk].some(x => 100 >= x && x > 80);
+	return [usage.cpu, usage.database, usage.disk].some(
+		(x) => 100 >= x && x > 80,
+	);
 });
 
 const limitExceeded = computed(() => {
 	if (!(props.site && props.plan)) return false;
 	let usage = props.plan.usage_in_percent;
-	return [usage.cpu, usage.database, usage.disk].some(x => x > 100);
+	return [usage.cpu, usage.database, usage.disk].some((x) => x > 100);
 });
 
 const isInTrial = computed(() => {
@@ -51,7 +53,7 @@ const siteMigrationText = computed(() => {
 	} else if (status === 'Scheduled') {
 		return `Your Site Migration is scheduled to happen ${utils.methods.formatDate(
 			props.site?.site_migration.scheduled_time,
-			'relative'
+			'relative',
 		)}.`;
 	}
 });
@@ -66,14 +68,14 @@ const siteVersionUpgradeText = computed(() => {
 	} else if (status === 'Scheduled') {
 		return `Your Site Version Upgrade is scheduled to happen ${utils.methods.formatDate(
 			props.site?.version_upgrade.scheduled_time,
-			'relative'
+			'relative',
 		)}.`;
 	}
 });
 
 const marketplacePromotionalBanners = createResource({
 	url: 'press.api.marketplace.get_promotional_banners',
-	auto: true
+	auto: true,
 });
 </script>
 
@@ -160,7 +162,7 @@ const marketplacePromotionalBanners = createResource({
 					variant="solid"
 					:route="{
 						name: 'SiteJobs',
-						params: { jobName: site.site_migration.job_id }
+						params: { jobName: site.site_migration.job_id },
 					}"
 				>
 					View Job
@@ -180,7 +182,7 @@ const marketplacePromotionalBanners = createResource({
 					variant="solid"
 					:route="{
 						name: 'SiteJobs',
-						params: { jobName: site.version_upgrade.job_id }
+						params: { jobName: site.version_upgrade.job_id },
 					}"
 				>
 					View Job
@@ -190,16 +192,16 @@ const marketplacePromotionalBanners = createResource({
 
 		<Dialog
 			v-model="showPromotionalDialog"
-			@close="e => (clickedPromotion = null)"
+			@close="(e) => (clickedPromotion = null)"
 			:options="{
 				title: 'Frappe Cloud Marketplace',
 				actions: [
 					{
 						variant: 'solid',
 						route: `/install-app/${clickedPromotion?.app}`,
-						label: 'Install App'
-					}
-				]
+						label: 'Install App',
+					},
+				],
 			}"
 		>
 			<template #body-content>

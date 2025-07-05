@@ -23,10 +23,12 @@
 					</p>
 					<SiteRestoreSelector
 						:sites="
-							$resources.sites.data.filter(site => site.name !== this.site.name)
+							$resources.sites.data.filter(
+								(site) => site.name !== this.site.name,
+							)
 						"
 						:selectedSite="selectedSite"
-						@update:selectedSite="value => (selectedSite = value)"
+						@update:selectedSite="(value) => (selectedSite = value)"
 					/>
 					<div v-if="selectedSite" class="mt-4">
 						<p class="text-base">
@@ -110,7 +112,7 @@ export default {
 	name: 'SiteDatabaseBackups',
 	props: ['site'],
 	components: {
-		SiteRestoreSelector
+		SiteRestoreSelector,
 	},
 	data() {
 		return {
@@ -118,7 +120,7 @@ export default {
 			backupToRestore: null,
 			showRestoreOnAnotherSiteDialog: false,
 			restoreOnAnotherSiteErrorMessage: null,
-			selectedSite: null
+			selectedSite: null,
 		};
 	},
 	resources: {
@@ -126,17 +128,17 @@ export default {
 			return {
 				url: 'press.api.site.all',
 				initialData: [],
-				auto: true
+				auto: true,
 			};
 		},
 		backups() {
 			return {
 				url: 'press.api.site.backups',
 				params: {
-					name: this.site?.name
+					name: this.site?.name,
 				},
 				initialData: [],
-				auto: true
+				auto: true,
 			};
 		},
 		scheduleBackup() {
@@ -144,26 +146,26 @@ export default {
 				url: 'press.api.site.backup',
 				params: {
 					name: this.site?.name,
-					with_files: true
+					with_files: true,
 				},
 				onSuccess: () => {
 					this.$resources.backups.reload();
 				},
-				onError: err => {
+				onError: (err) => {
 					notify({
 						title: "Couldn't create backup",
 						message: err.messages.join('\n'),
 						color: 'red',
 						icon: err.messages[0].includes('suspension')
 							? 'info'
-							: 'alert-triangle'
+							: 'alert-triangle',
 					});
-				}
+				},
 			};
-		}
+		},
 	},
 	mounted() {
-		this.$socket.on('agent_job_update', data => {
+		this.$socket.on('agent_job_update', (data) => {
 			if (data.site === this.site.name && data.name === 'Backup Site') {
 				if (data.status === 'Success') {
 					this.$resources.backups.reload();
@@ -179,10 +181,10 @@ export default {
 			return {
 				backups: this.$account.hasPermission(
 					this.site.name,
-					'press.api.site.get_backup_link'
-				)
+					'press.api.site.get_backup_link',
+				),
 			};
-		}
+		},
 	},
 	methods: {
 		dropdownItems(backup) {
@@ -192,20 +194,20 @@ export default {
 					items: [
 						{
 							label: `Database (${this.formatBytes(
-								backup.database_size || 0
+								backup.database_size || 0,
 							)})`,
 							onClick: () => {
 								this.downloadBackup(
 									backup.name,
 									'database',
 									backup.database_url,
-									backup.offsite
+									backup.offsite,
 								);
-							}
+							},
 						},
 						{
 							label: `Public Files (${this.formatBytes(
-								backup.public_size || 0
+								backup.public_size || 0,
 							)})`,
 							condition: () => backup.public_file,
 							onClick: () => {
@@ -213,13 +215,13 @@ export default {
 									backup.name,
 									'public',
 									backup.public_url,
-									backup.offsite
+									backup.offsite,
 								);
-							}
+							},
 						},
 						{
 							label: `Private Files (${this.formatBytes(
-								backup.private_size || 0
+								backup.private_size || 0,
 							)})`,
 							condition: () => backup.private_file,
 							onClick: () => {
@@ -227,13 +229,13 @@ export default {
 									backup.name,
 									'private',
 									backup.private_url,
-									backup.offsite
+									backup.offsite,
 								);
-							}
+							},
 						},
 						{
 							label: `Site Config (${this.formatBytes(
-								backup.config_file_size || 0
+								backup.config_file_size || 0,
 							)})`,
 							condition: () => backup.config_file_size,
 							onClick: () => {
@@ -241,11 +243,11 @@ export default {
 									backup.name,
 									'config',
 									backup.config_file_url,
-									backup.offsite
+									backup.offsite,
 								);
-							}
-						}
-					]
+							},
+						},
+					],
 				},
 				{
 					group: 'Restore',
@@ -259,31 +261,31 @@ export default {
 									// prettier-ignore
 									message: `Are you sure you want to restore your site to <b>${this.formatDate(backup.creation)}</b>?`,
 									actionLabel: 'Restore',
-									action: closeDialog => {
+									action: (closeDialog) => {
 										closeDialog();
 										this.restoreOffsiteBackup(backup);
-									}
+									},
 								});
-							}
+							},
 						},
 						{
 							label: 'Restore Backup on Another Site',
 							onClick: () => {
 								this.showRestoreOnAnotherSiteDialog = true;
 								this.backupToRestore = backup;
-							}
-						}
-					]
-				}
-			].filter(d => (d.condition ? d.condition() : true));
+							},
+						},
+					],
+				},
+			].filter((d) => (d.condition ? d.condition() : true));
 		},
 		async downloadBackup(name, file, database_url, offsite) {
 			let link = offsite
 				? await this.$call('press.api.site.get_backup_link', {
 						name: this.site.name,
 						backup: name,
-						file: file
-				  })
+						file: file,
+					})
 				: database_url;
 			window.open(link);
 		},
@@ -294,8 +296,8 @@ export default {
 				files: {
 					database: backup.remote_database_file,
 					public: backup.remote_public_file,
-					private: backup.remote_private_file
-				}
+					private: backup.remote_private_file,
+				},
 			}).then(() => {
 				this.isRestorePending = false;
 				this.$router.push(`/sites/${this.site.name}/jobs`);
@@ -311,8 +313,8 @@ export default {
 				files: {
 					database: backup.remote_database_file,
 					public: backup.remote_public_file,
-					private: backup.remote_private_file
-				}
+					private: backup.remote_private_file,
+				},
 			})
 				.then(() => {
 					this.isRestorePending = false;
@@ -322,10 +324,10 @@ export default {
 						window.location.reload();
 					}, 1000);
 				})
-				.catch(error => {
+				.catch((error) => {
 					this.restoreOnAnotherSiteErrorMessage = error;
 				});
-		}
-	}
+		},
+	},
 };
 </script>

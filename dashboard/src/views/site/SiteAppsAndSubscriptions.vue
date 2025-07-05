@@ -100,7 +100,7 @@
 			:options="{
 				title: 'Install an app on your site',
 				position: 'top',
-				size: 'lg'
+				size: 'lg',
 			}"
 			v-model="showInstallAppsDialog"
 		>
@@ -108,7 +108,7 @@
 				<FormControl
 					class="mb-2"
 					placeholder="Search for Apps"
-					v-on:input="e => updateSearchTerm(e.target.value)"
+					v-on:input="(e) => updateSearchTerm(e.target.value)"
 				/>
 				<div
 					v-if="availableApps.data && availableApps.data.length"
@@ -163,9 +163,9 @@
 					{
 						label: 'Proceed',
 						variant: 'solid',
-						onClick: $resources.installApp.submit
-					}
-				]
+						onClick: $resources.installApp.submit,
+					},
+				],
 			}"
 		>
 			<template v-slot:body-content>
@@ -175,7 +175,7 @@
 					:frappeVersion="site?.frappe_version"
 					class="mb-9"
 					@change="
-						plan => {
+						(plan) => {
 							selectedPlan = plan.name;
 							selectedPlanIsFree = plan.price_usd === 0;
 						}
@@ -196,16 +196,16 @@
 						label: 'Change Plan',
 						variant: 'solid',
 						onClick: switchToNewPlan,
-						loading: $resources.changePlan.loading
-					}
-				]
+						loading: $resources.changePlan.loading,
+					},
+				],
 			}"
 			v-model="showAppPlanChangeDialog"
 		>
 			<template v-slot:body-content>
 				<ChangeAppPlanSelector
 					@change="
-						plan => {
+						(plan) => {
 							newAppPlan = plan.name;
 							newAppPlanIsFree = plan.is_free;
 						}
@@ -239,21 +239,21 @@ export default {
 			selectedPlan: null,
 			selectedPlanIsFree: null,
 			searchTerm: '',
-			filteredOptions: []
+			filteredOptions: [],
 		};
 	},
 	components: {
 		ChangeAppPlanSelector,
-		CommitTag
+		CommitTag,
 	},
 	resources: {
 		marketplaceSubscriptions() {
 			return {
 				url: 'press.api.marketplace.get_marketplace_subscriptions_for_site',
 				params: {
-					site: this.siteName
+					site: this.siteName,
 				},
-				auto: true
+				auto: true,
 			};
 		},
 
@@ -269,9 +269,9 @@ export default {
 					notify({
 						title: e,
 						color: 'red',
-						icon: 'x'
+						icon: 'x',
 					});
-				}
+				},
 			};
 		},
 
@@ -279,14 +279,14 @@ export default {
 			return {
 				url: 'press.api.site.installed_apps',
 				params: { name: this.siteName },
-				auto: true
+				auto: true,
 			};
 		},
 
 		availableApps() {
 			return {
 				url: 'press.api.site.available_apps',
-				params: { name: this.siteName }
+				params: { name: this.siteName },
 			};
 		},
 
@@ -297,7 +297,7 @@ export default {
 					return {
 						name: this.siteName,
 						app: this.appToInstall?.app,
-						plan: this.selectedPlan
+						plan: this.selectedPlan,
 					};
 				},
 				validate() {
@@ -309,7 +309,7 @@ export default {
 					this.showPlanSelectionDialog = false;
 					this.showInstallAppsDialog = false;
 					this.$emit('app-installed');
-				}
+				},
 			};
 		},
 
@@ -317,15 +317,15 @@ export default {
 			url: 'press.api.site.uninstall_app',
 			onSuccess() {
 				this.$emit('app-uninstalled');
-			}
-		}
+			},
+		},
 	},
 	computed: {
 		availableApps() {
 			if (this.$resources.availableApps.data) {
 				this.fuse = new Fuse(this.$resources.availableApps.data, {
 					limit: 20,
-					keys: ['title']
+					keys: ['title'],
 				});
 				this.filteredOptions = this.$resources.availableApps.data;
 			}
@@ -340,14 +340,14 @@ export default {
 			}
 
 			return [];
-		}
+		},
 	},
 	methods: {
 		updateSearchTerm(value) {
 			if (value) {
 				this.filteredOptions = this.fuse
 					.search(value)
-					.map(result => result.item);
+					.map((result) => result.item);
 			} else {
 				this.filteredOptions = this.$resources.availableApps.data;
 			}
@@ -367,7 +367,7 @@ export default {
 				image: app.app_image,
 				plan: app.subscription.plan,
 				subscription: app.subscription.name,
-				billing_type: app.billing_type
+				billing_type: app.billing_type,
 			};
 			this.showAppPlanChangeDialog = true;
 		},
@@ -379,7 +379,7 @@ export default {
 			if (this.currentAppPlan !== this.newAppPlan) {
 				this.$resources.changePlan.submit({
 					subscription: this.appToChangePlan.subscription,
-					new_plan: this.newAppPlan
+					new_plan: this.newAppPlan,
 				});
 			} else {
 				this.showAppPlanChangeDialog = false;
@@ -398,7 +398,7 @@ export default {
 			this.$resources.installApp.submit({
 				name: this.siteName,
 				app: this.appToInstall?.app,
-				plan: this.selectedPlan
+				plan: this.selectedPlan,
 			});
 		},
 		handlePlanSelection() {
@@ -411,20 +411,20 @@ export default {
 					onClick: () =>
 						window.open(
 							`${window.location.protocol}//${window.location.host}/app/app/${app.name}`,
-							'_blank'
+							'_blank',
 						),
-					condition: () => this.$account.user.user_type == 'System User'
+					condition: () => this.$account.user.user_type == 'System User',
 				},
 				{
 					label: 'Remove App',
 					onClick: () => this.confirmRemoveApp(app),
-					condition: () => app.app != 'frappe'
+					condition: () => app.app != 'frappe',
 				},
 				{
 					label: 'Visit Repo',
 					onClick: () =>
-						window.open(`${app.repository_url}/tree/${app.branch}`, '_blank')
-				}
+						window.open(`${app.repository_url}/tree/${app.branch}`, '_blank'),
+				},
 			].filter(Boolean);
 		},
 		confirmRemoveApp(app) {
@@ -434,15 +434,15 @@ export default {
 				<b>All doctypes and modules pertaining to this app will be removed.</b>`,
 				actionLabel: 'Remove App',
 				actionColor: 'red',
-				action: closeDialog => {
+				action: (closeDialog) => {
 					closeDialog();
 					this.$resources.uninstallApp.submit({
 						name: this.site.name,
-						app: app.app
+						app: app.app,
 					});
-				}
+				},
 			});
-		}
-	}
+		},
+	},
 };
 </script>

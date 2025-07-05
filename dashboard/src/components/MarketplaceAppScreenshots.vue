@@ -22,7 +22,7 @@
 					:upload-args="{
 						doctype: 'Marketplace App',
 						docname: app.name,
-						method: 'press.api.marketplace.add_app_screenshot'
+						method: 'press.api.marketplace.add_app_screenshot',
 					}"
 				>
 					<template v-slot="{ openFileSelector, uploading, progress, error }">
@@ -46,10 +46,10 @@ import { notify } from '@/utils/toast';
 export default {
 	name: 'MarketplaceAppScreenshots',
 	props: {
-		app: Object
+		app: Object,
 	},
 	components: {
-		FileUploader
+		FileUploader,
 	},
 	methods: {
 		onAppImageAdd(file) {
@@ -57,13 +57,13 @@ export default {
 			notify({
 				title: 'Screenshot was added successfully!',
 				icon: 'check',
-				color: 'green'
+				color: 'green',
 			});
 		},
 		removeScreenshot(file, index) {
 			this.$resources.removeScreenshot.submit({
 				name: this.app.name,
-				file: file
+				file: file,
 			});
 			this.app.screenshots.splice(index, 1);
 		},
@@ -71,16 +71,16 @@ export default {
 			notify({
 				title: errorMessage,
 				color: 'red',
-				icon: 'x'
+				icon: 'x',
 			});
-		}
+		},
 	},
 	resources: {
 		removeScreenshot(file) {
 			return {
-				url: 'press.api.marketplace.remove_app_screenshot'
+				url: 'press.api.marketplace.remove_app_screenshot',
 			};
-		}
-	}
+		},
+	},
 };
 </script>

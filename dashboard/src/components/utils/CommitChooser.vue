@@ -28,15 +28,15 @@ export default {
 					label: this.isVersion(value.label)
 						? value.label
 						: value.label.match(/\((\w+)\)$/)[1],
-					value: value.value
+					value: value.value,
 				});
-			}
-		}
+			},
+		},
 	},
 	methods: {
 		isVersion(tag) {
 			return tag.match(/^v\d+\.\d+\.\d+$/);
-		}
-	}
+		},
+	},
 };
 </script>

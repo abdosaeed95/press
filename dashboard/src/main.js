@@ -14,11 +14,11 @@ import {
 	setConfig,
 	frappeRequest,
 	pageMetaPlugin,
-	resourcesPlugin
+	resourcesPlugin,
 } from 'frappe-ui';
 
 const app = createApp(App);
-let request = options => {
+let request = (options) => {
 	let _options = options || {};
 	_options.headers = options.headers || {};
 	let currentTeam = localStorage.getItem('current_team');
@@ -44,22 +44,22 @@ if (window.press_frontend_sentry_dsn?.includes('https://')) {
 		integrations: [
 			new BrowserTracing({
 				routingInstrumentation: Sentry.vueRouterInstrumentation(router),
-				tracingOrigins: ['localhost', /^\//]
-			})
+				tracingOrigins: ['localhost', /^\//],
+			}),
 		],
 		beforeSend(event, hint) {
 			const ignoreErrors = [
 				/dynamically imported module/,
-				/NetworkError when attempting to fetch resource/
+				/NetworkError when attempting to fetch resource/,
 			];
 			const error = hint.originalException;
 
-			if (error?.message && ignoreErrors.some(re => re.test(error.message)))
+			if (error?.message && ignoreErrors.some((re) => re.test(error.message)))
 				return null;
 
 			return event;
 		},
-		logErrors: true
+		logErrors: true,
 	});
 }
 
@@ -71,7 +71,7 @@ if (window.press_frontend_posthog_host?.includes('https://')) {
 			autocapture: false,
 			capture_pageview: false,
 			capture_pageleave: false,
-			advanced_disable_decide: true
+			advanced_disable_decide: true,
 		});
 		window.posthog = posthog;
 	} catch (e) {
@@ -81,8 +81,8 @@ if (window.press_frontend_posthog_host?.includes('https://')) {
 
 if (import.meta.env.DEV) {
 	request({
-		url: '/api/method/press.www.dashboard.get_context_for_dev'
-	}).then(values => {
+		url: '/api/method/press.www.dashboard.get_context_for_dev',
+	}).then((values) => {
 		for (let key in values) {
 			window[key] = values[key];
 		}
@@ -101,7 +101,7 @@ app.config.errorHandler = (error, instance) => {
 			icon: 'x',
 			title: 'An error occurred',
 			message: errorMessage,
-			color: 'red'
+			color: 'red',
 		});
 	}
 	console.error(error);

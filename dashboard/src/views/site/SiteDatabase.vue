@@ -12,6 +12,6 @@ import SiteDatabaseRestore from './SiteDatabaseRestore.vue';
 export default {
 	name: 'SiteDatabase',
 	props: ['site'],
-	components: { SiteDatabaseBackups, SiteDatabaseRestore }
+	components: { SiteDatabaseBackups, SiteDatabaseRestore },
 };
 </script>

@@ -19,15 +19,15 @@ export default {
 	name: 'AccountSettings',
 	pageMeta() {
 		return {
-			title: 'Settings - Profile'
+			title: 'Settings - Profile',
 		};
 	},
 	components: {
-		Tabs
+		Tabs,
 	},
 	computed: {
 		tabs() {
-			let tabRoute = subRoute => `/settings/${subRoute}`;
+			let tabRoute = (subRoute) => `/settings/${subRoute}`;
 			let tabs = [
 				{ label: 'Profile', route: 'profile' },
 				{
@@ -35,16 +35,16 @@ export default {
 					route: 'team',
 					condition: () =>
 						$account.user.name === $account.team.user ||
-						$account.user.user_type === 'System User'
+						$account.user.user_type === 'System User',
 				},
 				{ label: 'Developer', route: 'developer' },
-				{ label: 'Partner', route: 'partner' }
-			].filter(tab => (tab.condition ? tab.condition() : true));
+				{ label: 'Partner', route: 'partner' },
+			].filter((tab) => (tab.condition ? tab.condition() : true));
 
-			return tabs.map(tab => {
+			return tabs.map((tab) => {
 				return {
 					...tab,
-					route: tabRoute(tab.route)
+					route: tabRoute(tab.route),
 				};
 			});
 		},
@@ -69,7 +69,7 @@ export default {
 			}
 
 			let userTeamMember = team.team_members.filter(
-				member => member.user === user.name
+				(member) => member.user === user.name,
 			);
 
 			if (userTeamMember.length > 0) {
@@ -77,13 +77,13 @@ export default {
 				const memberSince = this.$date(userTeamMember.creation).toLocaleString({
 					month: 'short',
 					day: 'numeric',
-					year: 'numeric'
+					year: 'numeric',
 				});
 				subtitle += `&middot; <span>Member since ${memberSince}</span>`;
 			}
 
 			return subtitle;
-		}
-	}
+		},
+	},
 };
 </script>

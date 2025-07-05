@@ -7,9 +7,9 @@
 					label: config ? 'Edit Key' : 'Add Key',
 					variant: 'solid',
 					loading: docResource?.updateConfig?.loading,
-					onClick: addConfig
-				}
-			]
+					onClick: addConfig,
+				},
+			],
 		}"
 		v-model="showDialog"
 	>
@@ -47,7 +47,7 @@
 						'Number',
 						'JSON',
 						'Boolean',
-						selectedConfig?.value !== '__custom_key' ? 'Password' : null
+						selectedConfig?.value !== '__custom_key' ? 'Password' : null,
 					]"
 					:disabled="selectedConfig?.value !== '__custom_key'"
 					autocomplete="off"
@@ -68,7 +68,7 @@ import {
 	Autocomplete,
 	ErrorMessage,
 	FormControl,
-	getCachedDocumentResource
+	getCachedDocumentResource,
 } from 'frappe-ui';
 
 export default {
@@ -77,7 +77,7 @@ export default {
 	components: {
 		Autocomplete,
 		FormControl,
-		ErrorMessage
+		ErrorMessage,
 	},
 	data() {
 		return {
@@ -87,21 +87,21 @@ export default {
 			key: null,
 			type: null,
 			value: null,
-			error: null
+			error: null,
 		};
 	},
 	async mounted() {
 		if (this.config) {
 			await this.$resources.standardKeys.promise;
 			this.selectedConfig = this.keyOptions.find(
-				option => this.config.key === option.value
+				(option) => this.config.key === option.value,
 			);
 			if (this.selectedConfig) {
 				this.key = this.selectedConfig?.value;
 				this.type = this.selectedConfig?.type;
 			} else {
 				this.selectedConfig = this.keyOptions.find(
-					option => '__custom_key' === option.value
+					(option) => '__custom_key' === option.value,
 				);
 				this.key = this.config.key;
 				this.type = this.config.type;
@@ -115,9 +115,9 @@ export default {
 				url: 'press.api.site.get_site_config_standard_keys',
 				cache: 'Site Config Standard Keys',
 				initialData: [],
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	methods: {
 		addConfig() {
@@ -126,7 +126,7 @@ export default {
 			} else if (this.group) {
 				this.docResource = getCachedDocumentResource(
 					'Release Group',
-					this.group
+					this.group,
 				);
 			}
 			if (!this.docResource) return;
@@ -158,23 +158,23 @@ export default {
 						this.$emit('success');
 						this.showDialog = false;
 					},
-					onError: error => {
+					onError: (error) => {
 						this.error = error;
-					}
-				}
+					},
+				},
 			);
-		}
+		},
 	},
 	computed: {
 		keyOptions() {
 			let customKeyOption = {
 				label: 'Custom Key',
-				value: '__custom_key'
+				value: '__custom_key',
 			};
-			let standardKeyOptions = this.$resources.standardKeys.data.map(key => ({
+			let standardKeyOptions = this.$resources.standardKeys.data.map((key) => ({
 				label: key.title,
 				value: key.key,
-				type: key.type
+				type: key.type,
 			}));
 			return [customKeyOption, ...standardKeyOptions];
 		},
@@ -183,14 +183,14 @@ export default {
 				String: 'text',
 				Number: 'number',
 				JSON: 'textarea',
-				Boolean: 'select'
+				Boolean: 'select',
 			}[this.selectedConfig?.type || this.type];
 
 			return {
 				type,
-				options: type === 'select' ? ['1', '0'] : null
+				options: type === 'select' ? ['1', '0'] : null,
 			};
-		}
-	}
+		},
+	},
 };
 </script>

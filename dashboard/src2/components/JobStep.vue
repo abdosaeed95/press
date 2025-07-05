@@ -16,9 +16,9 @@ export default {
 	props: {
 		step: {
 			type: Object,
-			required: true
-		}
+			required: true,
+		},
 	},
-	components: { FoldStep }
+	components: { FoldStep },
 };
 </script>

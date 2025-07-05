@@ -28,7 +28,7 @@
 							{{
 								$date(info.last_deployed).toLocaleString({
 									month: 'long',
-									day: 'numeric'
+									day: 'numeric',
 								})
 							}}
 						</div>
@@ -72,7 +72,7 @@ export default {
 	components: { ServerDrop },
 	data() {
 		return {
-			loading: false
+			loading: false,
 		};
 	},
 	computed: {
@@ -80,10 +80,10 @@ export default {
 			return {
 				drop: this.$account.hasPermission(
 					this.server.name,
-					'press.api.server.archive'
-				)
+					'press.api.server.archive',
+				),
 			};
-		}
-	}
+		},
+	},
 };
 </script>

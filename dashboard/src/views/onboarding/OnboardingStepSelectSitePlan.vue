@@ -28,6 +28,6 @@
 <script>
 export default {
 	name: 'OnboardingStepSelectSitePlan',
-	props: ['active', 'done']
+	props: ['active', 'done'],
 };
 </script>

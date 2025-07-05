@@ -28,7 +28,7 @@
 			<router-link
 				:to="{
 					name: 'SiteMariaDBSlowQueries',
-					params: { siteName }
+					params: { siteName },
 				}"
 			>
 				<div class="py-2 text-gray-900 sm:px-2">
@@ -55,7 +55,7 @@ export default {
 	name: 'SiteMonitorsList',
 	props: ['site', 'siteName'],
 	components: {
-		Report
-	}
+		Report,
+	},
 };
 </script>

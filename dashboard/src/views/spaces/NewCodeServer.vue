@@ -12,7 +12,7 @@
 					v-show="activeStep.name === 'Hostname'"
 					v-model="subdomain"
 					:domain="domain"
-					@error="error => (subdomainValid = !Boolean(error))"
+					@error="(error) => (subdomainValid = !Boolean(error))"
 				/>
 				<Group v-show="activeStep.name === 'Group'" v-model="selectedGroup" />
 				<Bench
@@ -70,7 +70,7 @@ export default {
 		Steps,
 		Hostname,
 		Group,
-		Bench
+		Bench,
 	},
 	data() {
 		return {
@@ -85,18 +85,18 @@ export default {
 					name: 'Hostname',
 					validate: () => {
 						return this.subdomainValid;
-					}
+					},
 				},
 				{
 					name: 'Group',
 					validate: () => {
 						return this.selectedGroup != null;
-					}
+					},
 				},
 				{
-					name: 'Bench'
-				}
-			]
+					name: 'Bench',
+				},
+			],
 		};
 	},
 	async mounted() {
@@ -109,7 +109,7 @@ export default {
 				params: {
 					subdomain: this.subdomain,
 					bench: this.selectedBench,
-					domain: this.domain
+					domain: this.domain,
 				},
 				onSuccess(r) {
 					this.$router.replace(`/codeservers/${r}/jobs`);
@@ -118,14 +118,14 @@ export default {
 					if (this.selectedBench === null) {
 						return 'Please select a bench version to deploy the code server on';
 					}
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		async nextStep(activeStep, next) {
 			next();
-		}
-	}
+		},
+	},
 };
 </script>

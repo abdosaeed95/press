@@ -17,7 +17,7 @@
 		<template #actions>
 			<Button
 				v-if="app.status === 'Draft' && app.review_stage === 'Not Started'"
-				:disabled="reviewStages.some(step => !step.completed)"
+				:disabled="reviewStages.some((step) => !step.completed)"
 				:loading="$resources.startReview.isLoading"
 				@click="$resources.startReview.submit()"
 				class="py-5"
@@ -75,9 +75,9 @@
 				{
 					label: 'Send',
 					variant: 'solid',
-					onClick: () => $resources.addReply.submit()
-				}
-			]
+					onClick: () => $resources.addReply.submit(),
+				},
+			],
 		}"
 	>
 		<template v-slot:body-content>
@@ -98,7 +98,7 @@ export default {
 	data() {
 		return {
 			showReplyDialog: false,
-			message: null
+			message: null,
 		};
 	},
 	methods: {
@@ -106,28 +106,28 @@ export default {
 			const date = new Date(time);
 			return date.toLocaleString(undefined, {
 				dateStyle: 'medium',
-				timeStyle: 'short'
+				timeStyle: 'short',
 			});
-		}
+		},
 	},
 	resources: {
 		startReview() {
 			return {
 				url: 'press.api.marketplace.mark_app_ready_for_review',
 				params: {
-					name: this.appName
+					name: this.appName,
 				},
 				onSuccess() {
 					window.location.reload();
-				}
+				},
 			};
 		},
 		communication() {
 			return {
 				url: 'press.api.marketplace.communication',
 				params: {
-					name: this.appName
-				}
+					name: this.appName,
+				},
 			};
 		},
 		addReply() {
@@ -135,7 +135,7 @@ export default {
 				url: 'press.api.marketplace.add_reply',
 				params: {
 					name: this.appName,
-					message: this.message
+					message: this.message,
 				},
 				onSuccess() {
 					this.showReplyDialog = false;
@@ -143,11 +143,11 @@ export default {
 						title: 'Reply Queued',
 						message: 'Message reply is queued for sending',
 						icon: 'check',
-						color: 'green'
+						color: 'green',
 					});
-				}
+				},
 			};
-		}
+		},
 	},
 	mounted() {
 		this.$resources.communication.submit();
@@ -155,7 +155,7 @@ export default {
 	computed: {
 		communication() {
 			return this.$resources.communication.data;
-		}
-	}
+		},
+	},
 };
 </script>

@@ -51,7 +51,7 @@
 					{ label: 'Version', name: 'version' },
 					{ label: 'Tags', name: 'tags' },
 					{ label: 'Stats', name: 'stats' },
-					{ label: '', name: 'actions', width: 0.5 }
+					{ label: '', name: 'actions', width: 0.5 },
 				]"
 				:rows="benches"
 				v-slot="{ rows, columns }"
@@ -93,7 +93,7 @@
 								`${row.stats.number_of_sites} ${$plural(
 									row.stats.number_of_sites,
 									'Site',
-									'Sites'
+									'Sites',
 								)}`
 							}}
 							&middot;
@@ -101,7 +101,7 @@
 								`${row.stats.number_of_apps} ${$plural(
 									row.stats.number_of_apps,
 									'App',
-									'Apps'
+									'Apps',
 								)}`
 							}}
 						</div>
@@ -169,12 +169,12 @@ export default {
 			showAddCardDialog: false,
 			searchTerm: '',
 			bench_status: 'All',
-			bench_tag: ''
+			bench_tag: '',
 		};
 	},
 	pageMeta() {
 		return {
-			title: 'Benches - Frappe Cloud'
+			title: 'Benches - Frappe Cloud',
 		};
 	},
 	components: {
@@ -182,95 +182,95 @@ export default {
 		TableHeader,
 		TableRow,
 		TableCell,
-		StripeCard: defineAsyncComponent(() =>
-			import('@/components/StripeCard.vue')
-		)
+		StripeCard: defineAsyncComponent(
+			() => import('@/components/StripeCard.vue'),
+		),
 	},
 	resources: {
 		paymentMethods: {
 			url: 'press.api.billing.get_payment_methods',
-			auto: true
+			auto: true,
 		},
 		allBenches() {
 			return {
 				url: 'press.api.bench.all',
 				params: {
-					bench_filter: { status: this.bench_status, tag: this.bench_tag }
+					bench_filter: { status: this.bench_status, tag: this.bench_tag },
 				},
 				auto: true,
 				cache: [
 					'BenchList',
 					this.bench_status,
 					this.bench_tag,
-					this.$account.team.name
-				]
+					this.$account.team.name,
+				],
 			};
 		},
 		benchTags: {
 			url: 'press.api.bench.bench_tags',
 			auto: true,
-			initialData: []
-		}
+			initialData: [],
+		},
 	},
 	computed: {
 		benches() {
 			if (!this.$resources.allBenches.data) {
 				return [];
 			}
-			let benches = this.$resources.allBenches.data.filter(bench =>
-				this.$account.hasPermission(bench.name, '', true)
+			let benches = this.$resources.allBenches.data.filter((bench) =>
+				this.$account.hasPermission(bench.name, '', true),
 			);
 			if (this.searchTerm)
-				benches = benches.filter(bench =>
-					bench.title.toLowerCase().includes(this.searchTerm.toLowerCase())
+				benches = benches.filter((bench) =>
+					bench.title.toLowerCase().includes(this.searchTerm.toLowerCase()),
 				);
 
-			return benches.map(bench => ({
+			return benches.map((bench) => ({
 				name: bench.title,
 				status: bench.status,
 				version: bench.version,
 				stats: {
 					number_of_sites: bench.number_of_sites,
-					number_of_apps: bench.number_of_apps
+					number_of_apps: bench.number_of_apps,
 				},
 				tags: bench.tags,
-				route: { name: 'BenchSiteList', params: { benchName: bench.name } }
+				route: { name: 'BenchSiteList', params: { benchName: bench.name } },
 			}));
 		},
 		benchStatusFilterOptions() {
 			return [
 				{
 					label: 'All',
-					value: 'All'
+					value: 'All',
 				},
 				{
 					label: 'Active',
-					value: 'Active'
+					value: 'Active',
 				},
 				{
 					label: 'Awaiting Deploy',
-					value: 'Awaiting Deploy'
-				}
+					value: 'Awaiting Deploy',
+				},
 			];
 		},
 		benchTagFilterOptions() {
 			const defaultOptions = [
 				{
 					label: '',
-					value: ''
-				}
+					value: '',
+				},
 			];
 
 			if (!this.$resources.benchTags.data) return defaultOptions;
 
 			return [
 				...defaultOptions,
-				...this.$resources.benchTags.data.map(tag => ({
+				...this.$resources.benchTags.data.map((tag) => ({
 					label: tag,
-					value: tag
-				}))
+					value: tag,
+				})),
 			];
-		}
+		},
 	},
 	methods: {
 		showBillingDialog() {
@@ -287,22 +287,22 @@ export default {
 					onClick: () => {
 						this.$router.push({
 							name: 'NewBenchSite',
-							params: { bench: bench.route.params.benchName }
+							params: { bench: bench.route.params.benchName },
 						});
 					},
-					condition: () => bench.status === 'Active'
+					condition: () => bench.status === 'Active',
 				},
 				{
 					label: 'View Sites',
 					onClick: () => {
 						this.$router.push({
 							name: 'BenchSiteList',
-							params: { benchName: bench.route.params.benchName }
+							params: { benchName: bench.route.params.benchName },
 						});
-					}
-				}
-			].filter(item => (item.condition ? item.condition() : true));
-		}
-	}
+					},
+				},
+			].filter((item) => (item.condition ? item.condition() : true));
+		},
+	},
 };
 </script>

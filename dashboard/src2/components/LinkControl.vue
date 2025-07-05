@@ -8,7 +8,7 @@
 		:placeholder="placeholder"
 		@update:query="onQuery"
 		@update:model-value="
-			option => {
+			(option) => {
 				if (option?.value) {
 					$emit('update:modelValue', option.value);
 				} else {
@@ -27,12 +27,12 @@ export default {
 	emits: ['update:modelValue'],
 	inheritAttrs: false,
 	components: {
-		FormControl
+		FormControl,
 	},
 	data() {
 		return {
 			query: '',
-			currentValidValueInOptions: null
+			currentValidValueInOptions: null,
 		};
 	},
 	resources: {
@@ -44,30 +44,30 @@ export default {
 					order_by: this.options.orderBy,
 					page_length: this.options.pageLength || 10,
 					filters: this.options.filters,
-					query: this.query
+					query: this.query,
 				},
 				auto: true,
 				initialData: this.options.initialData || [],
-				transform: data => {
-					return data.map(option => ({
+				transform: (data) => {
+					return data.map((option) => ({
 						label: option.label || option.value,
 						description: option.label ? option.value : undefined,
-						value: option.value
+						value: option.value,
 					}));
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		onQuery: debounce(function (query) {
 			this.query = query.trim();
-		}, 500)
+		}, 500),
 	},
 	computed: {
 		autocompleteOptions() {
 			let options = this.$resources.options.data || [];
 			const currentValueInOptions = options.find(
-				o => o.value === this.modelValue
+				(o) => o.value === this.modelValue,
 			);
 
 			if (currentValueInOptions) {
@@ -83,7 +83,7 @@ export default {
 			}
 
 			return options;
-		}
-	}
+		},
+	},
 };
 </script>

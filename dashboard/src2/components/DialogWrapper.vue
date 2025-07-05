@@ -12,7 +12,7 @@ export default {
 	emits: ['update:modelValue'],
 	data() {
 		return {
-			_show: true
+			_show: true,
 		};
 	},
 	computed: {
@@ -26,8 +26,8 @@ export default {
 				} else {
 					this._show = value;
 				}
-			}
-		}
-	}
+			},
+		},
+	},
 };
 </script>

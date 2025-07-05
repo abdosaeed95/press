@@ -47,9 +47,9 @@ export default {
 			return {
 				url: 'press.api.site.logs',
 				params: { name: this.siteName },
-				auto: true
+				auto: true,
 			};
-		}
-	}
+		},
+	},
 };
 </script>

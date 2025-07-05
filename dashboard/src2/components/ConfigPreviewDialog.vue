@@ -1,7 +1,7 @@
 <template>
 	<Dialog
 		:options="{
-			title: 'Config Preview'
+			title: 'Config Preview',
 		}"
 		v-model="showDialog"
 	>
@@ -19,7 +19,7 @@ export default {
 	props: ['configs'],
 	data() {
 		return {
-			showDialog: true
+			showDialog: true,
 		};
 	},
 	computed: {
@@ -39,7 +39,7 @@ export default {
 				obj[d.key] = value;
 			}
 			return JSON.stringify(obj, null, '&nbsp; ');
-		}
-	}
+		},
+	},
 };
 </script>

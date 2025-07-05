@@ -44,7 +44,7 @@
 							:class="[
 								plan === selectedPlan
 									? 'border-gray- outline outline-gray-900'
-									: ''
+									: '',
 							]"
 							v-for="plan in $resources.subscription.data.plans"
 							:key="plan.name"
@@ -129,16 +129,16 @@ export default {
 		Badge,
 		TextInput,
 		CheckCircleIcon,
-		StripeCard: defineAsyncComponent(() =>
-			import('@/components/StripeCard.vue')
+		StripeCard: defineAsyncComponent(
+			() => import('@/components/StripeCard.vue'),
 		),
-		ErrorMessage
+		ErrorMessage,
 	},
 	data() {
 		return {
 			currentStep: 1,
 			selectedPlan: null,
-			success: false
+			success: false,
 		};
 	},
 	resources: {
@@ -146,16 +146,16 @@ export default {
 			return {
 				url: 'press.api.saas.subscription',
 				params: {
-					site: this.site
+					site: this.site,
 				},
 				auto: true,
 				onSuccess(data) {
 					if (data?.current_plan && data?.plans) {
 						this.selectedPlan = data.plans.find(
-							plan => plan.name === data.current_plan
+							(plan) => plan.name === data.current_plan,
 						);
 					}
-				}
+				},
 			};
 		},
 		setSubscriptionPlan() {
@@ -163,15 +163,15 @@ export default {
 				url: 'press.api.saas.set_subscription_plan',
 				params: {
 					site: this.site,
-					plan: this.selectedPlan?.name
+					plan: this.selectedPlan?.name,
 				},
 				onSuccess() {
 					this.currentStep = 1;
 					this.selectedPlan = null;
 					this.$resources.subscription.reload();
-				}
+				},
 			};
-		}
-	}
+		},
+	},
 };
 </script>

@@ -111,16 +111,16 @@ export default {
 	components: {
 		SitePlansTable,
 		ProgressArc,
-		SitePlansDialog: defineAsyncComponent(() =>
-			import('./SitePlansDialog.vue')
+		SitePlansDialog: defineAsyncComponent(
+			() => import('./SitePlansDialog.vue'),
 		),
-		PlanIcon
+		PlanIcon,
 	},
 	data() {
 		return {
 			showChangePlanDialog: false,
 			selectedPlan: null,
-			validationMessage: null
+			validationMessage: null,
 		};
 	},
 	watch: {
@@ -132,24 +132,24 @@ export default {
 				let result = await this.$call('validate_plan_change', {
 					current_plan: this.plan.current_plan,
 					new_plan: value,
-					currency: this.$account.team.currency
+					currency: this.$account.team.currency,
 				});
 				this.validationMessage = result;
 			} catch (e) {
 				this.validationMessage = null;
 			}
-		}
+		},
 	},
 	resources: {
 		plans() {
 			return {
 				url: 'press.api.site.get_plans',
 				params: {
-					name: this.site?.name
+					name: this.site?.name,
 				},
-				initialData: []
+				initialData: [],
 			};
-		}
+		},
 	},
 	methods: {
 		plan_title(plan) {
@@ -168,40 +168,40 @@ export default {
 		},
 
 		getCurrentFormattedUsage() {
-			let f = value => {
+			let f = (value) => {
 				return this.formatBytes(value, 0, 2);
 			};
 
 			return [
 				{
 					label: 'CPU',
-					value: `${this.plan.total_cpu_usage_hours} hours`
+					value: `${this.plan.total_cpu_usage_hours} hours`,
 				},
 				{
 					label: 'Database',
-					value: f(this.plan.total_database_usage)
+					value: f(this.plan.total_database_usage),
 				},
 				{
 					label: 'Storage',
-					value: f(this.plan.total_storage_usage)
-				}
+					value: f(this.plan.total_storage_usage),
+				},
 			];
-		}
+		},
 	},
 	computed: {
 		permissions() {
 			return {
 				changePlan: this.$account.hasPermission(
 					this.site.name,
-					'press.api.site.change_plan'
-				)
+					'press.api.site.change_plan',
+				),
 			};
 		},
 		canChangePlan() {
 			return this.site.can_change_plan;
 		},
 		plans() {
-			let processedPlans = this.$resources.plans.data.map(plan => {
+			let processedPlans = this.$resources.plans.data.map((plan) => {
 				if (this.belowCurrentUsage(plan)) {
 					plan.disabled = true;
 				}
@@ -219,13 +219,13 @@ export default {
 			});
 
 			if (this.site.status === 'Suspended') {
-				processedPlans = processedPlans.filter(p => !p.disabled);
+				processedPlans = processedPlans.filter((p) => !p.disabled);
 			}
 
 			return processedPlans;
 		},
 		usage() {
-			let f = value => {
+			let f = (value) => {
 				return this.formatBytes(value, 2, 2);
 			};
 
@@ -239,46 +239,46 @@ export default {
 						? `${this.plan.total_cpu_usage_hours} ${this.$plural(
 								this.plan.current_plan.cpu_time_per_day,
 								'hour',
-								'hours'
-						  )}`
+								'hours',
+							)}`
 						: `${this.plan.total_cpu_usage_hours} / ${
 								this.plan.current_plan.cpu_time_per_day
-						  } ${this.$plural(
+							} ${this.$plural(
 								this.plan.current_plan.cpu_time_per_day,
 								'hour',
-								'hours'
-						  )}`,
+								'hours',
+							)}`,
 					percentage:
 						(this.plan.total_cpu_usage_hours /
 							this.plan.current_plan.cpu_time_per_day) *
-						100
+						100,
 				},
 				{
 					label: 'Database',
 					value: this.plan.current_plan.dedicated_server_plan
 						? f(this.plan.total_database_usage)
 						: `${f(this.plan.total_database_usage)} / ${f(
-								this.plan.current_plan.max_database_usage
-						  )}`,
+								this.plan.current_plan.max_database_usage,
+							)}`,
 					percentage:
 						(this.plan.total_database_usage /
 							this.plan.current_plan.max_database_usage) *
-						100
+						100,
 				},
 				{
 					label: 'Storage',
 					value: this.plan.current_plan.dedicated_server_plan
 						? f(this.plan.total_storage_usage)
 						: `${f(this.plan.total_storage_usage)} / ${f(
-								this.plan.current_plan.max_storage_usage
-						  )}`,
+								this.plan.current_plan.max_storage_usage,
+							)}`,
 					percentage:
 						(this.plan.total_storage_usage /
 							this.plan.current_plan.max_storage_usage) *
-						100
-				}
+						100,
+				},
 			];
-		}
-	}
+		},
+	},
 };
 </script>

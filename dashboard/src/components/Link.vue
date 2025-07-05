@@ -10,6 +10,6 @@
 <script>
 export default {
 	name: 'Link',
-	props: ['href', 'to']
+	props: ['href', 'to'],
 };
 </script>

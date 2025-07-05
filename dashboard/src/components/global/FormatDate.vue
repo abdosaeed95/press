@@ -7,8 +7,8 @@ export default {
 	props: {
 		type: {
 			type: String,
-			default: 'full'
-		}
+			default: 'full',
+		},
 	},
 	render() {
 		let node = this.$slots.default()[0];
@@ -19,10 +19,10 @@ export default {
 		return h(
 			'span',
 			{
-				title: this.$date(value).toLocaleString(DateTime.DATETIME_FULL)
+				title: this.$date(value).toLocaleString(DateTime.DATETIME_FULL),
 			},
-			formattedDate
+			formattedDate,
 		);
-	}
+	},
 };
 </script>

@@ -12,7 +12,7 @@ function confirm(dialog) {
 
 function removeConfirmDialog(dialog) {
 	confirmDialogs.value = confirmDialogs.value.filter(
-		_dialog => dialog !== _dialog
+		(_dialog) => dialog !== _dialog,
 	);
 }
 
@@ -39,13 +39,13 @@ app.appContext.config.globalProperties.$confirm = confirm;
 						theme: dialog.actionColor,
 						variant: dialog.actionVariant || 'solid',
 						onClick: () => onDialogAction(dialog),
-						loading: dialog.resource?.loading
+						loading: dialog.resource?.loading,
 					},
 					{
 						label: 'Cancel',
-						onClick: () => removeConfirmDialog(dialog)
-					}
-				]
+						onClick: () => removeConfirmDialog(dialog),
+					},
+				],
 			}"
 		>
 			<template v-slot:body-content>

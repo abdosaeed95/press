@@ -15,7 +15,7 @@
 					:upload-args="{
 						doctype: 'Marketplace App',
 						docname: app.name,
-						method: 'press.api.marketplace.update_app_image'
+						method: 'press.api.marketplace.update_app_image',
 					}"
 				>
 					<template v-slot="{ openFileSelector, uploading, progress, error }">
@@ -89,9 +89,9 @@
 						label: 'Save Changes',
 						variant: 'solid',
 						loading: $resources.updateAppTitle.loading,
-						onClick: () => $resources.updateAppTitle.submit()
-					}
-				]
+						onClick: () => $resources.updateAppTitle.submit(),
+					},
+				],
 			}"
 			v-model="showAppProfileEditDialog"
 		>
@@ -129,12 +129,12 @@ import { notify } from '@/utils/toast';
 export default {
 	name: 'MarketplaceAppProfile',
 	props: {
-		app: Object
+		app: Object,
 	},
 	components: {
 		FileUploader,
 		CreateAppVersionDialog,
-		ChangeMarketplaceAppBranchDialog
+		ChangeMarketplaceAppBranchDialog,
 	},
 	data() {
 		return {
@@ -144,7 +144,7 @@ export default {
 			showCreateNewVersionDialog: false,
 			selectedSource: null,
 			selectedVersion: null,
-			activeBranch: null
+			activeBranch: null,
 		};
 	},
 	resources: {
@@ -155,21 +155,21 @@ export default {
 				url: 'press.api.marketplace.update_app_title',
 				params: {
 					name,
-					title
+					title,
 				},
 				onSuccess() {
 					this.showAppProfileEditDialog = false;
 					this.$resources.updateAppTitle.reset();
 					this.notifySuccess();
-				}
+				},
 			};
 		},
 		profileImageUrl() {
 			return {
 				url: 'press.api.marketplace.profile_image_url',
 				params: {
-					app: this.app.name
-				}
+					app: this.app.name,
+				},
 			};
 		},
 		removeVersion() {
@@ -182,11 +182,11 @@ export default {
 					notify({
 						title: e.messages.join('\n'),
 						color: 'red',
-						icon: 'x'
+						icon: 'x',
 					});
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		onAppImageChange() {
@@ -197,7 +197,7 @@ export default {
 			notify({
 				title: errorMessage,
 				color: 'red',
-				icon: 'x'
+				icon: 'x',
 			});
 		},
 		branchUri(source) {
@@ -212,26 +212,26 @@ export default {
 						this.selectedVersion = source.version;
 						this.activeBranch = source.source_information.branch;
 						this.showBranchChangeDialog = true;
-					}
+					},
 				},
 				{
 					label: 'Remove',
 					onClick: () => {
 						this.$resources.removeVersion.submit({
 							name: this.app.name,
-							version: source.version
+							version: source.version,
 						});
-					}
-				}
+					},
+				},
 			];
 		},
 		notifySuccess() {
 			notify({
 				title: 'App Profile Updated!',
 				icon: 'check',
-				color: 'green'
+				color: 'green',
 			});
-		}
+		},
 	},
 	computed: {
 		profileImageUrl() {
@@ -240,7 +240,7 @@ export default {
 			}
 
 			return this.$resources.profileImageUrl.data;
-		}
-	}
+		},
+	},
 };
 </script>

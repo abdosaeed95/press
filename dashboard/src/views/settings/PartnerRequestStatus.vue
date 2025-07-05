@@ -17,7 +17,7 @@
 						$date($account.team.partnership_date).toLocaleString({
 							month: 'long',
 							day: 'numeric',
-							year: 'numeric'
+							year: 'numeric',
 						})
 					}}</span>
 				</span>
@@ -41,9 +41,9 @@
 					{
 						variant: 'solid',
 						label: 'Save Changes',
-						onClick: () => $resources.updatePartnershipDate.submit()
-					}
-				]
+						onClick: () => $resources.updatePartnershipDate.submit(),
+					},
+				],
 			}"
 			v-model="showDateEditDialog"
 		>
@@ -72,26 +72,26 @@ export default {
 			partnerRequestStatus: null,
 			partnershipDate: null,
 			showDateEditDialog: false,
-			partnerDate: null
+			partnerDate: null,
 		};
 	},
 	resources: {
 		getStatus: {
 			url: 'press.api.partner.get_partner_request_status',
 			params: {
-				team: $account.team.name
+				team: $account.team.name,
 			},
 			onSuccess(data) {
 				this.partnerRequestStatus = data;
 			},
-			auto: true
+			auto: true,
 		},
 		updatePartnershipDate() {
 			return {
 				url: 'press.api.partner.update_partnership_date',
 				params: {
 					team: $account.team.name,
-					partnership_date: this.partnerDate || this.today
+					partnership_date: this.partnerDate || this.today,
 				},
 				onSuccess() {
 					this.showDateEditDialog = false;
@@ -100,14 +100,14 @@ export default {
 					if (!$account.team.partner_email) {
 						return 'Please link your account with Partner Code first.';
 					}
-				}
+				},
 			};
-		}
+		},
 	},
 	computed: {
 		today() {
 			return DateTime.local().toISODate();
-		}
-	}
+		},
+	},
 };
 </script>

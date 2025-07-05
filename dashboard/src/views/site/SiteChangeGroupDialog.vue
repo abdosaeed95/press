@@ -12,17 +12,17 @@
 						$resources.changeGroup.submit({
 							skip_failing_patches: skipFailingPatches,
 							group: targetGroup,
-							name: site?.name
-						})
+							name: site?.name,
+						}),
 				},
 				{
 					label: 'Clone current Bench Group',
 					onClick: () => {
 						$emit('update:modelValue', false);
 						showCloneBenchDialog = true;
-					}
-				}
-			]
+					},
+				},
+			],
 		}"
 		v-model="show"
 	>
@@ -40,9 +40,9 @@
 					label="Select Bench Group"
 					type="select"
 					:options="
-						$resources.changeGroupOptions.data.map(group => ({
+						$resources.changeGroupOptions.data.map((group) => ({
 							label: group.title,
-							value: group.name
+							value: group.name,
 						}))
 					"
 					v-model="targetGroup"
@@ -71,10 +71,10 @@
 					onClick: () =>
 						$resources.cloneGroup.submit({
 							name: site?.name,
-							new_group_title: newGroupTitle
-						})
-				}
-			]
+							new_group_title: newGroupTitle,
+						}),
+				},
+			],
 		}"
 		v-model="showCloneBenchDialog"
 	>
@@ -97,7 +97,7 @@ export default {
 			targetGroup: null,
 			newGroupTitle: '',
 			skipFailingPatches: false,
-			showCloneBenchDialog: false
+			showCloneBenchDialog: false,
 		};
 	},
 	computed: {
@@ -107,7 +107,7 @@ export default {
 			},
 			set(value) {
 				this.$emit('update:modelValue', value);
-			}
+			},
 		},
 		errorMessage() {
 			return (
@@ -115,7 +115,7 @@ export default {
 				this.$resources.changeGroup.error ||
 				this.$resources.cloneGroup.error
 			);
-		}
+		},
 	},
 	resources: {
 		changeGroup() {
@@ -124,31 +124,31 @@ export default {
 				onSuccess() {
 					const destinationGroupTitle =
 						this.$resources.changeGroupOptions.data.find(
-							group => group.name === this.targetGroup
+							(group) => group.name === this.targetGroup,
 						).title;
 
 					notify({
 						title: 'Scheduled Bench Group Change',
 						message: `Site scheduled to be moved to <b>${destinationGroupTitle}</b>`,
 						color: 'green',
-						icon: 'check'
+						icon: 'check',
 					});
 					this.targetGroup = null;
 					this.$emit('update:modelValue', false);
-				}
+				},
 			};
 		},
 		changeGroupOptions() {
 			return {
 				url: 'press.api.site.change_group_options',
 				params: {
-					name: this.site?.name
+					name: this.site?.name,
 				},
 				initialData: [],
 				onSuccess(data) {
 					if (data.length > 0) this.targetGroup = data[0].name;
 				},
-				auto: true
+				auto: true,
 			};
 		},
 		cloneGroup() {
@@ -159,19 +159,19 @@ export default {
 						title: 'Cloned Bench Group',
 						message: `The current bench group has been cloned successfully. Redirecting to the new bench group...`,
 						color: 'green',
-						icon: 'check'
+						icon: 'check',
 					});
 					this.showCloneBenchDialog = false;
 					this.$router.push({
 						name: 'BenchDeploys',
 						params: {
 							benchName: data.bench_name,
-							candidateName: data.candidate_name
-						}
+							candidateName: data.candidate_name,
+						},
 					});
-				}
+				},
 			};
-		}
-	}
+		},
+	},
 };
 </script>

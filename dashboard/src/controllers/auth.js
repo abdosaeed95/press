@@ -10,8 +10,8 @@ export default class Auth {
 		this.cookie = Object.fromEntries(
 			document.cookie
 				.split('; ')
-				.map(part => part.split('='))
-				.map(d => [d[0], decodeURIComponent(d[1])])
+				.map((part) => part.split('='))
+				.map((d) => [d[0], decodeURIComponent(d[1])]),
 		);
 
 		this.isLoggedIn = this.cookie.user_id && this.cookie.user_id !== 'Guest';
@@ -21,7 +21,7 @@ export default class Auth {
 		localStorage.removeItem('current_team');
 		let res = await call('login', {
 			usr: email,
-			pwd: password
+			pwd: password,
 		});
 		if (res) {
 			await window.$account.fetchAccount();
@@ -46,7 +46,7 @@ export default class Auth {
 	}
 	async resetPassword(email) {
 		return await call('press.api.account.send_reset_password_email', {
-			email
+			email,
 		});
 	}
 }

@@ -7,6 +7,6 @@
 <script>
 export default {
 	name: 'TableCell',
-	inject: ['columns']
+	inject: ['columns'],
 };
 </script>

@@ -32,19 +32,19 @@ const props = defineProps({
 	method: { type: String, required: true },
 	description: { type: String, required: true },
 	buttonLabel: { type: String, required: true },
-	group: { type: String, required: false }
+	group: { type: String, required: false },
 });
 
 const releaseGroup = getCachedDocumentResource(
 	'Release Group',
-	props.benchName
+	props.benchName,
 );
 
 function getBenchActionHandler(action) {
 	const actionHandlers = {
 		'Rename Bench Group': onRenameBench,
 		'Transfer Bench Group': onTransferBench,
-		'Drop Bench Group': onDropBench
+		'Drop Bench Group': onDropBench,
 	};
 	if (actionHandlers[action]) {
 		actionHandlers[action].call(this);
@@ -57,32 +57,32 @@ function onRenameBench() {
 		fields: [
 			{
 				label: 'Enter new bench group name',
-				fieldname: 'newBenchName'
-			}
+				fieldname: 'newBenchName',
+			},
 		],
 		onSuccess({ hide, values }) {
 			if (values.newBenchName) {
 				toast.promise(
 					releaseGroup.setValue.submit(
 						{
-							title: values.newBenchName
+							title: values.newBenchName,
 						},
 						{
 							onSuccess() {
 								hide();
-							}
-						}
+							},
+						},
 					),
 					{
 						loading: 'Renaming bench group...',
 						success: 'Bench group renamed successfully',
-						error: 'Failed to rename bench group'
-					}
+						error: 'Failed to rename bench group',
+					},
 				);
 			} else {
 				toast.error('Please enter a valid bench group name');
 			}
-		}
+		},
 	});
 }
 
@@ -93,13 +93,13 @@ function onTransferBench() {
 			{
 				label:
 					'Enter email address of the team for transfer of bench group ownership',
-				fieldname: 'email'
+				fieldname: 'email',
 			},
 			{
 				label: 'Reason for transfer',
 				fieldname: 'reason',
-				type: 'textarea'
-			}
+				type: 'textarea',
+			},
 		],
 		primaryAction: {
 			label: 'Transfer',
@@ -114,11 +114,11 @@ function onTransferBench() {
 					.then(() => {
 						hide();
 						toast.success(
-							`Transfer request sent to ${values.email} successfully.`
+							`Transfer request sent to ${values.email} successfully.`,
 						);
 					});
-			}
-		}
+			},
+		},
 	});
 }
 
@@ -131,8 +131,8 @@ function onDropBench() {
 		fields: [
 			{
 				label: 'Please type the bench group name to confirm',
-				fieldname: 'confirmBenchName'
-			}
+				fieldname: 'confirmBenchName',
+			},
 		],
 		primaryAction: {
 			label: 'Drop',
@@ -147,19 +147,19 @@ function onDropBench() {
 						onSuccess: () => {
 							hide();
 							router.push({ name: 'Release Group List' });
-						}
+						},
 					}),
 					{
 						loading: 'Dropping bench group...',
 						success: 'Bench group dropped successfully',
-						error: error =>
+						error: (error) =>
 							error.messages.length
 								? error.messages.join('\n')
-								: 'Failed to drop bench group'
-					}
+								: 'Failed to drop bench group',
+					},
 				);
-			}
-		}
+			},
+		},
 	});
 }
 </script>

@@ -70,7 +70,7 @@ const currency = computed(() => (team.doc.currency == 'INR' ? '₹' : '$'));
 const unpaidAmount = createResource({
 	url: 'press.api.billing.total_unpaid_amount',
 	cache: 'unpaidAmount',
-	auto: true
+	auto: true,
 });
 
 const currentMonthEnd = () => {
@@ -79,7 +79,7 @@ const currentMonthEnd = () => {
 	return lastDay.toLocaleDateString('en-US', {
 		day: 'numeric',
 		month: 'short',
-		year: 'numeric'
+		year: 'numeric',
 	});
 };
 
@@ -105,15 +105,15 @@ function payUnpaidInvoices() {
 					onClick: ({ hide }) => {
 						router.push({ name: 'BillingInvoices' });
 						hide();
-					}
-				}
+					},
+				},
 			});
 		}
 	} else {
 		let invoice = _unpaidInvoices;
 		if (invoice.stripe_invoice_url && team.doc.payment_mode === 'Card') {
 			window.open(
-				`/api/method/press.api.client.run_doc_method?dt=Invoice&dn=${invoice.name}&method=stripe_payment_url`
+				`/api/method/press.api.client.run_doc_method?dt=Invoice&dn=${invoice.name}&method=stripe_payment_url`,
 			);
 		} else {
 			showAddPrepaidCreditsDialog.value = true;

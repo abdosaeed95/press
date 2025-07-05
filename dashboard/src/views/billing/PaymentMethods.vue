@@ -13,13 +13,13 @@ export default {
 	name: 'BillingScreen',
 	pageMeta() {
 		return {
-			title: 'Billing - Frappe Cloud'
+			title: 'Billing - Frappe Cloud',
 		};
 	},
 	props: ['invoiceName'],
 	components: {
 		AccountBillingDetails,
-		AccountBillingCards
-	}
+		AccountBillingCards,
+	},
 };
 </script>

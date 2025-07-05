@@ -1,5 +1,3 @@
-from typing import Dict, List
-
 import frappe
 
 from press.api.site import protected
@@ -7,7 +5,7 @@ from press.utils import get_current_team
 
 
 @frappe.whitelist()
-def spaces(space_filter: Dict | None) -> Dict:
+def spaces(space_filter: dict | None) -> dict:
 	"""
 	Returns all spaces and code servers for the current team
 	"""
@@ -129,7 +127,7 @@ def create_code_server(subdomain, domain, bench) -> str:
 	"""
 	team = get_current_team()
 	if not frappe.db.get_value("Team", team, "code_servers_enabled"):
-		return
+		return None
 
 	code_server = frappe.get_doc(
 		{
@@ -151,21 +149,18 @@ def exists(subdomain, domain) -> bool:
 	banned_domains = frappe.get_all("Blocked Domain", {"block_for_all": 1}, pluck="name")
 	if banned_domains and subdomain in banned_domains:
 		return True
-	else:
-		return bool(
-			frappe.db.exists("Blocked Domain", {"name": subdomain, "root_domain": domain})
-			or frappe.db.exists(
-				"Code Server",
-				{"subdomain": subdomain, "domain": domain, "status": ("!=", "Archived")},
-			)
+	return bool(
+		frappe.db.exists("Blocked Domain", {"name": subdomain, "root_domain": domain})
+		or frappe.db.exists(
+			"Code Server",
+			{"subdomain": subdomain, "domain": domain, "status": ("!=", "Archived")},
 		)
+	)
 
 
 @frappe.whitelist()
 @protected("Code Server")
-def code_server_jobs(
-	filters=None, order_by=None, limit_start=None, limit_page_length=None
-) -> List:
+def code_server_jobs(filters=None, order_by=None, limit_start=None, limit_page_length=None) -> list:
 	jobs = frappe.get_all(
 		"Agent Job",
 		fields=["name", "job_type", "creation", "status", "start", "end", "duration"],

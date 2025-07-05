@@ -13,7 +13,7 @@ export default function registerRouter(app, auth, account) {
 			return;
 		}
 
-		if (to.matched.some(record => !record.meta.isLoginPage)) {
+		if (to.matched.some((record) => !record.meta.isLoginPage)) {
 			// this route requires auth, check if logged in
 			// if not, redirect to login page.
 			if (!auth.isLoggedIn) {

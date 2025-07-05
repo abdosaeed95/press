@@ -130,21 +130,21 @@ export default {
 				auto: this.invoice,
 				onSuccess(doc) {
 					this.$emit('doc', doc);
-				}
+				},
 			};
-		}
+		},
 	},
 	watch: {
 		invoice(value) {
 			if (value) {
 				this.$resources.doc.fetch();
 			}
-		}
+		},
 	},
 	computed: {
 		doc() {
 			return this.invoiceDoc || this.$resources.doc.data;
-		}
-	}
+		},
+	},
 };
 </script>

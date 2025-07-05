@@ -9,7 +9,7 @@
 					label: 'Add Server to Bench',
 					loading: $resources.addServerToReleaseGroup.loading,
 					disabled: $resources.isServerAddedInGroup.data || !targetServer,
-					onClick: () => $resources.addServerToReleaseGroup.submit()
+					onClick: () => $resources.addServerToReleaseGroup.submit(),
 				},
 				{
 					label: 'Change Server',
@@ -24,11 +24,11 @@
 							name: site?.name,
 							server: targetServer,
 							scheduled_datetime: datetimeInIST,
-							skip_failing_patches: skipFailingPatches
+							skip_failing_patches: skipFailingPatches,
 						});
-					}
-				}
-			]
+					},
+				},
+			],
 		}"
 	>
 		<template #body-content>
@@ -44,10 +44,10 @@
 				:options="$resources.changeServerOptions.data"
 				v-model="targetServer"
 				@change="
-					e =>
+					(e) =>
 						$resources.isServerAddedInGroup.fetch({
 							name: site?.name,
-							server: e.target.value
+							server: e.target.value,
 						})
 				"
 			/>
@@ -80,7 +80,7 @@ export default {
 		return {
 			targetServer: '',
 			targetDateTime: null,
-			skipFailingPatches: false
+			skipFailingPatches: false,
 		};
 	},
 	computed: {
@@ -90,7 +90,7 @@ export default {
 			},
 			set(value) {
 				this.$emit('update:modelValue', value);
-			}
+			},
 		},
 		message() {
 			if (this.$resources.changeServerOptions.data.length === 0) {
@@ -122,29 +122,29 @@ export default {
 				.format('YYYY-MM-DDTHH:mm');
 
 			return datetimeInIST;
-		}
+		},
 	},
 	resources: {
 		changeServerOptions() {
 			return {
 				url: 'press.api.site.change_server_options',
 				params: {
-					name: this.site?.name
+					name: this.site?.name,
 				},
 				initialData: [],
 				auto: true,
 				transform(d) {
-					return d.map(s => ({
+					return d.map((s) => ({
 						label: s.title || s.name,
-						value: s.name
+						value: s.name,
 					}));
-				}
+				},
 			};
 		},
 		isServerAddedInGroup() {
 			return {
 				url: 'press.api.site.is_server_added_in_group',
-				initialData: false
+				initialData: false,
 			};
 		},
 		changeServer() {
@@ -155,10 +155,10 @@ export default {
 						title: 'Site Change Server',
 						message: `Site <b>${this.site?.name}</b> has been scheduled to move to <b>${this.targetServer}</b>`,
 						icon: 'check',
-						color: 'green'
+						color: 'green',
 					});
 					this.$emit('update:modelValue', false);
-				}
+				},
 			};
 		},
 		addServerToReleaseGroup() {
@@ -167,34 +167,34 @@ export default {
 				params: {
 					name: this.site?.name,
 					group_name: this.site?.group,
-					server: this.targetServer
+					server: this.targetServer,
 				},
 				onSuccess(data) {
 					notify({
 						title: 'Server Added to the Bench',
 						message: `Added <b>${this.targetServer}</b> to current bench. Please wait for the deploy to be completed.`,
 						icon: 'check',
-						color: 'green'
+						color: 'green',
 					});
 					this.$router.push({
 						name: 'BenchJobs',
 						params: {
 							benchName: this.site?.group,
-							jobName: data
-						}
+							jobName: data,
+						},
 					});
 					this.resetValues();
 					this.$emit('update:modelValue', false);
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		resetValues() {
 			this.targetServer = '';
 			this.targetDateTime = null;
 			this.$resources.isServerAddedInGroup.reset();
-		}
-	}
+		},
+	},
 };
 </script>

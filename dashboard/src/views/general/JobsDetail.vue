@@ -13,7 +13,7 @@ export default {
 	name: 'JobsDetail',
 	props: ['jobName'],
 	components: {
-		StepsDetail
+		StepsDetail,
 	},
 	inject: ['viewportWidth'],
 	resources: {
@@ -21,15 +21,15 @@ export default {
 			return {
 				url: 'press.api.site.job',
 				params: {
-					job: this.jobName
+					job: this.jobName,
 				},
-				auto: Boolean(this.jobName)
+				auto: Boolean(this.jobName),
 			};
-		}
+		},
 	},
 	data() {
 		return {
-			runningJob: null
+			runningJob: null,
 		};
 	},
 	computed: {
@@ -42,7 +42,7 @@ export default {
 				let when = this.formatDate(this.job.creation, 'relative');
 				return `Completed ${when} in ${this.$formatDuration(
 					this.job.duration,
-					'hh:mm:ss'
+					'hh:mm:ss',
 				)}`;
 			}
 			if (this.job.status == 'Undelivered') {
@@ -57,10 +57,10 @@ export default {
 					status: step.status,
 					output: step.output,
 					running: this.isStepRunning(step),
-					completed: this.isStepCompleted(step, index)
+					completed: this.isStepCompleted(step, index),
 				};
 			});
-		}
+		},
 	},
 	mounted() {
 		this.$socket.emit('doc_subscribe', 'Agent Job', this.jobName);
@@ -80,7 +80,7 @@ export default {
 		isStepRunning(step) {
 			if (!this.runningJob) return false;
 			let runningStep = this.runningJob.steps.find(
-				s => s.name == step.step_name
+				(s) => s.name == step.step_name,
 			);
 			return runningStep?.status === 'Running';
 		},
@@ -89,7 +89,7 @@ export default {
 				return this.runningJob.current.index > index;
 			}
 			return step.status === 'Success';
-		}
-	}
+		},
+	},
 };
 </script>

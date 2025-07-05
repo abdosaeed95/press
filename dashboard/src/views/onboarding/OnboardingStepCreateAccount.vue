@@ -20,6 +20,6 @@
 </template>
 <script>
 export default {
-	name: 'OnboardingStepCreateAccount'
+	name: 'OnboardingStepCreateAccount',
 };
 </script>

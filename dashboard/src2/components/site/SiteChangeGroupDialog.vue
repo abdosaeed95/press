@@ -12,17 +12,17 @@
 						$resources.changeGroup.submit({
 							skip_failing_patches: skipFailingPatches,
 							group: targetGroup.value,
-							name: site
-						})
+							name: site,
+						}),
 				},
 				{
 					label: 'Clone current Bench Group',
 					onClick: () => {
 						$emit('update:modelValue', false);
 						showCloneBenchDialog = true;
-					}
-				}
-			]
+					},
+				},
+			],
 		}"
 		v-model="show"
 	>
@@ -40,10 +40,10 @@
 					label="Select Bench Group"
 					type="autocomplete"
 					:options="
-						$resources.changeGroupOptions.data.map(group => ({
+						$resources.changeGroupOptions.data.map((group) => ({
 							label: group.title || group.name,
 							description: group.name,
-							value: group.name
+							value: group.name,
 						}))
 					"
 					v-model="targetGroup"
@@ -73,10 +73,10 @@
 						$resources.cloneGroup.submit({
 							name: site,
 							new_group_title: newGroupTitle,
-							server: selectedServer
-						})
-				}
-			]
+							server: selectedServer,
+						}),
+				},
+			],
 		}"
 		v-model="showCloneBenchDialog"
 	>
@@ -105,12 +105,12 @@ export default {
 			show: true,
 			targetGroup: {
 				label: '',
-				value: ''
+				value: '',
 			},
 			newGroupTitle: '',
 			skipFailingPatches: false,
 			showCloneBenchDialog: false,
-			selectedServer: null
+			selectedServer: null,
 		};
 	},
 	computed: {
@@ -120,7 +120,7 @@ export default {
 				this.$resources.changeGroup.error ||
 				this.$resources.cloneGroup.error
 			);
-		}
+		},
 	},
 	resources: {
 		changeGroup() {
@@ -129,39 +129,39 @@ export default {
 				onSuccess() {
 					const destinationGroupTitle =
 						this.$resources.changeGroupOptions.data.find(
-							group => group.name === this.targetGroup.value
+							(group) => group.name === this.targetGroup.value,
 						).title;
 
 					toast.success(
-						`The site has been scheduled to move to the ${destinationGroupTitle} bench group successfully.`
+						`The site has been scheduled to move to the ${destinationGroupTitle} bench group successfully.`,
 					);
 
 					this.$router.push({
 						name: 'Site Jobs',
 						params: {
-							name: this.site
-						}
+							name: this.site,
+						},
 					});
 
 					this.targetGroup = {
 						label: '',
-						value: ''
+						value: '',
 					};
 					this.show = false;
-				}
+				},
 			};
 		},
 		changeGroupOptions() {
 			return {
 				url: 'press.api.site.change_group_options',
 				params: {
-					name: this.site
+					name: this.site,
 				},
 				initialData: [],
 				onSuccess(data) {
 					if (data.length > 0) this.targetGroup.value = data[0].name;
 				},
-				auto: true
+				auto: true,
 			};
 		},
 		cloneGroup() {
@@ -169,7 +169,7 @@ export default {
 				url: 'press.api.site.clone_group',
 				onSuccess(data) {
 					toast.success(
-						'The current bench group has been cloned successfully. Redirecting to the new bench group...'
+						'The current bench group has been cloned successfully. Redirecting to the new bench group...',
 					);
 					this.showCloneBenchDialog = false;
 
@@ -177,10 +177,10 @@ export default {
 						name: 'Deploy Candidate',
 						params: {
 							name: data.bench_name,
-							id: data.candidate_name
-						}
+							id: data.candidate_name,
+						},
 					});
-				}
+				},
 			};
 		},
 		serverOptions() {
@@ -190,13 +190,13 @@ export default {
 				fields: ['name', 'title'],
 				auto: true,
 				transform(data) {
-					return data.map(server => ({
+					return data.map((server) => ({
 						label: server.title,
-						value: server.name
+						value: server.name,
 					}));
-				}
+				},
 			};
-		}
-	}
+		},
+	},
 };
 </script>

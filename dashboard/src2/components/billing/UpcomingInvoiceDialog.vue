@@ -3,7 +3,7 @@
 		v-model="props.showInvoiceDialog"
 		:options="{
 			size: '3xl',
-			title: 'Total usage for this month'
+			title: 'Total usage for this month',
 		}"
 	>
 		<template #body-content>
@@ -32,6 +32,6 @@ import InvoiceTable from '../InvoiceTable.vue';
 
 const { upcomingInvoice } = inject('billing');
 const props = defineProps({
-	showInvoiceDialog: Boolean
+	showInvoiceDialog: Boolean,
 });
 </script>

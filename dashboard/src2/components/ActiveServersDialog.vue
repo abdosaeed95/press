@@ -25,19 +25,19 @@ export default {
 	name: 'ActiveServersDialog',
 	data() {
 		return {
-			showDialog: true
+			showDialog: true,
 		};
 	},
 	resources: {
 		activeServers: {
 			url: 'press.api.account.active_servers',
-			auto: true
-		}
+			auto: true,
+		},
 	},
 	methods: {
 		redirectToServer() {
 			window.location = '/servers';
-		}
-	}
+		},
+	},
 };
 </script>

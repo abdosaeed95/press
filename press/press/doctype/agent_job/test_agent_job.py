@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import unittest
+from collections.abc import Callable
 from contextlib import contextmanager
-from typing import Callable, Literal
+from typing import Literal
 from unittest.mock import Mock, patch
 
 import frappe
@@ -139,19 +140,24 @@ def fake_agent_job(
 
 	HEADS UP: Don't use this when you're mocking enqueue_http_request in your test context
 	"""
-	with responses.mock, patch.object(
-		AgentJob,
-		"before_insert",
-		fake_agent_job_req(job_type, status, data, steps),
-		create=True,
-	), patch(
-		"press.press.doctype.agent_job.agent_job.frappe.enqueue_doc",
-		new=foreground_enqueue_doc,
-	), patch(
-		"press.press.doctype.agent_job.agent_job.frappe.enqueue",
-		new=foreground_enqueue,
-	), patch("press.press.doctype.agent_job.agent_job.frappe.db.commit", new=Mock()), patch(
-		"press.press.doctype.agent_job.agent_job.frappe.db.rollback", new=Mock()
+	with (
+		responses.mock,
+		patch.object(
+			AgentJob,
+			"before_insert",
+			fake_agent_job_req(job_type, status, data, steps),
+			create=True,
+		),
+		patch(
+			"press.press.doctype.agent_job.agent_job.frappe.enqueue_doc",
+			new=foreground_enqueue_doc,
+		),
+		patch(
+			"press.press.doctype.agent_job.agent_job.frappe.enqueue",
+			new=foreground_enqueue,
+		),
+		patch("press.press.doctype.agent_job.agent_job.frappe.db.commit", new=Mock()),
+		patch("press.press.doctype.agent_job.agent_job.frappe.db.rollback", new=Mock()),
 	):
 		frappe.local.role_permissions = {}  # due to bug in FF related to only_if_creator docperm
 		yield

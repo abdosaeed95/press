@@ -27,6 +27,6 @@
 <script>
 export default {
 	name: 'SelectableCard',
-	props: ['selected', 'title', 'image', 'fullCircleImage']
+	props: ['selected', 'title', 'image', 'fullCircleImage'],
 };
 </script>

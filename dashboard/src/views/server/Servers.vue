@@ -64,7 +64,7 @@
 						{ label: 'Region', name: 'region' },
 						{ label: 'Tags', name: 'tags' },
 						{ label: 'Plan', name: 'plan' },
-						{ label: '', name: 'actions', width: 0.5 }
+						{ label: '', name: 'actions', width: 0.5 },
 					]"
 					:rows="servers"
 					v-slot="{ rows, columns }"
@@ -103,7 +103,7 @@
 									row.plan
 										? `${$planTitle(row.plan)}${
 												row.plan.price_usd > 0 ? '/mo' : ''
-										  }`
+											}`
 										: ''
 								}}
 							</span>
@@ -179,13 +179,13 @@ export default {
 		TableHeader,
 		TableRow,
 		TableCell,
-		StripeCard: defineAsyncComponent(() =>
-			import('@/components/StripeCard.vue')
-		)
+		StripeCard: defineAsyncComponent(
+			() => import('@/components/StripeCard.vue'),
+		),
 	},
 	pageMeta() {
 		return {
-			title: 'Servers - Frappe Cloud'
+			title: 'Servers - Frappe Cloud',
 		};
 	},
 	data() {
@@ -197,13 +197,13 @@ export default {
 			dropDownOptions: [
 				{
 					label: 'Frappe Cloud Server',
-					onClick: () => this.$router.replace('/servers/new')
+					onClick: () => this.$router.replace('/servers/new'),
 				},
 				{
 					label: 'Self Hosted Server',
-					onClick: () => this.$router.replace('/selfhosted/new')
-				}
-			]
+					onClick: () => this.$router.replace('/selfhosted/new'),
+				},
+			],
 		};
 	},
 	resources: {
@@ -211,22 +211,25 @@ export default {
 			return {
 				url: 'press.api.server.all',
 				params: {
-					server_filter: { server_type: this.server_type, tag: this.server_tag }
+					server_filter: {
+						server_type: this.server_type,
+						tag: this.server_tag,
+					},
 				},
 				auto: true,
 				cache: [
 					'ServerList',
 					this.server_type,
 					this.server_tag,
-					this.$account.team.name
-				]
+					this.$account.team.name,
+				],
 			};
 		},
 		serverTags: {
 			url: 'press.api.server.server_tags',
 			auto: true,
-			initialData: []
-		}
+			initialData: [],
+		},
 	},
 	methods: {
 		dropdownItems(server) {
@@ -236,14 +239,14 @@ export default {
 					condition: () => this.$account.user.user_type === 'System User',
 					onClick: () => {
 						window.open(`https://${server.route.params.serverName}`, '_blank');
-					}
+					},
 				},
 				{
 					label: 'New Bench',
 					onClick: () => {
 						this.$router.push(`/servers/${server.app_server}/bench/new`);
-					}
-				}
+					},
+				},
 			];
 		},
 		reload() {
@@ -264,7 +267,7 @@ export default {
 				}
 				this.showAddCardDialog = false;
 			}
-		}
+		},
 	},
 	computed: {
 		servers() {
@@ -272,61 +275,61 @@ export default {
 				return [];
 			}
 
-			let servers = this.$resources.allServers.data.filter(server =>
-				this.$account.hasPermission(server.name, '', true)
+			let servers = this.$resources.allServers.data.filter((server) =>
+				this.$account.hasPermission(server.name, '', true),
 			);
 
 			if (this.searchTerm)
 				servers = servers.filter(
-					server =>
+					(server) =>
 						server.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-						server.title.toLowerCase().includes(this.searchTerm.toLowerCase())
+						server.title.toLowerCase().includes(this.searchTerm.toLowerCase()),
 				);
 
-			return servers.map(server => ({
+			return servers.map((server) => ({
 				name: server.title || server.name,
 				status: server.status,
 				server_region_info: server.region_info,
 				plan: server.plan,
 				tags: server.tags,
 				app_server: server.app_server,
-				route: { name: 'ServerOverview', params: { serverName: server.name } }
+				route: { name: 'ServerOverview', params: { serverName: server.name } },
 			}));
 		},
 		serverStatusFilterOptions() {
 			return [
 				{
 					label: 'All Servers',
-					value: 'All Servers'
+					value: 'All Servers',
 				},
 				{
 					label: 'App Servers',
-					value: 'App Servers'
+					value: 'App Servers',
 				},
 				{
 					label: 'Database Servers',
-					value: 'Database Servers'
-				}
+					value: 'Database Servers',
+				},
 			];
 		},
 		serverTagFilterOptions() {
 			const defaultOptions = [
 				{
 					label: '',
-					value: ''
-				}
+					value: '',
+				},
 			];
 
 			if (!this.$resources.serverTags.data) return defaultOptions;
 
 			return [
 				...defaultOptions,
-				...this.$resources.serverTags.data.map(tag => ({
+				...this.$resources.serverTags.data.map((tag) => ({
 					label: tag,
-					value: tag
-				}))
+					value: tag,
+				})),
 			];
-		}
-	}
+		},
+	},
 };
 </script>
