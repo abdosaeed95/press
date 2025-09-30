@@ -11,13 +11,13 @@ export default function generateRoutes() {
 				name: routeName,
 				path: object.list.route,
 				component: () => import('../pages/ListPage.vue'),
-				props: route => {
+				props: (route) => {
 					return { objectType, ...route.params };
-				}
+				},
 			});
 		}
 		if (object.detail) {
-			let children = object.detail.tabs.map(tab => {
+			let children = object.detail.tabs.map((tab) => {
 				const routeName = `${object.doctype} Detail ${tab.label}`;
 				tab.routeName = routeName;
 				const nestedChildren = [];
@@ -26,9 +26,9 @@ export default function generateRoutes() {
 				for (let route of tab.nestedChildrenRoutes || []) {
 					nestedChildren.push({
 						...route,
-						props: route => {
+						props: (route) => {
 							return { objectType, ...route.params };
-						}
+						},
 					});
 				}
 
@@ -36,20 +36,20 @@ export default function generateRoutes() {
 					name: routeName,
 					path: tab.route,
 					component: () => import('../pages/DetailTab.vue'),
-					props: route => {
+					props: (route) => {
 						return { ...route.params };
 					},
 					redirect: nestedChildren.length ? { name: tab.redirectTo } : null,
-					children: nestedChildren
+					children: nestedChildren,
 				};
 			});
 			if (object.routes) {
 				for (let route of object.routes) {
 					children.push({
 						...route,
-						props: route => {
+						props: (route) => {
 							return { objectType, ...route.params };
-						}
+						},
 					});
 				}
 			}
@@ -59,11 +59,11 @@ export default function generateRoutes() {
 				name: object.detail.routeName,
 				path: object.detail.route,
 				component: () => import('../pages/DetailPage.vue'),
-				props: route => {
+				props: (route) => {
 					return { objectType, ...route.params };
 				},
 				redirect: children.length ? { name: children[0].name } : null,
-				children
+				children,
 			});
 		}
 	}

@@ -45,11 +45,11 @@ export default {
 				return acc;
 			}, {});
 
-			return Object.keys(groupedActions).map(group => ({
+			return Object.keys(groupedActions).map((group) => ({
 				group,
-				actions: groupedActions[group]
+				actions: groupedActions[group],
 			}));
-		}
-	}
+		},
+	},
 };
 </script>

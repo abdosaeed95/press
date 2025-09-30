@@ -11,7 +11,7 @@ export default {
 	name: 'SiteJobs',
 	props: ['name'],
 	components: {
-		ObjectList
+		ObjectList,
 	},
 	computed: {
 		logsOptions() {
@@ -19,12 +19,12 @@ export default {
 			return {
 				doctype: 'Agent Job',
 				filters: {
-					site: this.name
+					site: this.name,
 				},
 				route(row) {
 					return {
 						name: 'Site Job',
-						params: { id: row.name }
+						params: { id: row.name },
 					};
 				},
 				orderBy: 'creation desc',
@@ -37,7 +37,7 @@ export default {
 							label: 'Status',
 							fieldname: 'status',
 							class: !isMobile() ? 'w-24' : '',
-							options: ['', 'Pending', 'Running', 'Success', 'Failure']
+							options: ['', 'Pending', 'Running', 'Success', 'Failure'],
 						},
 						{
 							type: 'link',
@@ -46,28 +46,28 @@ export default {
 							options: {
 								doctype: 'Agent Job Type',
 								orderBy: 'name asc',
-								pageLength: 100
-							}
-						}
+								pageLength: 100,
+							},
+						},
 					];
 				},
 				columns: [
 					{
 						label: 'Job Type',
 						fieldname: 'job_type',
-						class: 'font-medium'
+						class: 'font-medium',
 					},
 					{
 						label: 'Status',
 						fieldname: 'status',
 						type: 'Badge',
-						width: 0.5
+						width: 0.5,
 					},
 					{
 						label: 'Site',
 						fieldname: 'site',
 						width: 1.2,
-						condition: () => doctype !== 'Site'
+						condition: () => doctype !== 'Site',
 					},
 					{
 						label: 'Duration',
@@ -76,22 +76,22 @@ export default {
 						format(value, row) {
 							if (row.job_id === 0 || !row.end) return;
 							return duration(value);
-						}
+						},
 					},
 					{
 						label: 'Created By',
-						fieldname: 'owner'
+						fieldname: 'owner',
 					},
 					{
 						label: '',
 						fieldname: 'creation',
 						type: 'Timestamp',
 						width: 0.5,
-						align: 'right'
-					}
-				].filter(c => (c.condition ? c.condition() : true))
+						align: 'right',
+					},
+				].filter((c) => (c.condition ? c.condition() : true)),
 			};
-		}
-	}
+		},
+	},
 };
 </script>

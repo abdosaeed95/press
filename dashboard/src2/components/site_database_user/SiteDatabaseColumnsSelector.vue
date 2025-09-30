@@ -25,7 +25,7 @@
 					size="sm"
 					v-for="column in filteredColumns"
 					:modelValue="isChecked(column)"
-					@change="e => toggleSelection(column, e)"
+					@change="(e) => toggleSelection(column, e)"
 					:label="column"
 				/>
 			</div>
@@ -41,11 +41,11 @@ export default {
 	emits: ['update:modelValue'],
 	components: {
 		FPopover: Popover,
-		FCheckbox: Checkbox
+		FCheckbox: Checkbox,
 	},
 	data() {
 		return {
-			searchQuery: ''
+			searchQuery: '',
 		};
 	},
 	mounted() {
@@ -61,15 +61,15 @@ export default {
 					(acc, item) => {
 						return acc.includes(item) ? acc : [...acc, item];
 					},
-					[...this.modelValue]
+					[...this.modelValue],
 				)
 				.sort();
 		},
 		filteredColumns() {
-			return this.allAvailableColumns.filter(column =>
-				column.toLowerCase().includes(this.searchQuery.toLowerCase())
+			return this.allAvailableColumns.filter((column) =>
+				column.toLowerCase().includes(this.searchQuery.toLowerCase()),
 			);
-		}
+		},
 	},
 	methods: {
 		isChecked(column) {
@@ -81,12 +81,12 @@ export default {
 			if (this.isChecked(column)) {
 				this.$emit(
 					'update:modelValue',
-					this.columns.filter(c => c != column)
+					this.columns.filter((c) => c != column),
 				);
 			} else {
 				this.$emit('update:modelValue', [...this.columns, column]);
 			}
-		}
-	}
+		},
+	},
 };
 </script>

@@ -36,7 +36,7 @@ export default {
 		return {
 			showDialog: true,
 			newTag: '',
-			selectedTag: null
+			selectedTag: null,
 		};
 	},
 	resources: {
@@ -47,25 +47,25 @@ export default {
 				filters: { doctype_name: this.doctype },
 				fields: ['tag'],
 				pageLength: 1000,
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	computed: {
 		$doc() {
 			return getCachedDocumentResource(this.doctype, this.docname);
 		},
 		tagOptions() {
-			const docTags = this.$doc.doc.tags.map(t => t.tag_name);
+			const docTags = this.$doc.doc.tags.map((t) => t.tag_name);
 			return [
 				...(this.$resources.availableTags.data || [])
-					.filter(t => !docTags.includes(t.tag))
-					.map(t => ({
+					.filter((t) => !docTags.includes(t.tag))
+					.map((t) => ({
 						label: t.tag || 'No label',
-						value: t.tag
-					}))
+						value: t.tag,
+					})),
 			];
-		}
+		},
 	},
 	methods: {
 		addTag() {
@@ -76,9 +76,9 @@ export default {
 					return 'Tag added successfully';
 				},
 				loading: 'Adding tag...',
-				error: 'Failed to add tag'
+				error: 'Failed to add tag',
 			});
-		}
-	}
+		},
+	},
 };
 </script>

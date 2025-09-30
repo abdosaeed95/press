@@ -14,6 +14,6 @@
 export default {
 	name: 'PlanChangeSuccessful',
 	props: ['currentPlan', 'selectedPlan', 'step'],
-	emits: ['update:step']
+	emits: ['update:step'],
 };
 </script>

@@ -73,19 +73,19 @@ export default {
 			return {
 				type: 'document',
 				doctype: 'Payout Order',
-				name: this.payoutId
+				name: this.payoutId,
 			};
-		}
+		},
 	},
 	computed: {
 		doc() {
 			return this.$resources.invoice.doc;
-		}
+		},
 	},
 	methods: {
 		formatCurrency(value, currency) {
 			return this.$format.currency(value, currency);
-		}
-	}
+		},
+	},
 };
 </script>

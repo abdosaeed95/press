@@ -5,7 +5,7 @@ const routes = [
 	{
 		path: '/',
 		name: 'Home',
-		component: Home
+		component: Home,
 	},
 	{
 		path: '/checkout/:secretKey',
@@ -13,24 +13,24 @@ const routes = [
 		component: () => import('../views/checkout/Checkout.vue'),
 		props: true,
 		meta: {
-			isLoginPage: true
-		}
+			isLoginPage: true,
+		},
 	},
 	{
 		path: '/login',
 		name: 'Login',
 		component: () => import('../views/auth/Auth.vue'),
 		meta: {
-			isLoginPage: true
-		}
+			isLoginPage: true,
+		},
 	},
 	{
 		path: '/signup',
 		name: 'Signup',
 		component: () => import('../views/auth/Auth.vue'),
 		meta: {
-			isLoginPage: true
-		}
+			isLoginPage: true,
+		},
 	},
 	{
 		path: '/setup-account/:requestKey/:joinRequest?',
@@ -38,8 +38,8 @@ const routes = [
 		component: () => import('../views/auth/SetupAccount.vue'),
 		props: true,
 		meta: {
-			isLoginPage: true
-		}
+			isLoginPage: true,
+		},
 	},
 	{
 		path: '/reset-password/:requestKey',
@@ -47,39 +47,39 @@ const routes = [
 		component: () => import('../views/auth/ResetPassword.vue'),
 		props: true,
 		meta: {
-			isLoginPage: true
-		}
+			isLoginPage: true,
+		},
 	},
 	{
 		path: '/impersonate/:team',
 		name: 'Impersonate Team',
 		component: () => import('../views/auth/ImpersonateTeam.vue'),
-		props: true
+		props: true,
 	},
 	{
 		path: '/notifications',
 		name: 'Notifications',
-		component: () => import('../views/notifications/Notifications.vue')
+		component: () => import('../views/notifications/Notifications.vue'),
 	},
 	{
 		path: '/groups',
 		name: 'BenchesScreen',
-		component: () => import('../views/bench/Benches.vue')
+		component: () => import('../views/bench/Benches.vue'),
 	},
 	{
 		path: '/groups/new/:saas_app?',
 		name: 'NewBench',
 		meta: {
-			isSaasPage: true
+			isSaasPage: true,
 		},
 		component: () => import('../views/bench/NewBench.vue'),
-		props: true
+		props: true,
 	},
 	{
 		path: '/servers/:server/bench/new',
 		name: 'NewServerBench',
 		component: () => import('../views/bench/NewBench.vue'),
-		props: true
+		props: true,
 	},
 	{
 		path: '/groups/:benchName',
@@ -87,7 +87,7 @@ const routes = [
 		component: () => import('../views/bench/Bench.vue'),
 		props: true,
 		meta: {
-			isSaasPage: true
+			isSaasPage: true,
 		},
 		redirect: { name: 'BenchSiteList' },
 		children: [
@@ -95,70 +95,70 @@ const routes = [
 				name: 'BenchSiteList',
 				path: 'sites',
 				component: () => import('../views/bench/BenchSites.vue'),
-				props: true
+				props: true,
 			},
 			{
 				path: 'apps',
 				component: () => import('../views/bench/BenchApps.vue'),
-				props: true
+				props: true,
 			},
 			{
 				path: 'bench-config',
 				component: () => import('../views/bench/BenchConfig.vue'),
-				props: true
+				props: true,
 			},
 			{
 				name: 'BenchDeploys',
 				path: 'deploys/:candidateName?',
 				component: () => import('../views/bench/BenchDeploys.vue'),
-				props: true
+				props: true,
 			},
 			{
 				path: 'logs/:instanceName/:logName?',
 				component: () => import('../views/bench/BenchLogs.vue'),
-				props: true
+				props: true,
 			},
 			{
 				name: 'BenchJobs',
 				path: 'jobs/:jobName?',
 				component: () => import('../views/bench/BenchJobs.vue'),
-				props: true
+				props: true,
 			},
 			{
 				path: 'settings',
 				component: () => import('../views/bench/BenchSettings.vue'),
-				props: true
-			}
-		]
+				props: true,
+			},
+		],
 	},
 	{
 		path: '/groups/:benchName/apps/new',
 		name: 'NewBenchApp',
 		component: () => import('../views/bench/NewBenchApp.vue'),
-		props: true
+		props: true,
 	},
 	{
 		path: '/sites',
 		name: 'Sites',
-		component: () => import('../views/site/Sites.vue')
+		component: () => import('../views/site/Sites.vue'),
 	},
 	{
 		path: '/:bench/sites',
 		name: 'BenchSites',
 		component: () => import('../views/site/Sites.vue'),
-		props: true
+		props: true,
 	},
 	{
 		path: '/sites/new',
 		name: 'NewSite',
 		component: () => import('../views/site/NewSite.vue'),
-		props: true
+		props: true,
 	},
 	{
 		path: '/:bench/new',
 		name: 'NewBenchSite',
 		component: () => import('../views/site/NewSite.vue'),
-		props: true
+		props: true,
 	},
 	{
 		path: '/sites/:siteName',
@@ -169,54 +169,54 @@ const routes = [
 			{
 				name: 'SiteOverview',
 				path: 'overview',
-				component: () => import('../views/site/SiteOverview.vue')
+				component: () => import('../views/site/SiteOverview.vue'),
 			},
 			{
 				name: 'SiteAppsAndSubscriptions',
 				path: 'apps',
 				component: () => import('../views/site/SiteAppsAndSubscriptions.vue'),
-				props: true
+				props: true,
 			},
 			{
 				path: 'installing',
-				component: () => import('../views/site/SiteInstalling.vue')
+				component: () => import('../views/site/SiteInstalling.vue'),
 			},
 			{
 				path: 'analytics',
 				component: () => import('../views/site/SiteCharts.vue'),
-				props: true
+				props: true,
 			},
 			{
 				path: 'database',
-				component: () => import('../views/site/SiteDatabase.vue')
+				component: () => import('../views/site/SiteDatabase.vue'),
 			},
 			{
 				path: 'site-config',
-				component: () => import('../views/site/SiteConfig.vue')
+				component: () => import('../views/site/SiteConfig.vue'),
 			},
 			{
 				path: 'settings',
-				component: () => import('../views/site/SiteSettings.vue')
+				component: () => import('../views/site/SiteSettings.vue'),
 			},
 			{
 				path: 'console',
-				component: () => import('../views/site/SiteConsole.vue')
+				component: () => import('../views/site/SiteConsole.vue'),
 			},
 			{
 				name: 'SiteJobs',
 				path: 'jobs/:jobName?',
 				component: () => import('../views/site/SiteJobs.vue'),
-				props: true
+				props: true,
 			},
 			{
 				path: 'logs/:logName?',
 				component: () => import('../views/site/SiteLogs.vue'),
-				props: true
+				props: true,
 			},
 			{
 				path: 'auto-update',
 				component: () => import('../views/site/SiteAutoUpdate.vue'),
-				props: true
+				props: true,
 			},
 			{
 				path: 'monitor',
@@ -227,46 +227,46 @@ const routes = [
 						name: 'SiteRequestLogs',
 						path: 'request-logs',
 						component: () => import('../views/site/SiteRequestLogs.vue'),
-						props: true
+						props: true,
 					},
 					{
 						name: 'SiteBinaryLogs',
 						path: 'binary-logs',
 						component: () => import('../views/site/SiteBinaryLogs.vue'),
-						props: true
+						props: true,
 					},
 					{
 						name: 'MariaDBProcessList',
 						path: 'mariadb-process-list',
 						component: () => import('../views/site/SiteMariaDBProcessList.vue'),
-						props: true
+						props: true,
 					},
 					{
 						name: 'SiteMariaDBSlowQueries',
 						path: 'mariadb-slow-queries',
 						component: () => import('../views/site/SiteMariaDBSlowQueries.vue'),
-						props: true
+						props: true,
 					},
 					{
 						name: 'SiteDeadlockReport',
 						path: 'deadlock-report',
 						component: () => import('../views/site/SiteDeadlockReport.vue'),
-						props: true
-					}
-				]
-			}
-		]
+						props: true,
+					},
+				],
+			},
+		],
 	},
 	{
 		path: '/servers',
 		name: 'Servers',
-		component: () => import('../views/server/Servers.vue')
+		component: () => import('../views/server/Servers.vue'),
 	},
 	{
 		path: '/servers/new',
 		name: 'NewServer',
 		component: () => import('../views/server/NewServer.vue'),
-		props: true
+		props: true,
 	},
 	{
 		path: '/servers/:serverName',
@@ -278,57 +278,57 @@ const routes = [
 				name: 'ServerOverview',
 				path: 'overview',
 				component: () => import('../views/server/ServerOverview.vue'),
-				props: true
+				props: true,
 			},
 			{
 				name: 'ServerAnalytics',
 				path: 'analytics',
 				component: () => import('../views/server/ServerAnalytics.vue'),
-				props: true
+				props: true,
 			},
 			{
 				name: 'ServerBenches',
 				path: 'groups',
 				component: () => import('../views/server/ServerBenches.vue'),
-				props: true
+				props: true,
 			},
 			{
 				name: 'ServerJobs',
 				path: 'jobs/:jobName?',
 				component: () => import('../views/server/ServerJobs.vue'),
-				props: true
+				props: true,
 			},
 			{
 				name: 'ServerPlays',
 				path: 'plays/:playName?',
 				component: () => import('../views/server/ServerPlays.vue'),
-				props: true
+				props: true,
 			},
 			{
 				name: 'ServerInstall',
 				path: 'install',
 				component: () => import('../views/server/ServerInstall.vue'),
-				props: true
+				props: true,
 			},
 			{
 				name: 'ServerSettings',
 				path: 'settings',
 				component: () => import('../views/server/ServerSettings.vue'),
-				props: true
-			}
-		]
+				props: true,
+			},
+		],
 	},
 	{
 		name: 'New SelfHosted Server',
 		path: '/selfhosted/new',
 		component: () => import('../views/server/NewSelfHostedServer.vue'),
-		props: true
+		props: true,
 	},
 	{
 		path: '/install-app/:marketplaceApp',
 		name: 'InstallMarketplaceApp',
 		component: () => import('@/views/marketplace/InstallMarketplaceApp.vue'),
-		props: true
+		props: true,
 	},
 	{
 		path: '/marketplace',
@@ -338,24 +338,24 @@ const routes = [
 			{
 				path: 'publisher-profile',
 				component: () =>
-					import('../views/marketplace/MarketplacePublisherProfile.vue')
+					import('../views/marketplace/MarketplacePublisherProfile.vue'),
 			},
 			{
 				path: 'apps',
-				component: () => import('../views/marketplace/MarketplaceApps.vue')
+				component: () => import('../views/marketplace/MarketplaceApps.vue'),
 			},
 			{
 				path: 'payouts/:payoutOrderName?',
 				component: () => import('../views/marketplace/MarketplacePayouts.vue'),
-				props: true
-			}
-		]
+				props: true,
+			},
+		],
 	},
 	{
 		path: '/marketplace/apps/new',
 		name: 'NewMarketplaceApp',
 		component: () => import('../views/marketplace/NewMarketplaceApp.vue'),
-		props: true
+		props: true,
 	},
 	{
 		path: '/marketplace/apps/:appName',
@@ -367,51 +367,51 @@ const routes = [
 				name: 'MarketplaceAppOverview',
 				path: 'overview',
 				component: () =>
-					import('../views/marketplace/MarketplaceAppOverview.vue')
+					import('../views/marketplace/MarketplaceAppOverview.vue'),
 			},
 			{
 				name: 'MarketplaceAppReview',
 				path: 'review',
 				component: () =>
 					import('../views/marketplace/MarketplaceAppReview.vue'),
-				props: true
+				props: true,
 			},
 			{
 				name: 'MarketplaceAppAnalytics',
 				path: 'analytics',
 				component: () =>
-					import('../views/marketplace/MarketplaceAppAnalytics.vue')
+					import('../views/marketplace/MarketplaceAppAnalytics.vue'),
 			},
 			{
 				name: 'MarketplaceAppDeployment',
 				path: 'releases',
 				component: () =>
-					import('../views/marketplace/MarketplaceAppDeployment.vue')
+					import('../views/marketplace/MarketplaceAppDeployment.vue'),
 			},
 			{
 				name: 'MarketplaceAppSubscriptions',
 				path: 'subscriptions',
 				component: () =>
 					import('../views/marketplace/MarketplaceAppSubscriptions.vue'),
-				props: true
+				props: true,
 			},
 			{
 				name: 'MarketplaceAppPricing',
 				path: 'pricing',
 				component: () =>
-					import('../views/marketplace/MarketplaceAppPricing.vue')
-			}
-		]
+					import('../views/marketplace/MarketplaceAppPricing.vue'),
+			},
+		],
 	},
 	{
 		path: '/spaces',
 		name: 'Spaces',
-		component: () => import('../views/spaces/Spaces.vue')
+		component: () => import('../views/spaces/Spaces.vue'),
 	},
 	{
 		path: '/codeservers/new',
 		name: 'NewCodeServer',
-		component: () => import('../views/spaces/NewCodeServer.vue')
+		component: () => import('../views/spaces/NewCodeServer.vue'),
 	},
 	{
 		path: '/codeservers/:serverName',
@@ -422,14 +422,14 @@ const routes = [
 			{
 				name: 'CodeServerOverview',
 				path: 'overview',
-				component: () => import('../views/spaces/CodeServerOverview.vue')
+				component: () => import('../views/spaces/CodeServerOverview.vue'),
 			},
 			{
 				path: 'jobs/:jobName?',
 				component: () => import('../views/spaces/CodeServerJobs.vue'),
-				props: true
-			}
-		]
+				props: true,
+			},
+		],
 	},
 	{
 		path: '/setup-site/:product',
@@ -437,8 +437,8 @@ const routes = [
 		component: () => import('../views/site/AppSiteSetup.vue'),
 		props: true,
 		meta: {
-			hideSidebar: true
-		}
+			hideSidebar: true,
+		},
 	},
 	{
 		path: '/subscription/:site?',
@@ -446,8 +446,8 @@ const routes = [
 		component: () => import('../views/checkout/Subscription.vue'),
 		props: true,
 		meta: {
-			hideSidebar: true
-		}
+			hideSidebar: true,
+		},
 	},
 	{
 		path: '/billing/:invoiceName?',
@@ -459,26 +459,26 @@ const routes = [
 			{
 				name: 'BillingOverview',
 				path: 'overview',
-				component: () => import('../views/billing/BillingOverview.vue')
+				component: () => import('../views/billing/BillingOverview.vue'),
 			},
 			{
 				name: 'Payment Methods',
 				path: 'payment',
-				component: () => import('../views/billing/PaymentMethods.vue')
+				component: () => import('../views/billing/PaymentMethods.vue'),
 			},
 			{
 				name: 'Invoices',
 				path: 'invoices',
 				props: true,
-				component: () => import('../views/billing/AccountBillingPayments.vue')
+				component: () => import('../views/billing/AccountBillingPayments.vue'),
 			},
 			{
 				name: 'Credit Balance',
 				path: 'credit-balance',
 				component: () =>
-					import('../views/billing/AccountBillingCreditBalance.vue')
-			}
-		]
+					import('../views/billing/AccountBillingCreditBalance.vue'),
+			},
+		],
 	},
 	{
 		path: '/settings',
@@ -489,29 +489,29 @@ const routes = [
 			{
 				name: 'ProfileSettings',
 				path: 'profile',
-				component: () => import('../views/settings/ProfileSettings.vue')
+				component: () => import('../views/settings/ProfileSettings.vue'),
 			},
 			{
 				name: 'TeamSettings',
 				path: 'team',
-				component: () => import('../views/settings/TeamSettings.vue')
+				component: () => import('../views/settings/TeamSettings.vue'),
 			},
 			{
 				name: 'DeveloperSettings',
 				path: 'developer',
-				component: () => import('../views/settings/DeveloperSettings.vue')
+				component: () => import('../views/settings/DeveloperSettings.vue'),
 			},
 			{
 				name: 'PartnerSettings',
 				path: 'partner',
-				component: () => import('../views/settings/PartnerSettings.vue')
-			}
-		]
+				component: () => import('../views/settings/PartnerSettings.vue'),
+			},
+		],
 	},
 	{
 		path: '/security',
 		name: 'Security',
-		component: () => import('../views/security/Servers.vue')
+		component: () => import('../views/security/Servers.vue'),
 	},
 	{
 		path: '/security/:serverName',
@@ -523,44 +523,44 @@ const routes = [
 				name: 'SecurityOverview',
 				path: 'overview',
 				component: () => import('../views/security/SecurityOverview.vue'),
-				props: true
+				props: true,
 			},
 			{
 				name: 'SecurityUpdates',
 				path: 'security_update/:updateId?',
 				component: () => import('../views/security/SecurityUpdates.vue'),
-				props: true
+				props: true,
 			},
 			{
 				name: 'Firewall',
 				path: 'firewall/',
 				// component: () => import('../views/security/SecurityUpdateInfo.vue'),
-				props: true
+				props: true,
 			},
 			{
 				name: 'SSH Session Logs',
 				path: 'ssh_session_logs/:logId?',
 				component: () => import('../views/security/SSHSession.vue'),
-				props: true
+				props: true,
 			},
 			{
 				name: 'Nginx Overview',
 				path: 'nginx_overview/',
 				// component: () => import('../views/security/SecurityUpdateInfo.vue'),
-				props: true
-			}
-		]
+				props: true,
+			},
+		],
 	},
 	{
 		name: 'NotFound',
 		path: '/:pathMatch(.*)*',
-		component: () => import('../views/general/404.vue')
-	}
+		component: () => import('../views/general/404.vue'),
+	},
 ];
 
 const router = createRouter({
 	history: createWebHistory('/dashboard-old/'),
-	routes
+	routes,
 });
 
 export default router;

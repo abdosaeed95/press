@@ -4,7 +4,7 @@
 		class="flex cursor-pointer select-none items-center rounded px-2 py-1.5 text-gray-800 transition hover:bg-gray-100"
 		:class="[
 			item.disabled ? 'pointer-events-none opacity-50' : '',
-			$attrs.class
+			$attrs.class,
 		]"
 	>
 		<div class="flex w-full items-center space-x-2">
@@ -33,8 +33,8 @@ import MobileNavItem from './MobileNavItem.vue';
 let props = defineProps({
 	item: {
 		type: Object,
-		required: true
-	}
+		required: true,
+	},
 });
 
 const isOpened = ref(false);

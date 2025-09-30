@@ -268,7 +268,7 @@ RUN git config --global --add safe.directory /home/frappe/context/apps/{{ app.ap
       && cd /home/frappe/frappe-bench/apps/{{ app.app }}/dashboard && yarn install && NODE_ENV=production yarn run build \
       && bench build --app {{ app.app }} \
       `#stage-apps-Build-{{ app.app }}`
-  
+
   {% else %}
 
   RUN --mount=type=cache,sharing=locked,target=/home/frappe/.cache,uid=1000,gid=1000 \

@@ -53,7 +53,7 @@ export default {
 			validated: false,
 			request: null,
 			response: null,
-			response_status_code: null
+			response_status_code: null,
 		};
 	},
 	resources: {
@@ -62,24 +62,24 @@ export default {
 				url: 'press.api.webhook.attempt',
 				makeParams: () => {
 					return {
-						name: this.$props.id
+						name: this.$props.id,
 					};
 				},
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	computed: {
 		data() {
 			return this.$resources.attempt.data || {};
-		}
+		},
 	},
 	methods: {
 		is_valid_status_code(status_code) {
 			if (!status_code) return false;
 			if (status_code == '0') return false;
 			return true;
-		}
-	}
+		},
+	},
 };
 </script>

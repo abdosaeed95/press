@@ -15,8 +15,8 @@ const restHandlers = [
 		FAKE_BASE_URL + '/api/method/press.api.site.features',
 		(req, res, ctx) => {
 			return res(ctx.status(200), ctx.json({ message: apps }));
-		}
-	)
+		},
+	),
 ];
 
 const server = setupServer(...restHandlers);
@@ -47,6 +47,6 @@ export function setupGlobalConfig(config) {
 	config.global.components = globalComponents;
 	config.global.plugins = [resourceManager, router];
 	config.global.directives = {
-		'on-outside-click': outsideClickDirective
+		'on-outside-click': outsideClickDirective,
 	};
 }

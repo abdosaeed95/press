@@ -14,14 +14,14 @@ import ConfigEditor from '@/components/ConfigEditor.vue';
 export default {
 	name: 'BenchConfig',
 	components: {
-		ConfigEditor
+		ConfigEditor,
 	},
 	props: ['bench'],
 	data() {
 		return {
 			editMode: false,
 			isCommonSiteConfigFormDirty: false,
-			isBenchConfigFormDirty: false
+			isBenchConfigFormDirty: false,
 		};
 	},
 	methods: {
@@ -29,10 +29,10 @@ export default {
 			return {
 				url: 'press.api.bench.bench_config',
 				params: {
-					name: this.bench?.name
+					name: this.bench?.name,
 				},
 				auto: true,
-				initialData: []
+				initialData: [],
 			};
 		},
 		updateBenchConfigMethod(updatedConfig) {
@@ -40,10 +40,10 @@ export default {
 				url: 'press.api.bench.update_config',
 				params: {
 					name: this.bench?.name,
-					config: JSON.stringify(updatedConfig)
-				}
+					config: JSON.stringify(updatedConfig),
+				},
 			};
-		}
-	}
+		},
+	},
 };
 </script>

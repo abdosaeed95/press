@@ -72,9 +72,9 @@
 						{
 							label: 'Add Key',
 							variant: 'solid',
-							onClick: addConfig
-						}
-					]
+							onClick: addConfig,
+						},
+					],
 				}"
 				v-model="showAddConfigKeyDialog"
 			>
@@ -106,7 +106,9 @@
 								'Number',
 								'JSON',
 								'Boolean',
-								chosenStandardConfig?.value !== 'custom_key' ? 'Password' : null
+								chosenStandardConfig?.value !== 'custom_key'
+									? 'Password'
+									: null,
 							]"
 							@change="isDirty = true"
 						/>
@@ -130,14 +132,14 @@ import { Autocomplete } from 'frappe-ui';
 export default {
 	name: 'ConfigEditor',
 	components: {
-		Autocomplete
+		Autocomplete,
 	},
 	props: [
 		'title',
 		'subtitle',
 		'configName',
 		'configData',
-		'updateConfigMethod'
+		'updateConfigMethod',
 	],
 	data() {
 		return {
@@ -146,13 +148,13 @@ export default {
 			showAddConfigKeyDialog: false,
 			chosenStandardConfig: {
 				title: '',
-				key: ''
+				key: '',
 			},
 			newConfig: {
 				key: '',
 				value: '',
-				type: 'String'
-			}
+				type: 'String',
+			},
 		};
 	},
 	resources: {
@@ -168,7 +170,7 @@ export default {
 					return false;
 				}
 			}
-			const updatedConfig = this.$resources.configData.data.map(d => {
+			const updatedConfig = this.$resources.configData.data.map((d) => {
 				const value = d.value;
 				if (!isNaN(value)) d.type = 'Number';
 				else if (isValidJSON(value)) d.type = 'JSON';
@@ -178,19 +180,19 @@ export default {
 				return {
 					key: d.key,
 					value,
-					type: d.type
+					type: d.type,
 				};
 			});
 
 			return {
 				...this.updateConfigMethod(updatedConfig),
 				async validate() {
-					let keys = updatedConfig.map(d => d.key);
+					let keys = updatedConfig.map((d) => d.key);
 					if (keys.length !== [...new Set(keys)].length) {
 						return 'Duplicate key';
 					}
 					this.$resources.validateKeys.submit({
-						keys: JSON.stringify(keys)
+						keys: JSON.stringify(keys),
 					});
 					let invalidKeys = this.$resources.validateKeys.data;
 					if (invalidKeys?.length > 0) {
@@ -215,17 +217,17 @@ export default {
 				onSuccess() {
 					this.isDirty = false;
 					this.$resources.configData.reload();
-				}
+				},
 			};
 		},
 		standardConfigKeys: {
 			url: 'press.api.config.standard_keys',
 			cache: 'standardConfigKeys',
-			auto: true
+			auto: true,
 		},
 		validateKeys: {
-			url: 'press.api.config.is_valid'
-		}
+			url: 'press.api.config.is_valid',
+		},
 	},
 	computed: {
 		configPreview() {
@@ -250,17 +252,17 @@ export default {
 			return [
 				{
 					group: 'Custom',
-					items: [{ label: 'Create a custom key', value: 'custom_key' }]
+					items: [{ label: 'Create a custom key', value: 'custom_key' }],
 				},
 				{
 					group: 'Standard',
-					items: this.$resources.standardConfigKeys.data.map(d => ({
+					items: this.$resources.standardConfigKeys.data.map((d) => ({
 						label: d.title,
-						value: d.key
-					}))
-				}
+						value: d.key,
+					})),
+				},
 			];
-		}
+		},
 	},
 	methods: {
 		configInputProps() {
@@ -269,19 +271,19 @@ export default {
 				Password: 'text',
 				Number: 'number',
 				JSON: 'textarea',
-				Boolean: 'select'
+				Boolean: 'select',
 			}[this.newConfig.type];
 
 			return {
 				type,
-				options: this.newConfig.type === 'Boolean' ? ['1', '0'] : null
+				options: this.newConfig.type === 'Boolean' ? ['1', '0'] : null,
 			};
 		},
 		addConfig() {
 			this.$resources.configData.data.push({
 				key: this.getStandardConfigKey(this.newConfig.key),
 				value: this.newConfig.value,
-				type: this.newConfig.type
+				type: this.newConfig.type,
 			});
 			this.isDirty = true;
 			this.showAddConfigKeyDialog = false;
@@ -292,7 +294,7 @@ export default {
 			} else {
 				this.showCustomKeyInput = false;
 				this.newConfig.type = this.getStandardConfigType(
-					this.chosenStandardConfig?.value
+					this.chosenStandardConfig?.value,
 				);
 			}
 
@@ -308,19 +310,19 @@ export default {
 		},
 		getStandardConfigType(key) {
 			return (
-				this.$resources.standardConfigKeys.data.find(d => d.key === key)
+				this.$resources.standardConfigKeys.data.find((d) => d.key === key)
 					?.type || 'String'
 			);
 		},
 		getStandardConfigKey(key) {
 			return (
-				this.$resources.standardConfigKeys.data.find(d => d.title === key)
+				this.$resources.standardConfigKeys.data.find((d) => d.title === key)
 					?.key || key
 			);
 		},
 		getStandardConfigTitle(key) {
 			return (
-				this.$resources.standardConfigKeys.data.find(d => d.key === key)
+				this.$resources.standardConfigKeys.data.find((d) => d.key === key)
 					?.title || key
 			);
 		},
@@ -335,7 +337,7 @@ export default {
 			} else {
 				this.isDirty = false;
 			}
-		}
-	}
+		},
+	},
 };
 </script>

@@ -102,7 +102,7 @@
 					type="checkbox"
 					label="I am okay if my details are shared with local partner"
 					@change="
-						val => $emit('update:shareDetailsConsent', val.target.checked)
+						(val) => $emit('update:shareDetailsConsent', val.target.checked)
 					"
 				/>
 			</div>
@@ -116,14 +116,14 @@ import RichSelect from '@/components/RichSelect.vue';
 export default {
 	components: {
 		SelectableCard,
-		RichSelect
+		RichSelect,
 	},
 	name: 'Apps',
 	emits: [
 		'update:selectedApps',
 		'update:selectedGroup',
 		'update:selectedRegion',
-		'update:shareDetailsConsent'
+		'update:shareDetailsConsent',
 	],
 	props: [
 		'selectedApps',
@@ -131,49 +131,49 @@ export default {
 		'privateBench',
 		'selectedRegion',
 		'shareDetailsConsent',
-		'bench'
+		'bench',
 	],
 	data() {
 		return {
 			selectedVersion: null,
-			version: null
+			version: null,
 		};
 	},
 	computed: {
 		publicApps() {
 			return this.apps
-				.filter(app => app.public)
-				.map(app => {
+				.filter((app) => app.public)
+				.map((app) => {
 					app.marketplace = this.marketplaceApps[app.app] || null;
 					return app;
 				});
 		},
 		privateApps() {
-			return this.apps.filter(app => !app.public);
+			return this.apps.filter((app) => !app.public);
 		},
 		apps() {
 			let group = this.getSelectedGroup();
 			return group ? group.apps : [];
 		},
 		versionOptions() {
-			return this.versions.map(version => version.name);
+			return this.versions.map((version) => version.name);
 		},
 		regionOptions() {
 			let group = this.getSelectedGroup();
 			return group
-				? group.clusters.map(d => ({
+				? group.clusters.map((d) => ({
 						label: d.title,
 						value: d.name,
 						image: d.image,
-						beta: d.beta
-				  }))
+						beta: d.beta,
+					}))
 				: [];
-		}
+		},
 	},
 	watch: {
 		selectedVersion(value) {
 			if (!this.privateBench) {
-				let selectedVersion = this.versions.find(v => v.name == value);
+				let selectedVersion = this.versions.find((v) => v.name == value);
 				this.$emit('update:selectedGroup', selectedVersion.group.name);
 			}
 		},
@@ -182,7 +182,7 @@ export default {
 			if (this.regionOptions.length > 0) {
 				this.$emit('update:selectedRegion', this.regionOptions[0].value);
 			}
-		}
+		},
 	},
 	methods: {
 		toggleApp(app) {
@@ -192,7 +192,7 @@ export default {
 			} else {
 				this.$emit(
 					'update:selectedApps',
-					this.selectedApps.filter(a => a !== app.app)
+					this.selectedApps.filter((a) => a !== app.app),
 				);
 			}
 		},
@@ -201,10 +201,10 @@ export default {
 				return null;
 			}
 			let selectedVersion = this.versions.find(
-				v => v.name == this.selectedVersion
+				(v) => v.name == this.selectedVersion,
 			);
 			return selectedVersion.group;
-		}
+		},
 	},
 	resources: {
 		versions() {
@@ -212,10 +212,10 @@ export default {
 				url: 'press.api.site.get_new_site_options',
 				auto: true,
 				params: {
-					group: this.privateBench ? this.bench : ''
+					group: this.privateBench ? this.bench : '',
 				},
 				onSuccess(r) {
-					this.versions = r.versions.filter(v => {
+					this.versions = r.versions.filter((v) => {
 						return v.group;
 					});
 					this.marketplaceApps = r.marketplace_apps;
@@ -223,7 +223,7 @@ export default {
 					// from mounted
 					if (this.privateBench) {
 						this.selectedVersion = this.versions.filter(
-							v => v.group.name === this.bench
+							(v) => v.group.name === this.bench,
 						)[0].name;
 						this.$emit('update:selectedApps', ['frappe']);
 					} else {
@@ -233,9 +233,9 @@ export default {
 					if (this.regionOptions.length == 1) {
 						this.$emit('update:selectedRegion', this.regionOptions[0].value);
 					}
-				}
+				},
 			};
-		}
-	}
+		},
+	},
 };
 </script>

@@ -7,12 +7,12 @@ import ClickToCopyField from '@/components/ClickToCopyField.vue';
 let clipboardData = '';
 Object.assign(window.navigator, {
 	clipboard: {
-		writeText: vi.fn(data => {
+		writeText: vi.fn((data) => {
 			clipboardData = data;
 			return Promise.resolve();
 		}),
-		readText: vi.fn(() => clipboardData)
-	}
+		readText: vi.fn(() => clipboardData),
+	},
 });
 
 describe('ClickToCopyField Component', () => {
@@ -21,8 +21,8 @@ describe('ClickToCopyField Component', () => {
 
 		const wrapper = mount(ClickToCopyField, {
 			props: {
-				textContent: 'Test'
-			}
+				textContent: 'Test',
+			},
 		});
 
 		expect(wrapper.html()).contains('Test');
@@ -34,13 +34,13 @@ describe('ClickToCopyField Component', () => {
 
 		const wrapper = mount(ClickToCopyField, {
 			props: {
-				textContent: 'Test'
+				textContent: 'Test',
 			},
 			global: {
 				mocks: {
-					$notify
-				}
-			}
+					$notify,
+				},
+			},
 		});
 
 		wrapper.find('button').isVisible();

@@ -26,7 +26,7 @@
 <script>
 // https://github.com/eggert/tz/blob/main/backward add more if required.
 const TZ_BACKWARD_COMPATBILITY_MAP = {
-	'Asia/Calcutta': 'Asia/Kolkata'
+	'Asia/Calcutta': 'Asia/Kolkata',
 };
 
 export default {
@@ -36,7 +36,7 @@ export default {
 	data() {
 		return {
 			requiredFieldNotSet: [],
-			guessedTimezone: ''
+			guessedTimezone: '',
 		};
 	},
 	mounted() {
@@ -46,7 +46,7 @@ export default {
 		fields: {
 			handler(new_fields) {
 				let timezoneFields = new_fields.filter(
-					f => f.fieldtype === 'Select' && f.fieldname.endsWith('_tz')
+					(f) => f.fieldtype === 'Select' && f.fieldname.endsWith('_tz'),
 				);
 				for (let field of timezoneFields) {
 					if (!field.options) {
@@ -60,8 +60,8 @@ export default {
 					}
 				}
 			},
-			deep: true
-		}
+			deep: true,
+		},
 	},
 	methods: {
 		onChange(value, field) {
@@ -70,7 +70,7 @@ export default {
 		},
 		updateValue(fieldname, value) {
 			let values = Object.assign({}, this.modelValue, {
-				[fieldname]: value
+				[fieldname]: value,
 			});
 			this.$emit('update:modelValue', values);
 		},
@@ -81,7 +81,7 @@ export default {
 					return false;
 				} else {
 					this.requiredFieldNotSet = this.requiredFieldNotSet.filter(
-						f => f !== field
+						(f) => f !== field,
 					);
 				}
 			}
@@ -98,8 +98,8 @@ export default {
 				required: field.required || false,
 				rows: field.rows,
 				placeholder: field.placeholder,
-				'onUpdate:modelValue': value => this.onChange(value, field),
-				onBlur: e => this.checkRequired(field, e)
+				'onUpdate:modelValue': (value) => this.onChange(value, field),
+				onBlur: (e) => this.checkRequired(field, e),
 			};
 		},
 		getInputType(field) {
@@ -110,7 +110,7 @@ export default {
 				Check: 'checkbox',
 				Password: 'password',
 				Text: 'textarea',
-				Date: 'date'
+				Date: 'date',
 			}[field.fieldtype || 'Data'];
 		},
 		guessTimezone() {
@@ -124,7 +124,7 @@ export default {
 				console.error("Couldn't guess timezone", e);
 				return null;
 			}
-		}
-	}
+		},
+	},
 };
 </script>

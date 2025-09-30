@@ -59,21 +59,21 @@ export default {
 	inject: ['viewportWidth'],
 	components: {
 		CardDetails,
-		InfoSection
+		InfoSection,
 	},
 	resources: {
 		secUpdateInfo() {
 			return {
 				url: 'press.api.security.get_security_update_details',
 				params: { update_id: this.updateId },
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	computed: {
 		secUpdateInfo() {
 			return this.$resources.secUpdateInfo.data;
-		}
+		},
 	},
 	methods: {
 		getColor(priority) {
@@ -90,7 +90,7 @@ export default {
 		},
 		redirectToUbuntuPage(packageName) {
 			window.open(`https://launchpad.net/ubuntu/+source/${packageName}`);
-		}
-	}
+		},
+	},
 };
 </script>

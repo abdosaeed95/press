@@ -8,7 +8,7 @@
 			<Button
 				v-for="tab in [
 					{ name: 'Upload Backups', key: 'backup' },
-					{ name: 'Migrate from Site URL', key: 'siteUrl' }
+					{ name: 'Migrate from Site URL', key: 'siteUrl' },
 				]"
 				:key="tab.key"
 				:type="restoreFrom === tab.key ? 'primary' : 'secondary'"
@@ -41,7 +41,7 @@
 			<BackupFilesUploader
 				class="mt-6"
 				:backupFiles="selectedFiles"
-				@update:backupFiles="files => $emit('update:selectedFiles', files)"
+				@update:backupFiles="(files) => $emit('update:selectedFiles', files)"
 			/>
 		</div>
 		<div v-if="restoreFrom === 'siteUrl'">
@@ -76,18 +76,18 @@
 						{
 							label: 'Site URL',
 							fieldtype: 'Data',
-							fieldname: 'url'
+							fieldname: 'url',
 						},
 						{
 							label: 'Email',
 							fieldtype: 'Data',
-							fieldname: 'email'
+							fieldname: 'email',
 						},
 						{
 							label: 'Password',
 							fieldtype: 'Password',
-							fieldname: 'password'
-						}
+							fieldname: 'password',
+						},
 					]"
 					v-model="frappeSite"
 				/>
@@ -148,7 +148,7 @@ export default {
 	components: {
 		FileUploader,
 		Form,
-		BackupFilesUploader
+		BackupFilesUploader,
 	},
 	data() {
 		return {
@@ -159,42 +159,42 @@ export default {
 					type: 'database',
 					ext: 'application/x-gzip',
 					title: 'Database Backup',
-					file: null
+					file: null,
 				},
 				{
 					icon: 'file',
 					type: 'public',
 					ext: 'application/x-tar',
 					title: 'Public Files',
-					file: null
+					file: null,
 				},
 				{
 					icon: 'file-minus',
 					type: 'private',
 					ext: 'application/x-tar',
 					title: 'Private Files',
-					file: null
+					file: null,
 				},
 				{
 					icon: 'file-minus',
 					type: 'config',
 					ext: 'application/json',
 					title: 'Config Files',
-					file: null
-				}
+					file: null,
+				},
 			],
 			uploadedFiles: {
 				database: null,
 				public: null,
-				private: null
+				private: null,
 			},
 			frappeSite: {
 				url: '',
 				email: '',
-				password: ''
+				password: '',
 			},
 			errorMessage: null,
-			wantToSkipFailingPatches: false
+			wantToSkipFailingPatches: false,
 		};
 	},
 	resources: {
@@ -205,7 +205,7 @@ export default {
 				params: {
 					url,
 					email,
-					password
+					password,
 				},
 				validate() {
 					let { url, email, password } = this.frappeSite;
@@ -219,9 +219,9 @@ export default {
 						selectedFiles[file.type] = file.remote_file;
 					}
 					this.$emit('update:selectedFiles', selectedFiles);
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		showAlert() {
@@ -232,14 +232,14 @@ export default {
 				this.$resources.getBackupLinks.error &&
 				this.$resources.getBackupLinks.error.search(word) !== -1
 			);
-		}
+		},
 	},
 	computed: {
 		fetchedBackupFiles() {
 			if (!this.$resources.getBackupLinks.data) {
 				return [];
 			}
-			return this.$resources.getBackupLinks.data.map(file => {
+			return this.$resources.getBackupLinks.data.map((file) => {
 				// Convert "20200820_124804-erpnextcom-private-files.tar" to "20200820T124804"
 				// so DateTime can parse it
 				let timestamp_string = file.file_name
@@ -248,20 +248,20 @@ export default {
 					.join('T');
 
 				let formatted = DateTime.fromISO(timestamp_string).toLocaleString(
-					DateTime.DATETIME_FULL
+					DateTime.DATETIME_FULL,
 				);
 
 				return {
 					...file,
-					timestamp: formatted
+					timestamp: formatted,
 				};
 			});
-		}
+		},
 	},
 	watch: {
 		wantToSkipFailingPatches(value) {
 			this.$emit('update:skipFailingPatches', value);
-		}
-	}
+		},
+	},
 };
 </script>

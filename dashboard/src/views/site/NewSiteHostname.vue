@@ -39,21 +39,21 @@ export default {
 	data() {
 		return {
 			subdomainAvailable: false,
-			errorMessage: null
+			errorMessage: null,
 		};
 	},
 	resources: {
 		domain() {
 			return {
 				url: 'press.api.site.get_domain',
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	computed: {
 		domain() {
 			return this.$resources.domain.data;
-		}
+		},
 	},
 	methods: {
 		async subdomainChange(e) {
@@ -65,7 +65,7 @@ export default {
 			if (!error) {
 				let subdomainTaken = await this.$call('press.api.site.exists', {
 					subdomain,
-					domain: this.domain
+					domain: this.domain,
 				});
 				if (subdomainTaken) {
 					error = `${subdomain}.${this.domain} already exists.`;
@@ -78,7 +78,7 @@ export default {
 		},
 		validateSubdomain(subdomain) {
 			return validateSubdomain(subdomain);
-		}
-	}
+		},
+	},
 };
 </script>

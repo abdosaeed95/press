@@ -12,17 +12,17 @@
 					onClick: () =>
 						groupDocResource.addRegion.submit(
 							{
-								region: selectedRegion.value
+								region: selectedRegion.value,
 							},
 							{
 								onSuccess: () => {
 									this.$emit('success');
 									this.showDialog = false;
-								}
-							}
-						)
-				}
-			]
+								},
+							},
+						),
+				},
+			],
 		}"
 	>
 		<template #body-content>
@@ -56,30 +56,30 @@ export default {
 		return {
 			showDialog: true,
 			selectedRegion: null,
-			groupDocResource: getCachedDocumentResource('Release Group', this.group)
+			groupDocResource: getCachedDocumentResource('Release Group', this.group),
 		};
 	},
 	computed: {
 		regionOptions() {
-			return this.$resources.availableRegions.data.map(r => ({
+			return this.$resources.availableRegions.data.map((r) => ({
 				label: r.title || r.name,
 				value: r.name,
 				image: r.image,
-				beta: r.beta
+				beta: r.beta,
 			}));
-		}
+		},
 	},
 	resources: {
 		availableRegions() {
 			return {
 				url: 'press.api.bench.available_regions',
 				params: {
-					name: this.group
+					name: this.group,
 				},
 				auto: true,
-				initialData: []
+				initialData: [],
 			};
-		}
-	}
+		},
+	},
 };
 </script>

@@ -4,16 +4,16 @@ import { createResource } from 'frappe-ui';
 const props = defineProps({
 	payoutOrderName: {
 		type: String,
-		required: true
-	}
+		required: true,
+	},
 });
 
 const payout = createResource({
 	url: 'press.api.marketplace.get_payout_details',
 	auto: true,
 	params: {
-		name: props.payoutOrderName
-	}
+		name: props.payoutOrderName,
+	},
 });
 </script>
 <template>

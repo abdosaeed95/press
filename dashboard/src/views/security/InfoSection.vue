@@ -7,7 +7,7 @@
 						class="grid h-4 w-4 place-items-center rounded-full border"
 						:class="{
 							'border-green-500 bg-green-50': sectionData,
-							'border-gray-500 bg-gray-50': 'Skipped'
+							'border-gray-500 bg-gray-50': 'Skipped',
 						}"
 					>
 						<FeatherIcon
@@ -19,7 +19,7 @@
 							"
 							:class="{
 								'text-green-500': sectionData,
-								'text-gray-500': 'Skipped'
+								'text-gray-500': 'Skipped',
 							}"
 							:stroke-width="3"
 							class="h-3 w-3"
@@ -34,7 +34,7 @@
 			<div
 				class="rounded-md bg-gray-100 px-2 py-2.5 font-mono text-xs text-gray-900 overflow-auto mt-3"
 				:style="{
-					width: viewportWidth < 768 ? 'calc(100vw - 6rem)' : ''
+					width: viewportWidth < 768 ? 'calc(100vw - 6rem)' : '',
 				}"
 			>
 				<div class="max-w-md">
@@ -47,7 +47,7 @@
 <script>
 export default {
 	name: 'InfoSection',
-	props: ['sectionName', 'sectionData', 'defaultOpen']
+	props: ['sectionName', 'sectionData', 'defaultOpen'],
 };
 </script>
 

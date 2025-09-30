@@ -84,12 +84,12 @@ export default {
 	name: 'Login',
 	props: {
 		forgot: {
-			default: false
-		}
+			default: false,
+		},
 	},
 	components: {
 		LoginBox,
-		GoogleIcon
+		GoogleIcon,
 	},
 	data() {
 		return {
@@ -97,7 +97,7 @@ export default {
 			email: null,
 			password: null,
 			errorMessage: null,
-			successMessage: null
+			successMessage: null,
 		};
 	},
 	watch: {
@@ -106,7 +106,7 @@ export default {
 			this.state = null;
 			this.password = null;
 			this.successMessage = null;
-		}
+		},
 	},
 	resources: {
 		login() {
@@ -114,7 +114,7 @@ export default {
 				url: 'login',
 				params: {
 					usr: this.email,
-					pwd: this.password
+					pwd: this.password,
 				},
 				onSuccess(res) {
 					if (res) {
@@ -122,7 +122,7 @@ export default {
 						this.$auth.isLoggedIn = true;
 						return res;
 					}
-				}
+				},
 			};
 		},
 		oauthLogin() {
@@ -136,17 +136,17 @@ export default {
 					notify({
 						title: e,
 						color: 'red',
-						icon: 'x'
+						icon: 'x',
 					});
-				}
+				},
 			};
 		},
 		guestFeatureFlags() {
 			return {
 				url: 'press.api.account.guest_feature_flags',
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	methods: {
 		async loginOrResetPassword() {
@@ -173,7 +173,7 @@ export default {
 		async resetPassword() {
 			await this.$auth.resetPassword(this.email);
 			this.successMessage = true;
-		}
-	}
+		},
+	},
 };
 </script>

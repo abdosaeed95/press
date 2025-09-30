@@ -22,5 +22,5 @@ export default {
 		const handler = instances[index];
 		document.addEventListener('click', handler);
 		instances.splice(index, 1);
-	}
+	},
 };

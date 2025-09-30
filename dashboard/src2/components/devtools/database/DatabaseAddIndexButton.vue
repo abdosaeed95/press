@@ -18,12 +18,12 @@ import { toast } from 'vue-sonner';
 export default {
 	props: {
 		row: { type: Object, required: true },
-		site: { type: String, required: true }
+		site: { type: String, required: true },
 	},
 	data() {
 		return {
 			isJobRunning: false,
-			jobName: null
+			jobName: null,
 		};
 	},
 	resources: {
@@ -38,11 +38,11 @@ export default {
 						method: 'add_database_index',
 						args: {
 							table: this.row['Table'],
-							column: this.row['Column']
-						}
+							column: this.row['Column'],
+						},
 					};
 				},
-				onSuccess: data => {
+				onSuccess: (data) => {
 					if (data?.message) {
 						if (data?.message?.success) {
 							toast.success(data?.message?.message);
@@ -53,9 +53,9 @@ export default {
 						}
 					}
 				},
-				auto: false
+				auto: false,
 			};
-		}
+		},
 	},
 	methods: {
 		addIndex() {
@@ -65,12 +65,12 @@ export default {
 			if (this.jobName) {
 				window.open(
 					this.$router.resolve(
-						`/sites/${this.site}/insights/jobs/${this.jobName}`
+						`/sites/${this.site}/insights/jobs/${this.jobName}`,
 					).href,
-					'_blank'
+					'_blank',
 				);
 			}
-		}
-	}
+		},
+	},
 };
 </script>

@@ -19,7 +19,7 @@ import { shallowRef } from 'vue';
 export default {
 	name: 'SQLCodeEditor',
 	components: {
-		Codemirror
+		Codemirror,
 	},
 	props: ['schema'],
 	emits: ['update:query', 'codeSelected', 'codeUnselected'],
@@ -30,42 +30,42 @@ export default {
 			},
 			set(value) {
 				this.$emit('update:query', value);
-			}
+			},
 		},
 		extensions() {
 			if (!this.schema) {
 				return [
 					sql({
 						dialect: MySQL,
-						upperCaseKeywords: true
+						upperCaseKeywords: true,
 					}),
 					autocompletion({
 						activateOnTyping: true,
 						closeOnBlur: false,
 						maxRenderedOptions: 10,
-						icons: false
-					})
+						icons: false,
+					}),
 				];
 			}
 			return [
 				sql({
 					dialect: MySQL,
 					upperCaseKeywords: true,
-					schema: this.schema
+					schema: this.schema,
 				}),
 				autocompletion({
 					activateOnTyping: true,
 					closeOnBlur: false,
 					maxRenderedOptions: 10,
-					icons: false
-				})
+					icons: false,
+				}),
 			];
-		}
+		},
 	},
 	setup(props, { emit }) {
 		// Codemirror EditorView instance ref
 		const view = shallowRef();
-		const handleReady = payload => {
+		const handleReady = (payload) => {
 			view.value = payload.view;
 			view.value.dom.addEventListener('mouseup', handleSelectionChange);
 		};
@@ -80,7 +80,7 @@ export default {
 			if (!selection.empty) {
 				const selectedText = state.doc.sliceString(
 					selection.from,
-					selection.to
+					selection.to,
 				);
 				if ((selectedText ?? '').trim() === '') {
 					emit('codeUnselected');
@@ -92,9 +92,9 @@ export default {
 			}
 		};
 		return {
-			handleReady
+			handleReady,
 		};
-	}
+	},
 };
 </script>
 <style>

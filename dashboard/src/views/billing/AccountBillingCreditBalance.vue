@@ -35,14 +35,14 @@
 export default {
 	name: 'AccountBillingCreditBalance',
 	resources: {
-		balances: 'press.api.billing.balances'
+		balances: 'press.api.billing.balances',
 	},
 	methods: {
 		formatDate(d) {
 			return this.$date(d.creation).toLocaleString({
 				month: 'long',
 				day: 'numeric',
-				year: 'numeric'
+				year: 'numeric',
 			});
 		},
 		getDescription(d) {
@@ -51,7 +51,7 @@ export default {
 			}
 
 			return d.amount < 0 ? d.type : d.source;
-		}
-	}
+		},
+	},
 };
 </script>

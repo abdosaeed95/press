@@ -32,8 +32,8 @@ let fields = [
 	//},
 	{
 		label: 'Enable security portal',
-		fieldname: 'security_portal_enabled'
-	}
+		fieldname: 'security_portal_enabled',
+	},
 ];
 
 export default {
@@ -48,7 +48,7 @@ export default {
 
 		return {
 			values,
-			fields
+			fields,
 		};
 	},
 	resources: {
@@ -56,20 +56,20 @@ export default {
 			return {
 				url: 'press.api.account.update_feature_flags',
 				params: {
-					values: this.values
+					values: this.values,
 				},
 				onSuccess() {
 					this.$account.fetchAccount();
-				}
+				},
 			};
-		}
+		},
 	},
 	computed: {
 		isDirty() {
 			return Object.keys(this.values).some(
-				key => Number(this.values[key]) !== Number(this.$account.team[key])
+				(key) => Number(this.values[key]) !== Number(this.$account.team[key]),
 			);
-		}
-	}
+		},
+	},
 };
 </script>

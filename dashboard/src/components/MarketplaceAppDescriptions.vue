@@ -20,9 +20,9 @@
 							label: 'Save Changes',
 							variant: 'solid',
 							loading: $resources.updateAppSummary.loading,
-							onClick: () => $resources.updateAppSummary.submit()
-						}
-					]
+							onClick: () => $resources.updateAppSummary.submit(),
+						},
+					],
 				}"
 				v-model="showEditSummaryDialog"
 			>
@@ -60,9 +60,9 @@
 								label: 'Save Changes',
 								variant: 'solid',
 								loading: $resources.updateAppDescription.loading,
-								onClick: () => $resources.updateAppDescription.submit()
-							}
-						]
+								onClick: () => $resources.updateAppDescription.submit(),
+							},
+						],
 					}"
 					:dismissable="true"
 					v-model="showEditDescriptionDialog"
@@ -104,12 +104,12 @@ import { notify } from '@/utils/toast';
 export default {
 	name: 'MarketplaceAppDescriptions',
 	props: {
-		app: Object
+		app: Object,
 	},
 	data() {
 		return {
 			showEditSummaryDialog: false,
-			showEditDescriptionDialog: false
+			showEditDescriptionDialog: false,
 		};
 	},
 	resources: {
@@ -119,12 +119,12 @@ export default {
 				url: 'press.api.marketplace.update_app_summary',
 				params: {
 					name,
-					summary: description
+					summary: description,
 				},
 				onSuccess() {
 					this.notifySuccess('App Summary Updated!');
 					this.showEditSummaryDialog = false;
-				}
+				},
 			};
 		},
 		updateAppDescription() {
@@ -133,12 +133,12 @@ export default {
 				url: 'press.api.marketplace.update_app_description',
 				params: {
 					name,
-					description: long_description
+					description: long_description,
 				},
 				onSuccess() {
 					this.notifySuccess('App Description Updated!');
 					this.showEditDescriptionDialog = false;
-				}
+				},
 			};
 		},
 		fetchReadme() {
@@ -150,18 +150,18 @@ export default {
 						title: 'Successfully fetched latest readme',
 						message: 'Long description updated!',
 						icon: 'check',
-						color: 'green'
+						color: 'green',
 					});
 				},
 				onError(e) {
 					notify({
 						title: e,
 						color: 'red',
-						icon: 'x'
+						icon: 'x',
 					});
-				}
+				},
 			};
-		}
+		},
 	},
 	computed: {
 		descriptionHTML() {
@@ -169,16 +169,16 @@ export default {
 				return MarkdownIt().render(this.app.long_description);
 			}
 			return '';
-		}
+		},
 	},
 	methods: {
 		notifySuccess(message) {
 			notify({
 				title: message,
 				icon: 'check',
-				color: 'green'
+				color: 'green',
 			});
-		}
-	}
+		},
+	},
 };
 </script>

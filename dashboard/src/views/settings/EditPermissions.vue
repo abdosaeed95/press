@@ -4,7 +4,7 @@
 			title: `Editing permissions for ${
 				type === 'group' ? 'group' : 'member'
 			} ${name}`,
-			size: '3xl'
+			size: '3xl',
 		}"
 		:modelValue="show"
 		@after-leave="
@@ -17,7 +17,7 @@
 			<Input
 				class="mb-2"
 				placeholder="Search"
-				v-on:input="e => updateSearchTerm(e)"
+				v-on:input="(e) => updateSearchTerm(e)"
 			/>
 			<LoadingText v-if="$resources.options.loading" />
 			<div v-else class="flex flex-col max-h-96 overflow-auto">
@@ -44,7 +44,7 @@
 						class="pt-4"
 						type="checkbox"
 						label="Select All"
-						@change="val => toggleSelectAll(option, index, val)"
+						@change="(val) => toggleSelectAll(option, index, val)"
 					/>
 					<div class="grid grid-cols-4 gap-4 py-4">
 						<Input
@@ -82,7 +82,7 @@ export default {
 	data() {
 		return {
 			updated: {},
-			filteredList: []
+			filteredList: [],
 		};
 	},
 	resources: {
@@ -92,15 +92,15 @@ export default {
 				auto: true,
 				params: {
 					name: this.name,
-					ptype: this.type
+					ptype: this.type,
 				},
 				onSuccess(r) {
 					this.fuse = new Fuse(r.options, {
 						keys: ['doctype', 'name', 'title'],
-						threshold: 0.3
+						threshold: 0.3,
 					});
 					this.filteredList = r.options;
-				}
+				},
 			};
 		},
 		updatePermissions() {
@@ -109,19 +109,19 @@ export default {
 				params: {
 					user: this.name,
 					ptype: this.type,
-					updated: this.updated
+					updated: this.updated,
 				},
 				onSuccess() {
 					notify({
 						title: 'Permissions Updated',
 						color: 'green',
-						icon: 'check'
+						icon: 'check',
 					});
 					this.$emit('close', true);
 					this.$resources.options.fetch();
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		isSelected(option, action) {
@@ -136,7 +136,9 @@ export default {
 		},
 		updateSearchTerm(value) {
 			if (value) {
-				this.filteredList = this.fuse.search(value).map(result => result.item);
+				this.filteredList = this.fuse
+					.search(value)
+					.map((result) => result.item);
 			} else {
 				this.filteredList = this.options;
 			}
@@ -156,7 +158,7 @@ export default {
 				// toggle off
 				this.updated[option.doctype][option.name] = this.updated[
 					option.doctype
-				][option.name].filter(item => item !== action);
+				][option.name].filter((item) => item !== action);
 			} else {
 				// toggled on
 				this.updated[option.doctype][option.name].push(action);
@@ -171,7 +173,7 @@ export default {
 				? Object.assign([], allActions)
 				: [];
 			this.filteredList[index].perms = selected ? allActions.join(',') : '';
-		}
+		},
 	},
 	computed: {
 		options() {
@@ -181,7 +183,7 @@ export default {
 		actions() {
 			if (!this.$resources.options.data) return {};
 			return this.$resources.options.data.actions;
-		}
-	}
+		},
+	},
 };
 </script>

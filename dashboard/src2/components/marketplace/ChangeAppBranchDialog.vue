@@ -8,9 +8,9 @@
 					label: 'Change Branch',
 					variant: 'solid',
 					loading: $resources.changeBranch.loading,
-					onClick: () => changeBranch()
-				}
-			]
+					onClick: () => changeBranch(),
+				},
+			],
 		}"
 		v-model="show"
 	>
@@ -45,7 +45,7 @@ export default {
 	data() {
 		return {
 			show: true,
-			selectedBranch: null
+			selectedBranch: null,
 		};
 	},
 	props: ['app', 'source', 'version', 'activeBranch'],
@@ -55,9 +55,9 @@ export default {
 			return {
 				url: 'press.api.marketplace.branches',
 				params: {
-					name: this.source
+					name: this.source,
 				},
-				auto: true
+				auto: true,
 			};
 		},
 		changeBranch() {
@@ -67,15 +67,15 @@ export default {
 					name: this.app,
 					source: this.source,
 					version: this.version,
-					to_branch: this.selectedBranch
+					to_branch: this.selectedBranch,
 				},
 				validate() {
 					if (this.selectedBranch == this.app.branch) {
 						throw new DashboardError('Please select a different branch');
 					}
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		changeBranch() {
@@ -86,18 +86,18 @@ export default {
 					this.$emit('branch-changed');
 					return 'Branch changed successfully';
 				},
-				error: e => getToastErrorMessage(e)
+				error: (e) => getToastErrorMessage(e),
 			});
 		},
 		branchList() {
 			if (this.$resources.branches.loading || !this.$resources.branches.data) {
 				return [];
 			}
-			return this.$resources.branches.data.map(d => d.name);
-		}
+			return this.$resources.branches.data.map((d) => d.name);
+		},
 	},
 	mounted() {
 		this.selectedBranch = this.activeBranch;
-	}
+	},
 };
 </script>

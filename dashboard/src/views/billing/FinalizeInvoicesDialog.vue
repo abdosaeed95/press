@@ -11,7 +11,7 @@
 						{{
 							$date(invoice.period_end).toLocaleString({
 								month: 'long',
-								year: 'numeric'
+								year: 'numeric',
 							})
 						}}
 						-
@@ -45,16 +45,16 @@ export default {
 	name: 'FinalizeInvoicesDialog',
 	props: {
 		show: Boolean,
-		msg: String
+		msg: String,
 	},
 	resources: {
 		finalizeInvoices: {
-			url: 'press.api.billing.finalize_invoices'
+			url: 'press.api.billing.finalize_invoices',
 		},
 		unpaidInvoices: {
 			url: 'press.api.billing.unpaid_invoices',
-			auto: true
-		}
-	}
+			auto: true,
+		},
+	},
 };
 </script>

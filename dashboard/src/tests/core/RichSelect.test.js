@@ -24,15 +24,15 @@ beforeEach(() => {
 				{
 					label: 'Option 1',
 					value: 'opt-1',
-					image: 'https://via.placeholder.com/100x100'
+					image: 'https://via.placeholder.com/100x100',
 				},
 				{
 					label: 'Option 2',
 					value: 'opt-2',
-					image: 'https://via.placeholder.com/200x200'
-				}
-			]
-		}
+					image: 'https://via.placeholder.com/200x200',
+				},
+			],
+		},
 	});
 });
 
@@ -50,7 +50,7 @@ describe('Rich Select Component', () => {
 		// Image should be displayed along with the label
 		expect(wrapper.find('img').exists()).toBe(true);
 		expect(wrapper.find('img').attributes('src')).toBe(
-			'https://via.placeholder.com/100x100'
+			'https://via.placeholder.com/100x100',
 		);
 
 		expect(wrapper.text()).toContain('Option 1');

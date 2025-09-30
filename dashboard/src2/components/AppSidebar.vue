@@ -10,23 +10,23 @@
 						icon: 'command',
 						condition: () =>
 							$team?.doc?.valid_teams?.length > 1 || $team?.doc?.is_desk_user,
-						onClick: () => (showTeamSwitcher = true)
+						onClick: () => (showTeamSwitcher = true),
 					},
 					{
 						label: 'Support & Docs',
 						icon: 'help-circle',
-						onClick: support
+						onClick: support,
 					},
 					{
 						label: 'Share Feedback',
 						icon: 'file-text',
-						onClick: feedback
+						onClick: feedback,
 					},
 					{
 						label: 'Logout',
 						icon: 'log-out',
-						onClick: $session.logout.submit
-					}
+						onClick: $session.logout.submit,
+					},
 				]"
 			>
 				<template v-slot="{ open }">
@@ -82,15 +82,15 @@ export default {
 	components: {
 		AppSidebarItem,
 		AppSidebarItemGroup,
-		SwitchTeamDialog2: defineAsyncComponent(() =>
-			import('./SwitchTeamDialog.vue')
+		SwitchTeamDialog2: defineAsyncComponent(
+			() => import('./SwitchTeamDialog.vue'),
 		),
 		Tooltip,
-		NavigationItems
+		NavigationItems,
 	},
 	data() {
 		return {
-			showTeamSwitcher: false
+			showTeamSwitcher: false,
 		};
 	},
 	methods: {
@@ -100,9 +100,9 @@ export default {
 		feedback() {
 			window.open(
 				'https://frappecloud.com/frappe-cloud-feedback/new',
-				'_blank'
+				'_blank',
 			);
-		}
-	}
+		},
+	},
 };
 </script>

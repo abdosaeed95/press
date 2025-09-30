@@ -60,9 +60,10 @@ class TestTLSCertificate(unittest.TestCase):
 
 		cert = create_test_tls_certificate(erpnext_domain.name, wildcard=True)
 
-		with patch.object(LetsEncrypt, "__init__", new=none_init), patch.object(
-			ProxyServer, "setup_wildcard_hosts"
-		) as mock_setup_wildcard_hosts:
+		with (
+			patch.object(LetsEncrypt, "__init__", new=none_init),
+			patch.object(ProxyServer, "setup_wildcard_hosts") as mock_setup_wildcard_hosts,
+		):
 			cert._obtain_certificate()
 		mock_setup_wildcard_hosts.assert_called_once()
 
@@ -74,9 +75,11 @@ class TestTLSCertificate(unittest.TestCase):
 		cert = create_test_tls_certificate(fc_domain.name, wildcard=True)
 		cert.reload()  # already created with proxy server
 
-		with patch.object(LetsEncrypt, "__init__", new=none_init), patch.object(
-			TLSCertificate, "trigger_server_tls_setup_callback", new=Mock()
-		), patch.object(ProxyServer, "setup_wildcard_hosts") as mock_setup_wildcard_hosts:
+		with (
+			patch.object(LetsEncrypt, "__init__", new=none_init),
+			patch.object(TLSCertificate, "trigger_server_tls_setup_callback", new=Mock()),
+			patch.object(ProxyServer, "setup_wildcard_hosts") as mock_setup_wildcard_hosts,
+		):
 			cert._obtain_certificate()
 
 		mock_setup_wildcard_hosts.assert_not_called()
@@ -88,8 +91,12 @@ class TestTLSCertificate(unittest.TestCase):
 		create_test_root_domain("fc2.dev")
 		cert = create_test_tls_certificate("fc2.dev", wildcard=True)
 		create_test_proxy_server("n2", domain="fc2.dev")
-		with patch.object(LetsEncrypt, "__init__", new=none_init), patch.object(
-			TLSCertificate, "trigger_server_tls_setup_callback"
-		) as mock_trigger_server_tls_setup, patch.object(ProxyServer, "setup_wildcard_hosts", new=Mock()):
+		with (
+			patch.object(LetsEncrypt, "__init__", new=none_init),
+			patch.object(
+				TLSCertificate, "trigger_server_tls_setup_callback"
+			) as mock_trigger_server_tls_setup,
+			patch.object(ProxyServer, "setup_wildcard_hosts", new=Mock()),
+		):
 			cert._obtain_certificate()
 		mock_trigger_server_tls_setup.assert_called()

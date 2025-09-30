@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2019, Frappe and contributors
 # For license information, please see license.txt
 
@@ -7,6 +6,7 @@ import json
 from typing import TYPE_CHECKING
 
 import frappe
+
 from press.press.doctype.app.app import new_app
 from press.utils import get_current_team
 

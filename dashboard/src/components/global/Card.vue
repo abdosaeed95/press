@@ -37,7 +37,7 @@ export default {
 	name: 'Card',
 	props: ['title', 'subtitle', 'loading', 'stopOverflow'],
 	components: {
-		LoadingText
-	}
+		LoadingText,
+	},
 };
 </script>

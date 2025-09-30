@@ -32,9 +32,9 @@ export default {
 			iconMap: {
 				Running: 'loader',
 				Success: 'check',
-				Pending: 'minus'
+				Pending: 'minus',
 			},
-			installingJob: null
+			installingJob: null,
 		};
 	},
 	mounted() {
@@ -43,7 +43,7 @@ export default {
 	},
 	methods: {
 		setupSiteInstall() {
-			this.$socket.on('agent_job_update', data => {
+			this.$socket.on('agent_job_update', (data) => {
 				if (
 					data.site === this.site.name &&
 					(data.name === 'New Site' || data.name === 'New Site from Backup')
@@ -63,15 +63,15 @@ export default {
 		},
 		async fetchPendingJobs() {
 			let jobs = await this.$call('press.api.site.running_jobs', {
-				name: this.site.name
+				name: this.site.name,
 			});
-			jobs.forEach(job => {
+			jobs.forEach((job) => {
 				if (job.name === 'New Site' || job.name === 'New Site from Backup') {
 					this.installingJob = job;
 				}
 			});
-		}
-	}
+		},
+	},
 };
 </script>
 

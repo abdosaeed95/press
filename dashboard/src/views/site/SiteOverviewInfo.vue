@@ -28,7 +28,7 @@
 							{{
 								$date(info.last_deployed).toLocaleString({
 									month: 'long',
-									day: 'numeric'
+									day: 'numeric',
 								})
 							}}
 						</div>
@@ -131,7 +131,7 @@ export default {
 	components: { SiteDrop },
 	data() {
 		return {
-			loading: false
+			loading: false,
 		};
 	},
 	mounted() {
@@ -148,7 +148,7 @@ export default {
 
 			return this.$call('press.api.site.change_auto_update', {
 				name: this.site.name,
-				auto_update_enabled: event.target.checked
+				auto_update_enabled: event.target.checked,
 			}).then(() => {
 				setTimeout(() => window.location.reload(), 1000);
 			});
@@ -162,7 +162,7 @@ export default {
 				`,
 				actionLabel: 'Deactivate',
 				actionColor: 'red',
-				action: () => this.deactivate()
+				action: () => this.deactivate(),
 			});
 		},
 		onActivateClick() {
@@ -171,42 +171,42 @@ export default {
 				message: `Are you sure you want to activate this site?
 				<br><br><strong>Note: Use this as last resort if site is broken and inaccessible</strong>`,
 				actionLabel: 'Activate',
-				action: () => this.activate()
+				action: () => this.activate(),
 			});
 		},
 		deactivate() {
 			return this.$call('press.api.site.deactivate', {
-				name: this.site.name
+				name: this.site.name,
 			}).then(() => {
 				setTimeout(() => window.location.reload(), 1000);
 			});
 		},
 		activate() {
 			this.$call('press.api.site.activate', {
-				name: this.site.name
+				name: this.site.name,
 			});
 			notify({
 				title: 'Site activated successfully!',
 				message: 'You can now access your site',
 				icon: 'check',
-				color: 'green'
+				color: 'green',
 			});
 			setTimeout(() => window.location.reload(), 1000);
-		}
+		},
 	},
 	computed: {
 		permissions() {
 			return {
 				drop: this.$account.hasPermission(
 					this.site.name,
-					'press.api.site.archive'
+					'press.api.site.archive',
 				),
 				deactivate: this.$account.hasPermission(
 					this.site.name,
-					'press.api.site.deactivate'
-				)
+					'press.api.site.deactivate',
+				),
 			};
-		}
-	}
+		},
+	},
 };
 </script>

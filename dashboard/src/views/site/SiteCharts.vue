@@ -153,7 +153,7 @@ export default {
 		BarChart,
 		LineChart,
 		SiteAnalyticsUptime,
-		AlertBanner
+		AlertBanner,
 	},
 	data() {
 		return {
@@ -163,8 +163,8 @@ export default {
 				{ label: '6 hours', value: '6h' },
 				{ label: '24 hours', value: '24h' },
 				{ label: '7 days', value: '7d' },
-				{ label: '15 days', value: '15d' }
-			]
+				{ label: '15 days', value: '15d' },
+			],
 		};
 	},
 	resources: {
@@ -175,11 +175,11 @@ export default {
 				params: {
 					name: this.siteName,
 					timezone: localTimezone,
-					duration: this.duration
+					duration: this.duration,
 				},
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	computed: {
 		requestChartColors() {
@@ -193,7 +193,7 @@ export default {
 				this.$theme.colors.teal[500],
 				this.$theme.colors.cyan[500],
 				this.$theme.colors.gray[500],
-				this.$theme.colors.orange[500]
+				this.$theme.colors.orange[500],
 			];
 		},
 		usageCounterData() {
@@ -203,7 +203,7 @@ export default {
 			let plan_limit = this.$resources.analytics.data?.plan_limit;
 
 			return {
-				datasets: [data.map(d => [+new Date(d.date), d.value / 1000000])],
+				datasets: [data.map((d) => [+new Date(d.date), d.value / 1000000])],
 				// daily limit marker
 				markLine: {
 					data: [
@@ -212,15 +212,15 @@ export default {
 							yAxis: plan_limit,
 							label: {
 								formatter: '{b}: {c} seconds',
-								position: 'middle'
+								position: 'middle',
 							},
 							lineStyle: {
-								color: '#f5222d'
-							}
-						}
+								color: '#f5222d',
+							},
+						},
 					],
-					symbol: ['none', 'none']
-				}
+					symbol: ['none', 'none'],
+				},
 			};
 		},
 		requestCountData() {
@@ -228,7 +228,7 @@ export default {
 			if (!requestCount) return;
 
 			return {
-				datasets: [requestCount.map(d => [+new Date(d.date), d.value])]
+				datasets: [requestCount.map((d) => [+new Date(d.date), d.value])],
 			};
 		},
 		requestCountByPathData() {
@@ -293,8 +293,8 @@ export default {
 
 			return {
 				datasets: [
-					requestCpuTime.map(d => [+new Date(d.date), d.value / 1000000])
-				]
+					requestCpuTime.map((d) => [+new Date(d.date), d.value / 1000000]),
+				],
 			};
 		},
 		jobCountData() {
@@ -302,7 +302,7 @@ export default {
 			if (!jobCount) return;
 
 			return {
-				datasets: [jobCount.map(d => [+new Date(d.date), d.value])]
+				datasets: [jobCount.map((d) => [+new Date(d.date), d.value])],
 			};
 		},
 		jobTimeData() {
@@ -310,9 +310,11 @@ export default {
 			if (!jobCpuTime) return;
 
 			return {
-				datasets: [jobCpuTime.map(d => [+new Date(d.date), d.value / 1000000])]
+				datasets: [
+					jobCpuTime.map((d) => [+new Date(d.date), d.value / 1000000]),
+				],
 			};
-		}
-	}
+		},
+	},
 };
 </script>

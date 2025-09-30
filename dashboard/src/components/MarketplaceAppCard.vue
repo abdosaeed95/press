@@ -25,6 +25,6 @@
 
 <script>
 export default {
-	props: ['app']
+	props: ['app'],
 };
 </script>

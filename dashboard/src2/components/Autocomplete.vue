@@ -6,7 +6,7 @@
 		<Combobox
 			:modelValue="value"
 			@update:modelValue="
-				val => {
+				(val) => {
 					emit('update:modelValue', val?.value);
 				}
 			"
@@ -71,7 +71,7 @@
 										class="flex w-full cursor-pointer select-none items-center justify-between truncate rounded px-2.5 py-1.5 text-base"
 										:class="{
 											'bg-gray-100': active,
-											'bg-gray-300': selected
+											'bg-gray-300': selected,
 										}"
 									>
 										{{ option.label }}
@@ -117,7 +117,7 @@ import {
 	ComboboxButton,
 	ComboboxInput,
 	ComboboxOption,
-	ComboboxOptions
+	ComboboxOptions,
 } from '@headlessui/vue';
 import { ComputedRef, PropType, computed, ref, watch } from 'vue';
 import { Popover } from 'frappe-ui';
@@ -139,26 +139,26 @@ type Action = {
 const props = defineProps({
 	options: {
 		type: Array as PropType<Option[]>,
-		default: () => []
+		default: () => [],
 	},
 	modelValue: {},
 	placeholder: {
 		type: String,
-		default: ''
+		default: '',
 	},
 	label: {
 		type: String,
-		default: ''
+		default: '',
 	},
 	// Allow user to input value that is not in the options
 	allowInputAsOption: {
 		type: Boolean,
-		default: false
+		default: false,
 	},
 	actionButton: {
 		type: Object as PropType<Action>,
-		default: null
-	}
+		default: null,
+	},
 });
 
 const query = ref('');
@@ -168,7 +168,7 @@ const filteredOptions = ref(props.options);
 
 const getDisplayValue = (option: Option | Option[]) => {
 	if (Array.isArray(option)) {
-		return option.map(o => o.label).join(', ');
+		return option.map((o) => o.label).join(', ');
 	} else if (option) {
 		return option.label || option.value || '';
 	} else {
@@ -181,9 +181,11 @@ const value = computed(() => {
 		return null;
 	}
 	return (
-		filteredOptions.value.find(option => option.value === props.modelValue) || {
+		filteredOptions.value.find(
+			(option) => option.value === props.modelValue,
+		) || {
 			label: props.modelValue,
-			value: props.modelValue
+			value: props.modelValue,
 		}
 	);
 }) as ComputedRef<Option>;
@@ -194,7 +196,7 @@ async function updateOptions() {
 	if (!query.value) {
 		filteredOptions.value = props.options;
 	} else {
-		filteredOptions.value = props.options.filter(option => {
+		filteredOptions.value = props.options.filter((option) => {
 			const label = option.label.toLowerCase();
 			const value = option.label.toLowerCase();
 			const queryLower = query.value.toLowerCase();

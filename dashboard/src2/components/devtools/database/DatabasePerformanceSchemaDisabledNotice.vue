@@ -14,6 +14,6 @@
 </template>
 <script>
 export default {
-	name: 'DatabasePerformanceSchemaDisabledNotice'
+	name: 'DatabasePerformanceSchemaDisabledNotice',
 };
 </script>

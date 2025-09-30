@@ -32,9 +32,9 @@
 								label: 'Submit',
 								variant: 'solid',
 								loading: $resources.changePlan.loading,
-								onClick: () => $resources.changePlan.submit()
-							}
-						]
+								onClick: () => $resources.changePlan.submit(),
+							},
+						],
 					}"
 					v-model="showChangePlanDialog"
 				>
@@ -174,21 +174,21 @@ export default {
 			showChangePlanDialog: false,
 			selectedPlan: null,
 			enableReadWriteAccess: false,
-			error: null
+			error: null,
 		};
 	},
 	components: {
 		ClickToCopyField,
-		SitePlansTable
+		SitePlansTable,
 	},
 	resources: {
 		fetchDatabaseAccessInfo() {
 			return {
 				url: 'press.api.site.get_database_access_info',
 				params: {
-					name: this.site
+					name: this.site,
 				},
-				auto: true
+				auto: true,
 			};
 		},
 		enableDatabaseAccess() {
@@ -196,32 +196,32 @@ export default {
 				url: 'press.api.site.enable_database_access',
 				params: {
 					name: this.site,
-					mode: this.enableReadWriteAccess ? 'read_write' : 'read_only'
+					mode: this.enableReadWriteAccess ? 'read_write' : 'read_only',
 				},
 				onSuccess(d) {
 					this.pollDatabaseAccessJob(d);
-				}
+				},
 			};
 		},
 		disableDatabaseAccess() {
 			return {
 				url: 'press.api.site.disable_database_access',
 				params: {
-					name: this.site
+					name: this.site,
 				},
 				onSuccess(d) {
 					this.pollDatabaseAccessJob(d);
-				}
+				},
 			};
 		},
 		plans() {
 			return {
 				url: 'press.api.site.get_plans',
 				params: {
-					name: this.site
+					name: this.site,
 				},
 				initialData: [],
-				auto: true
+				auto: true,
 			};
 		},
 		changePlan() {
@@ -229,13 +229,13 @@ export default {
 				url: 'press.api.site.change_plan',
 				params: {
 					name: this.site,
-					plan: this.selectedPlan?.name
+					plan: this.selectedPlan?.name,
 				},
 				onSuccess() {
 					notify({
 						title: `Plan changed to ${this.selectedPlan.plan_title}`,
 						icon: 'check',
-						color: 'green'
+						color: 'green',
 					});
 					this.showChangePlanDialog = false;
 					this.selectedPlan = null;
@@ -247,11 +247,11 @@ export default {
 					notify({
 						title: error,
 						icon: 'x',
-						color: 'red'
+						color: 'red',
 					});
-				}
+				},
 			};
-		}
+		},
 	},
 	computed: {
 		databaseAccessInfo() {
@@ -271,7 +271,7 @@ export default {
 			return null;
 		},
 		plans() {
-			let processedPlans = this.$resources.plans.data.map(plan => {
+			let processedPlans = this.$resources.plans.data.map((plan) => {
 				if (!plan.database_access) {
 					plan.disabled = true;
 				}
@@ -287,8 +287,8 @@ export default {
 			},
 			set(value) {
 				this.$emit('update:modelValue', value);
-			}
-		}
+			},
+		},
 	},
 	methods: {
 		dialogClosed() {
@@ -300,9 +300,9 @@ export default {
 			frappeRequest({
 				url: 'press.api.site.get_job_status',
 				params: {
-					job_name: jobName
-				}
-			}).then(message => {
+					job_name: jobName,
+				},
+			}).then((message) => {
 				console.log(message);
 				if (message.status === 'Success') {
 					this.pollingAgentJob = false;
@@ -316,7 +316,7 @@ export default {
 					}, 1000);
 				}
 			});
-		}
-	}
+		},
+	},
 };
 </script>

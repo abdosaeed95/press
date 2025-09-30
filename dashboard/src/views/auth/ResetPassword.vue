@@ -51,13 +51,13 @@ import LoginBox from '@/views/partials/LoginBox.vue';
 export default {
 	name: 'ResetPassword',
 	components: {
-		LoginBox
+		LoginBox,
 	},
 	props: ['requestKey'],
 	data() {
 		return {
 			email: null,
-			password: null
+			password: null,
 		};
 	},
 	resources: {
@@ -65,12 +65,12 @@ export default {
 			return {
 				url: 'press.api.account.get_user_for_reset_password_key',
 				params: {
-					key: this.requestKey
+					key: this.requestKey,
 				},
 				onSuccess(email) {
 					this.email = email || null;
 				},
-				auto: true
+				auto: true,
 			};
 		},
 		resetPassword() {
@@ -78,13 +78,13 @@ export default {
 				url: 'press.api.account.reset_password',
 				params: {
 					key: this.requestKey,
-					password: this.password
+					password: this.password,
 				},
 				onSuccess() {
 					window.location.reload();
-				}
+				},
 			};
-		}
-	}
+		},
+	},
 };
 </script>

@@ -8,9 +8,9 @@
 					label: 'Add App',
 					variant: 'solid',
 					disabled: (!appValidated && !selectedVersion) || !this.app.is_public,
-					onClick: addApp
-				}
-			]
+					onClick: addApp,
+				},
+			],
 		}"
 		v-model="show"
 		@update:modelValue="
@@ -82,7 +82,7 @@ import { getToastErrorMessage } from '../../utils/toast';
 export default {
 	components: {
 		GitHubAppSelector,
-		LinkControl
+		LinkControl,
 	},
 	data() {
 		return {
@@ -92,14 +92,14 @@ export default {
 			selectedVersion: '',
 			appValidated: false,
 			selectedGithubUser: null,
-			selectedGithubRepository: null
+			selectedGithubRepository: null,
 		};
 	},
 	resources: {
 		validateApp() {
 			return {
 				url: 'press.api.github.app',
-				onSuccess: async data => {
+				onSuccess: async (data) => {
 					this.appValidated = true;
 					if (!data) {
 						return;
@@ -117,9 +117,9 @@ export default {
 						repository_url,
 						github_installation_id: this.selectedGithubUser?.id,
 						branch: this.selectedBranch.value,
-						is_public: isPublic
+						is_public: isPublic,
 					};
-				}
+				},
 			};
 		},
 		addApp() {
@@ -130,12 +130,12 @@ export default {
 						doc: {
 							...this.app,
 							doctype: 'Marketplace App',
-							version: this.selectedVersion
-						}
+							version: this.selectedVersion,
+						},
 					};
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		addApp() {
@@ -145,30 +145,30 @@ export default {
 					this.show = false;
 					this.$router.push({
 						name: 'Marketplace App Detail Listing',
-						params: { name: this.app.name }
+						params: { name: this.app.name },
 					});
 					return 'New app added';
 				},
-				error: e => getToastErrorMessage(e)
+				error: (e) => getToastErrorMessage(e),
 			});
 		},
 		validateApp(data) {
 			this.selectedBranch = {
 				label: data.branch,
-				value: data.branch
+				value: data.branch,
 			};
 			this.selectedGithubRepository = data.repository;
 			this.selectedGithubUser = data.selectedGithubUser;
 
 			this.$resources.validateApp.submit({
 				...data,
-				installation: data.selectedGithubUser.id
+				installation: data.selectedGithubUser.id,
 			});
 		},
 		async checkRepoVisibility(owner, repo) {
 			try {
 				const response = await fetch(
-					`https://api.github.com/repos/${owner}/${repo}`
+					`https://api.github.com/repos/${owner}/${repo}`,
 				);
 				if (!response.ok) {
 					throw new Error('Repository not found or private');
@@ -180,7 +180,7 @@ export default {
 				console.error(error);
 				return false; // Assume false if there was an error
 			}
-		}
-	}
+		},
+	},
 };
 </script>

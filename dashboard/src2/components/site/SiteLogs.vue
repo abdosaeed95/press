@@ -13,28 +13,28 @@ export default {
 	props: {
 		name: {
 			type: String,
-			required: true
+			required: true,
 		},
 		type: {
 			type: String,
-			required: false
-		}
+			required: false,
+		},
 	},
 	components: {
-		ObjectList
+		ObjectList,
 	},
 	resources: {
 		logs() {
 			return {
 				url: 'press.api.site.logs',
 				params: {
-					name: this.name
+					name: this.name,
 				},
 				auto: true,
 				initialData: [],
-				cache: ['ObjectList', 'press.api.site.logs', this.name]
+				cache: ['ObjectList', 'press.api.site.logs', this.name],
 			};
-		}
+		},
 	},
 	computed: {
 		logs() {
@@ -44,18 +44,18 @@ export default {
 				'database',
 				'pdf',
 				'wkhtmltopdf',
-				'ipython'
+				'ipython',
 			];
 
 			if (this.type && !knownTypes.includes(this.type)) {
 				return this.$resources.logs.data.filter(
-					d => !knownTypes.includes(d.name.split('.')[0])
+					(d) => !knownTypes.includes(d.name.split('.')[0]),
 				);
 			}
 
 			// logs of a particular type
 			return this.$resources.logs.data.filter(
-				d => d.name.split('.')[0] === this.type
+				(d) => d.name.split('.')[0] === this.type,
 			);
 		},
 		logsOptions() {
@@ -65,13 +65,13 @@ export default {
 					route(row) {
 						return {
 							name: 'Site Log',
-							params: { logName: row.name }
+							params: { logName: row.name },
 						};
 					},
 					columns: [
 						{
 							label: 'Name',
-							fieldname: 'name'
+							fieldname: 'name',
 						},
 						{
 							label: 'Size',
@@ -79,36 +79,36 @@ export default {
 							class: 'text-gray-600',
 							format(value) {
 								return `${value} kB`;
-							}
+							},
 						},
 						{
 							label: 'Modified On',
 							fieldname: 'modified',
 							format(value) {
 								return value ? date(value, 'lll') : '';
-							}
-						}
+							},
+						},
 					],
 					actions: () => [
 						{
 							slots: {
-								prefix: () => h(LucideSparkleIcon)
+								prefix: () => h(LucideSparkleIcon),
 							},
 							label: 'View in Log Browser',
 							onClick: () => {
 								this.$router.push({
 									name: 'Log Browser',
-									params: { mode: 'site', docName: this.name }
+									params: { mode: 'site', docName: this.name },
 								});
-							}
+							},
 						},
 						{
 							label: 'Refresh',
 							icon: 'refresh-ccw',
 							loading: this.$resources.logs.loading,
-							onClick: () => this.$resources.logs.reload()
-						}
-					]
+							onClick: () => this.$resources.logs.reload(),
+						},
+					],
 				};
 			} else {
 				return {
@@ -119,9 +119,9 @@ export default {
 								name: 'Site Logs',
 								params: {
 									name: this.name,
-									type: 'scheduler'
-								}
-							}
+									type: 'scheduler',
+								},
+							},
 						},
 						{
 							title: 'Database Logs',
@@ -129,9 +129,9 @@ export default {
 								name: 'Site Logs',
 								params: {
 									name: this.name,
-									type: 'database'
-								}
-							}
+									type: 'database',
+								},
+							},
 						},
 						{
 							title: 'Frappe Logs',
@@ -139,9 +139,9 @@ export default {
 								name: 'Site Logs',
 								params: {
 									name: this.name,
-									type: 'frappe'
-								}
-							}
+									type: 'frappe',
+								},
+							},
 						},
 						{
 							title: 'PDF Logs',
@@ -149,9 +149,9 @@ export default {
 								name: 'Site Logs',
 								params: {
 									name: this.name,
-									type: 'pdf'
-								}
-							}
+									type: 'pdf',
+								},
+							},
 						},
 						{
 							title: 'IPython Logs',
@@ -159,9 +159,9 @@ export default {
 								name: 'Site Logs',
 								params: {
 									name: this.name,
-									type: 'ipython'
-								}
-							}
+									type: 'ipython',
+								},
+							},
 						},
 						{
 							title: 'Wkhtmltopdf Logs',
@@ -169,9 +169,9 @@ export default {
 								name: 'Site Logs',
 								params: {
 									name: this.name,
-									type: 'wkhtmltopdf'
-								}
-							}
+									type: 'wkhtmltopdf',
+								},
+							},
 						},
 						{
 							title: 'Other Logs',
@@ -179,16 +179,16 @@ export default {
 								name: 'Site Logs',
 								params: {
 									name: this.name,
-									type: 'other'
-								}
-							}
-						}
+									type: 'other',
+								},
+							},
+						},
 					],
 					columns: [
 						{
 							label: 'Title',
 							fieldname: 'title',
-							width: 0.3
+							width: 0.3,
 						},
 						{
 							label: '',
@@ -202,28 +202,28 @@ export default {
 									iconRight: 'arrow-right',
 									onClick: () => {
 										this.$router.push(row.route);
-									}
+									},
 								};
-							}
-						}
+							},
+						},
 					],
 					actions: () => [
 						{
 							slots: {
-								prefix: () => h(LucideSparkleIcon)
+								prefix: () => h(LucideSparkleIcon),
 							},
 							label: 'View in Log Browser',
 							onClick: () => {
 								this.$router.push({
 									name: 'Log Browser',
-									params: { mode: 'site', docName: this.name }
+									params: { mode: 'site', docName: this.name },
 								});
-							}
-						}
-					]
+							},
+						},
+					],
 				};
 			}
-		}
-	}
+		},
+	},
 };
 </script>

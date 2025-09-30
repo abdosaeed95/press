@@ -1,7 +1,7 @@
 <template>
 	<Dialog
 		:options="{
-			title: 'Activate Webhook'
+			title: 'Activate Webhook',
 		}"
 	>
 		<template #body-content>
@@ -75,7 +75,7 @@ export default {
 			validated: false,
 			request: null,
 			response: null,
-			response_status_code: null
+			response_status_code: null,
 		};
 	},
 	resources: {
@@ -86,10 +86,10 @@ export default {
 					return {
 						dt: 'Press Webhook',
 						dn: this.webhook.name,
-						method: 'validate_endpoint'
+						method: 'validate_endpoint',
 					};
 				},
-				onSuccess: result => {
+				onSuccess: (result) => {
 					const data = result.message;
 					this.request = data.request;
 					this.response = data.response;
@@ -104,10 +104,10 @@ export default {
 							'Endpoint should return a status between 200 and 300\nPlease check the endpoint and try again';
 					}
 				},
-				onError: e => {
+				onError: (e) => {
 					console.error(e);
 					this.errorMessage = e.message;
-				}
+				},
 			};
 		},
 		activateWebhook() {
@@ -117,7 +117,7 @@ export default {
 					return {
 						dt: 'Press Webhook',
 						dn: this.webhook.name,
-						method: 'activate'
+						method: 'activate',
 					};
 				},
 				onSuccess(e) {
@@ -127,9 +127,9 @@ export default {
 				onError(e) {
 					console.error(e);
 					this.errorMessage = e.message;
-				}
+				},
 			};
-		}
-	}
+		},
+	},
 };
 </script>

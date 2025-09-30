@@ -2,7 +2,7 @@
 	<Dialog
 		:options="{
 			title: `Bench Logs - ${bench}`,
-			size: '6xl'
+			size: '6xl',
 		}"
 		v-model="show"
 	>
@@ -53,7 +53,7 @@ import { date } from '../../utils/format';
 import router from '../../router';
 
 const props = defineProps({
-	bench: String
+	bench: String,
 });
 
 const show = ref(true);
@@ -66,9 +66,9 @@ const log = createResource({
 		return {
 			name: `bench-${props.bench?.split('-')[1]}`,
 			bench: props.bench,
-			log: logName.value
+			log: logName.value,
 		};
-	}
+	},
 });
 
 const navigateToLogBrowser = () => {
@@ -78,8 +78,8 @@ const navigateToLogBrowser = () => {
 		params: {
 			mode: 'bench',
 			docName: props.bench,
-			logId: logName.value
-		}
+			logId: logName.value,
+		},
 	});
 };
 
@@ -90,11 +90,11 @@ const listOptions = ref({
 			makeParams() {
 				return {
 					name: `bench-${props.bench?.split('-')[1]}`,
-					bench: props.bench
+					bench: props.bench,
 				};
 			},
 			cache: ['BenchLogs', props.bench],
-			auto: true
+			auto: true,
 		};
 	},
 	onRowClick(row) {
@@ -105,7 +105,7 @@ const listOptions = ref({
 	columns: [
 		{
 			label: 'Name',
-			fieldname: 'name'
+			fieldname: 'name',
 		},
 		{
 			label: 'Size',
@@ -113,30 +113,30 @@ const listOptions = ref({
 			class: 'text-gray-600',
 			format(value) {
 				return `${value} kB`;
-			}
+			},
 		},
 		{
 			label: 'Created On',
 			fieldname: 'created',
 			format(value) {
 				return value ? date(value, 'lll') : '';
-			}
-		}
+			},
+		},
 	],
 	actions: () => [
 		{
 			slots: {
-				prefix: () => h(LucideSparkleIcon)
+				prefix: () => h(LucideSparkleIcon),
 			},
 			label: 'View in Log Browser',
 			onClick: () => {
 				show.value = false;
 				router.push({
 					name: 'Log Browser',
-					params: { mode: 'bench', docName: props.bench }
+					params: { mode: 'bench', docName: props.bench },
 				});
-			}
-		}
-	]
+			},
+		},
+	],
 });
 </script>

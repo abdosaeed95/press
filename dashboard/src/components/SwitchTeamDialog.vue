@@ -29,6 +29,6 @@
 
 <script>
 export default {
-	name: 'SwitchTeamDialog'
+	name: 'SwitchTeamDialog',
 };
 </script>

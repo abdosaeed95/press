@@ -35,9 +35,9 @@
 						label: 'Save Changes',
 						variant: 'solid',
 						loading: $resources.changeNotifyEmail.loading,
-						onClick: () => $resources.changeNotifyEmail.submit()
-					}
-				]
+						onClick: () => $resources.changeNotifyEmail.submit(),
+					},
+				],
 			}"
 			v-model="showChangeNotifyEmailDialog"
 		>
@@ -61,11 +61,11 @@ export default {
 				doctype: 'Site Activity',
 				url: 'press.api.site.activities',
 				filters: {
-					site: this.site?.name
+					site: this.site?.name,
 				},
 				start: 0,
 				auto: true,
-				pageLength: 20
+				pageLength: 20,
 			};
 		},
 		changeNotifyEmail() {
@@ -73,27 +73,27 @@ export default {
 				url: 'press.api.site.change_notify_email',
 				params: {
 					name: this.site?.name,
-					email: this.site?.notify_email
+					email: this.site?.notify_email,
 				},
 				onSuccess() {
 					this.showChangeNotifyEmailDialog = false;
 					notify({
 						title: 'Notify Email Changed!',
 						icon: 'check',
-						color: 'green'
+						color: 'green',
 					});
-				}
+				},
 			};
-		}
+		},
 	},
 	computed: {
 		activities() {
 			return this.$resources.activities;
-		}
+		},
 	},
 	data() {
 		return {
-			showChangeNotifyEmailDialog: false
+			showChangeNotifyEmailDialog: false,
 		};
 	},
 	methods: {
@@ -104,7 +104,7 @@ export default {
 			}
 			description += this.formatDate(activity.creation);
 			return description;
-		}
-	}
+		},
+	},
 };
 </script>

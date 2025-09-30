@@ -37,16 +37,16 @@ export default {
 			return {
 				url: 'press.api.security.fetch_ssh_session_logs',
 				params: {
-					server: this.server?.name
+					server: this.server?.name,
 				},
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	computed: {
 		sshLogs() {
 			return this.$resources.sshLogs.data;
-		}
+		},
 	},
 	methods: {
 		getTitle(log) {
@@ -65,7 +65,7 @@ export default {
 		},
 		getColor(user) {
 			return user === 'root' ? 'red' : 'green';
-		}
-	}
+		},
+	},
 };
 </script>

@@ -37,9 +37,9 @@ export default {
 			return {
 				url: 'press.api.analytics.daily_usage',
 				params: { name: this.site, timezone: localTimezone },
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	computed: {
 		dailyUsageData() {
@@ -49,7 +49,7 @@ export default {
 
 			return {
 				datasets: [
-					dailyUsageData.map(d => [+new Date(d.date), d.value / 1000000])
+					dailyUsageData.map((d) => [+new Date(d.date), d.value / 1000000]),
 				],
 				// daily limit marker
 				markLine: {
@@ -59,17 +59,17 @@ export default {
 							yAxis: plan_limit,
 							label: {
 								formatter: '{b}: {c} seconds',
-								position: 'middle'
+								position: 'middle',
 							},
 							lineStyle: {
-								color: '#f5222d'
-							}
-						}
+								color: '#f5222d',
+							},
+						},
 					],
-					symbol: ['none', 'none']
-				}
+					symbol: ['none', 'none'],
+				},
 			};
-		}
-	}
+		},
+	},
 };
 </script>

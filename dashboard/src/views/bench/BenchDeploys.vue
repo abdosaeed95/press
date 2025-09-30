@@ -22,7 +22,7 @@
 					<ListItem
 						:title="`Deploy on ${formatDate(
 							candidate.creation,
-							'DATETIME_SHORT'
+							'DATETIME_SHORT',
 						)}`"
 						:subtitle="itemSubtitle(candidate)"
 					>
@@ -69,7 +69,7 @@ export default {
 	props: ['bench', 'benchName', 'candidateName'],
 	components: {
 		CardWithDetails,
-		StepsDetail
+		StepsDetail,
 	},
 	resources: {
 		candidates() {
@@ -78,29 +78,29 @@ export default {
 				doctype: 'Deploy Candidate',
 				url: 'press.api.bench.candidates',
 				filters: {
-					group: this.benchName
+					group: this.benchName,
 				},
 				start: 0,
 				auto: true,
-				pageLength: 10
+				pageLength: 10,
 			};
 		},
 		selectedCandidate() {
 			return {
 				url: 'press.api.bench.candidate',
 				params: {
-					name: this.candidateName
+					name: this.candidateName,
 				},
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	mounted() {
 		if (this.candidateName && this.selectedCandidate?.status != 'Success') {
 			this.$socket.on(`bench_deploy:${this.candidateName}:steps`, this.onSteps);
 			this.$socket.on(
 				`bench_deploy:${this.candidateName}:finished`,
-				this.onStopped
+				this.onStopped,
 			);
 		}
 	},
@@ -108,7 +108,7 @@ export default {
 		this.$socket.off(`bench_deploy:${this.candidateName}:steps`, this.onSteps);
 		this.$socket.off(
 			`bench_deploy:${this.candidateName}:finished`,
-			this.onStopped
+			this.onStopped,
 		);
 	},
 	methods: {
@@ -123,7 +123,7 @@ export default {
 		},
 		getSteps(candidate) {
 			if (!candidate) return [];
-			let steps = candidate.build_steps.map(step => {
+			let steps = candidate.build_steps.map((step) => {
 				let name = step.stage + ' - ' + step.step;
 				let output =
 					step.command || step.output
@@ -140,12 +140,12 @@ export default {
 					status: step.status,
 					duration,
 					completed: step.status == 'Success',
-					running: step.status == 'Running'
+					running: step.status == 'Running',
 				};
 			});
 
 			let bench = this.bench;
-			let jobs = candidate.jobs.map(job => {
+			let jobs = candidate.jobs.map((job) => {
 				return {
 					name: `Deploy ${job.bench}`,
 					output:
@@ -161,21 +161,21 @@ export default {
 								'Link',
 								{
 									props: { to: `/groups/${bench?.name}/jobs/${job.name}` },
-									class: 'text-sm'
+									class: 'text-sm',
 								},
-								'Job Log →'
+								'Job Log →',
 							);
-						}
-					}
+						},
+					},
 				};
 			});
 			return [...steps, ...jobs];
 		},
 		itemSubtitle(candidate) {
-			return ['frappe', ...candidate.apps.filter(d => d !== 'frappe')].join(
-				', '
+			return ['frappe', ...candidate.apps.filter((d) => d !== 'frappe')].join(
+				', ',
 			);
-		}
+		},
 	},
 	computed: {
 		selectedCandidate() {
@@ -188,29 +188,29 @@ export default {
 			) {
 				let when = this.formatDate(
 					this.selectedCandidate.build_end,
-					'relative'
+					'relative',
 				);
 				let duration = this.$formatDuration(
-					this.selectedCandidate.build_duration
+					this.selectedCandidate.build_duration,
 				);
 				return `Completed ${when} in ${duration}`;
 			} else if (this.selectedCandidate?.status === 'Running') {
 				const when = this.formatDate(
 					this.selectedCandidate.build_start,
-					'relative'
+					'relative',
 				);
 				return `Started ${when}`;
 			} else if (this.selectedCandidate?.status === 'Failure') {
 				const when = this.formatDate(
 					this.selectedCandidate.build_end,
-					'relative'
+					'relative',
 				);
 				return `Failed ${when}`;
 			}
 		},
 		candidates() {
 			return this.$resources.candidates.data || [];
-		}
-	}
+		},
+	},
 };
 </script>

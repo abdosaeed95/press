@@ -25,7 +25,7 @@
 		<Dialog
 			:options="{
 				title: 'Add App to Marketplace',
-				size: 'xl'
+				size: 'xl',
 			}"
 			v-model="showAddAppDialog"
 		>
@@ -61,7 +61,7 @@
 					@click="
 						$resources.addMarketplaceApp.submit({
 							source: selectedApp.source.name,
-							app: selectedApp.app
+							app: selectedApp.app,
 						})
 					"
 				>
@@ -84,26 +84,26 @@ export default {
 	name: 'Marketplace',
 	pageMeta() {
 		return {
-			title: 'Developer - Frappe Cloud'
+			title: 'Developer - Frappe Cloud',
 		};
 	},
 	components: {
 		Tabs,
-		AppSourceSelector
+		AppSourceSelector,
 	},
 	data: () => ({
 		tabs: [
 			{ label: 'My Apps', route: '/marketplace/apps' },
 			{ label: 'Publisher Profile', route: '/marketplace/publisher-profile' },
-			{ label: 'Payouts', route: '/marketplace/payouts' }
+			{ label: 'Payouts', route: '/marketplace/payouts' },
 		],
 		showAddAppDialog: false,
-		selectedApp: null
+		selectedApp: null,
 	}),
 	resources: {
 		appOptions() {
 			return {
-				url: 'press.api.marketplace.options_for_marketplace_app'
+				url: 'press.api.marketplace.options_for_marketplace_app',
 			};
 		},
 		addMarketplaceApp() {
@@ -112,14 +112,14 @@ export default {
 				onSuccess() {
 					this.showAddAppDialog = false;
 					window.location.reload();
-				}
+				},
 			};
-		}
+		},
 	},
 	computed: {
 		availableApps() {
 			return this.$resources.appOptions.data;
-		}
+		},
 	},
 	activated() {
 		if (this.$route.matched.length === 1) {
@@ -133,6 +133,6 @@ export default {
 		} else {
 			next();
 		}
-	}
+	},
 };
 </script>

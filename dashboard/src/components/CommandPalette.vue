@@ -50,7 +50,7 @@ import {
 	Combobox,
 	ComboboxInput,
 	ComboboxOptions,
-	ComboboxOption
+	ComboboxOption,
 } from '@headlessui/vue';
 import Fuse from 'fuse.js/dist/fuse.basic.esm';
 import { debounce } from 'lodash';
@@ -58,18 +58,18 @@ import { debounce } from 'lodash';
 export default {
 	name: 'CommandPalette',
 	props: {
-		show: false
+		show: false,
 	},
 	data() {
 		return {
-			filteredOptions: []
+			filteredOptions: [],
 		};
 	},
 	components: {
 		Combobox,
 		ComboboxInput,
 		ComboboxOptions,
-		ComboboxOption
+		ComboboxOption,
 	},
 	mounted() {
 		this.makeFuse();
@@ -80,7 +80,7 @@ export default {
 			if (query) {
 				this.filteredOptions = this.fuse
 					.search(query)
-					.map(result => result.item);
+					.map((result) => result.item);
 			}
 		}, 200),
 		onSelection(value) {
@@ -105,10 +105,10 @@ export default {
 				includeScore: true,
 				shouldSort: true,
 				minMatchCharLength: 3,
-				keys: ['title']
+				keys: ['title'],
 			};
 			this.fuse = new Fuse(fuse_list, options);
-		}
-	}
+		},
+	},
 };
 </script>

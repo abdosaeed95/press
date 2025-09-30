@@ -79,13 +79,13 @@ export default {
 	props: ['bench'],
 	components: {
 		BenchAppUpdates,
-		SwitchTeamDialog
+		SwitchTeamDialog,
 	},
 	data() {
 		return {
 			showDeployDialog: false,
 			showTeamSwitcher: false,
-			selectedApps: []
+			selectedApps: [],
 		};
 	},
 	resources: {
@@ -93,9 +93,9 @@ export default {
 			return {
 				url: 'press.api.bench.deploy_information',
 				params: {
-					name: this.bench?.name
+					name: this.bench?.name,
 				},
-				auto: true
+				auto: true,
 			};
 		},
 		deploy() {
@@ -103,7 +103,7 @@ export default {
 				url: 'press.api.bench.deploy',
 				params: {
 					name: this.bench?.name,
-					apps: this.selectedApps
+					apps: this.selectedApps,
 				},
 				validate() {
 					if (
@@ -116,17 +116,17 @@ export default {
 				onSuccess(candidate) {
 					this.$router.push(`/groups/${this.bench.name}/deploys/${candidate}`);
 					this.showDeployDialog = false;
-				}
+				},
 			};
-		}
+		},
 	},
 	computed: {
 		permissions() {
 			return {
 				update: this.$account.hasPermission(
 					this.bench.name,
-					'press.api.bench.deploy_and_update'
-				)
+					'press.api.bench.deploy_and_update',
+				),
 			};
 		},
 		show() {
@@ -153,7 +153,7 @@ export default {
 				return 'Deploy in Progress';
 			}
 			return this.bench.status == 'Active' ? 'Update Available' : 'Deploy';
-		}
-	}
+		},
+	},
 };
 </script>

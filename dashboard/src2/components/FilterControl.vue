@@ -6,7 +6,7 @@
 	/>
 	<TabButtons
 		v-else-if="$attrs.type === 'tab'"
-		v-bind="{ ...$attrs, buttons: $attrs.options.map(o => ({ label: o })) }"
+		v-bind="{ ...$attrs, buttons: $attrs.options.map((o) => ({ label: o })) }"
 	/>
 	<DatePicker
 		v-else-if="$attrs.type === 'date'"

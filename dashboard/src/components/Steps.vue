@@ -7,7 +7,7 @@
 						class="z-10 flex h-5 w-5 items-center justify-center rounded-full border border-gray-400 bg-white"
 						:class="{
 							'bg-gray-700 text-white': isStepCompleted(step),
-							'border-gray-500': isStepCurrent(step) || isStepCompleted(step)
+							'border-gray-500': isStepCurrent(step) || isStepCompleted(step),
 						}"
 					>
 						<FeatherIcon
@@ -24,7 +24,7 @@
 					<div
 						class="absolute top-1/2 w-8 -translate-x-8 -translate-y-1/2 transform border-t border-gray-400"
 						:class="{
-							'border-gray-500': isStepCompleted(step) || isStepCurrent(step)
+							'border-gray-500': isStepCompleted(step) || isStepCurrent(step),
 						}"
 						v-show="index !== 0"
 					></div>
@@ -42,7 +42,7 @@ export default {
 	props: ['steps'],
 	data() {
 		return {
-			active: null
+			active: null,
 		};
 	},
 	mounted() {
@@ -76,7 +76,7 @@ export default {
 		},
 		isStepCurrent(step) {
 			return this.active === step;
-		}
+		},
 	},
 	computed: {
 		hasNext() {
@@ -84,7 +84,7 @@ export default {
 		},
 		hasPrevious() {
 			return this.steps.indexOf(this.active) > 0;
-		}
-	}
+		},
+	},
 };
 </script>

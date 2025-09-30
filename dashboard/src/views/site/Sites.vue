@@ -117,7 +117,7 @@
 							{ label: 'Region', name: 'region', width: 0.5 },
 							{ label: 'Tags', name: 'tags', width: 1 },
 							{ label: 'Plan', name: 'plan', width: 1.5 },
-							{ label: '', name: 'actions', width: 0.5 }
+							{ label: '', name: 'actions', width: 0.5 },
 						]"
 						:rows="sites"
 						v-slot="{ rows, columns }"
@@ -187,7 +187,7 @@
 											row.plan
 												? `${$planTitle(row.plan)}${
 														row.plan.price_usd > 0 ? '/mo' : ''
-												  }`
+													}`
 												: ''
 										}}
 									</span>
@@ -247,9 +247,9 @@
 								{
 									label: 'Proceed',
 									variant: 'solid',
-									onClick: proceedWithLoginAsAdmin
-								}
-							]
+									onClick: proceedWithLoginAsAdmin,
+								},
+							],
 						}"
 						v-model="showReasonForAdminLoginDialog"
 					>
@@ -282,7 +282,7 @@ export default {
 	name: 'Sites',
 	pageMeta() {
 		return {
-			title: 'Sites - Frappe Cloud'
+			title: 'Sites - Frappe Cloud',
 		};
 	},
 	props: ['bench'],
@@ -291,16 +291,16 @@ export default {
 		TableHeader,
 		TableRow,
 		TableCell,
-		PrepaidCreditsDialog: defineAsyncComponent(() =>
-			import('@/components/PrepaidCreditsDialog.vue')
+		PrepaidCreditsDialog: defineAsyncComponent(
+			() => import('@/components/PrepaidCreditsDialog.vue'),
 		),
-		StripeCard: defineAsyncComponent(() =>
-			import('@/components/StripeCard.vue')
+		StripeCard: defineAsyncComponent(
+			() => import('@/components/StripeCard.vue'),
 		),
 		AlertBillingInformation,
-		UpdateBillingDetails: defineAsyncComponent(() =>
-			import('../../../src2/components/UpdateBillingDetails.vue')
-		)
+		UpdateBillingDetails: defineAsyncComponent(
+			() => import('../../../src2/components/UpdateBillingDetails.vue'),
+		),
 	},
 	data() {
 		return {
@@ -313,7 +313,7 @@ export default {
 			siteForLogin: null,
 			site_status: 'All',
 			site_tag: '',
-			showAddressDialog: false
+			showAddressDialog: false,
 		};
 	},
 	resources: {
@@ -321,26 +321,26 @@ export default {
 			return {
 				url: 'press.api.site.all',
 				params: {
-					site_filter: { status: this.site_status, tag: this.site_tag }
+					site_filter: { status: this.site_status, tag: this.site_tag },
 				},
 				auto: true,
 				cache: [
 					'SiteList',
 					this.site_status,
 					this.site_tag,
-					this.$account.team.name
-				]
+					this.$account.team.name,
+				],
 			};
 		},
 		siteTags: { url: 'press.api.site.site_tags', auto: true, initialData: [] },
 		latestUnpaidInvoice: {
 			url: 'press.api.billing.get_latest_unpaid_invoice',
-			auto: true
+			auto: true,
 		},
 		loginAsAdmin() {
 			return loginAsAdmin('placeholderSite'); // So that RM does not yell at first load
 		},
-		billingDetails: 'press.api.billing.details'
+		billingDetails: 'press.api.billing.details',
 	},
 	mounted() {
 		this.$socket.on('agent_job_update', this.onAgentJobUpdate);
@@ -362,7 +362,7 @@ export default {
 					title:
 						'Please settle your unpaid invoices from the billing tab in order to create new sites',
 					icon: 'info',
-					color: 'yellow'
+					color: 'yellow',
 				});
 			} else {
 				this.$router.replace('/sites/new');
@@ -377,7 +377,7 @@ export default {
 					title: 'Site creation complete!',
 					message: 'Login to your site and complete the setup wizard',
 					icon: 'check',
-					color: 'green'
+					color: 'green',
 				});
 			}
 		},
@@ -413,21 +413,21 @@ export default {
 					label: 'Visit Site',
 					onClick: () => {
 						window.open(`https://${site.name}/apps`, '_blank');
-					}
+					},
 				},
 				{
 					label: 'Login As Admin',
 					onClick: () => {
 						if (this.$account.team.name === site.team) {
 							return this.$resources.loginAsAdmin.submit({
-								name: site.name
+								name: site.name,
 							});
 						}
 
 						this.siteForLogin = site.name;
 						this.showReasonForAdminLoginDialog = true;
-					}
-				}
+					},
+				},
 			];
 		},
 		proceedWithLoginAsAdmin() {
@@ -440,23 +440,23 @@ export default {
 
 			this.$resources.loginAsAdmin.submit({
 				name: this.siteForLogin,
-				reason: this.reasonForAdminLogin
+				reason: this.reasonForAdminLogin,
 			});
 
 			this.showReasonForAdminLoginDialog = false;
-		}
+		},
 	},
 	computed: {
 		sites() {
 			if (!this.$resources.allSites.data) {
 				return [];
 			}
-			let sites = this.$resources.allSites.data.filter(site =>
-				this.$account.hasPermission(site.name, '', true)
+			let sites = this.$resources.allSites.data.filter((site) =>
+				this.$account.hasPermission(site.name, '', true),
 			);
 			if (this.searchTerm) {
-				return sites.filter(site =>
-					site.name.toLowerCase().includes(this.searchTerm.toLowerCase())
+				return sites.filter((site) =>
+					site.name.toLowerCase().includes(this.searchTerm.toLowerCase()),
 				);
 			}
 			return sites;
@@ -472,8 +472,8 @@ export default {
 				site.route = {
 					name: 'SiteOverview',
 					params: {
-						siteName: site.name
-					}
+						siteName: site.name,
+					},
 				};
 				sitesByGroup[group].push(site);
 			}
@@ -495,14 +495,14 @@ export default {
 							title: site.title,
 							group: site.group,
 							public: site.public,
-							version: site.version
+							version: site.version,
 						});
 					else
 						groups.push({
 							title: site.title,
 							group: site.group,
 							public: site.public,
-							version: site.version
+							version: site.version,
 						});
 				}
 			}
@@ -525,48 +525,48 @@ export default {
 			return [
 				{
 					label: 'All',
-					value: 'All'
+					value: 'All',
 				},
 				{
 					label: 'Active',
-					value: 'Active'
+					value: 'Active',
 				},
 				{
 					label: 'Broken',
-					value: 'Broken'
+					value: 'Broken',
 				},
 				{
 					label: 'Inactive',
-					value: 'Inactive'
+					value: 'Inactive',
 				},
 				{
 					label: 'Trial',
-					value: 'Trial'
+					value: 'Trial',
 				},
 				{
 					label: 'Update Available',
-					value: 'Update Available'
-				}
+					value: 'Update Available',
+				},
 			];
 		},
 		siteTagFilterOptions() {
 			const defaultOptions = [
 				{
 					label: '',
-					value: ''
-				}
+					value: '',
+				},
 			];
 
 			if (!this.$resources.siteTags.data) return defaultOptions;
 
 			return [
 				...defaultOptions,
-				...this.$resources.siteTags.data.map(tag => ({
+				...this.$resources.siteTags.data.map((tag) => ({
 					label: tag,
-					value: tag
-				}))
+					value: tag,
+				})),
 			];
-		}
-	}
+		},
+	},
 };
 </script>

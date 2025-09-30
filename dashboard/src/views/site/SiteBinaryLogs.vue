@@ -11,7 +11,7 @@
 				:filters="filters"
 				:columns="[
 					{ label: 'Timestamp', name: 'timestamp', class: 'w-3/12' },
-					{ label: 'Query', name: 'query', class: 'w-9/12' }
+					{ label: 'Query', name: 'query', class: 'w-9/12' },
 				]"
 				:data="formatData"
 				title="MariaDB Binary Log Report"
@@ -59,23 +59,23 @@ export default {
 					name: 'pattern',
 					label: 'Search:',
 					type: 'text',
-					value: this.pattern
+					value: this.pattern,
 				},
 				{
 					name: 'start_datetime',
 					label: 'From:',
 					type: 'datetime-local',
-					value: ''
+					value: '',
 				},
 				{
 					name: 'end_datetime',
 					label: 'To:',
 					type: 'datetime-local',
-					value: ''
-				}
+					value: '',
+				},
 			],
 			today: new Date().toISOString().slice(0, 10),
-			max_lines: 100
+			max_lines: 100,
 		};
 	},
 	watch: {
@@ -87,7 +87,7 @@ export default {
 		},
 		endTime() {
 			this.reset();
-		}
+		},
 	},
 	resources: {
 		binaryLogs() {
@@ -98,28 +98,28 @@ export default {
 					start_time: this.startTime || this.today,
 					end_time: this.endTime || this.today,
 					pattern: this.patternFilter,
-					max_lines: this.max_lines
+					max_lines: this.max_lines,
 				},
 				auto: true,
 				pageLength: 10,
 				keepData: true,
-				initialData: []
+				initialData: [],
 			};
 		},
 		getPlan() {
 			return {
 				url: 'press.api.site.current_plan',
 				params: {
-					name: this.site?.name
+					name: this.site?.name,
 				},
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	methods: {
 		reset() {
 			this.$resources.binaryLogs.reset();
-		}
+		},
 	},
 	computed: {
 		startTime() {
@@ -134,19 +134,19 @@ export default {
 		formatData() {
 			let binaryData = this.$resources.binaryLogs.data;
 			let data = [];
-			binaryData.forEach(row => {
+			binaryData.forEach((row) => {
 				let timestamp = this.formatDate(
 					row.timestamp,
-					'TIME_24_WITH_SHORT_OFFSET'
+					'TIME_24_WITH_SHORT_OFFSET',
 				);
 				let out = [
 					{ name: 'Timestamp', value: timestamp, class: 'w-3/12' },
-					{ name: 'Query', value: row.query, class: 'w-9/12' }
+					{ name: 'Query', value: row.query, class: 'w-9/12' },
 				];
 				data.push(out);
 			});
 			return data;
-		}
-	}
+		},
+	},
 };
 </script>

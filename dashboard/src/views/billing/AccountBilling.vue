@@ -28,30 +28,30 @@ export default {
 	name: 'BillingScreen',
 	pageMeta() {
 		return {
-			title: 'Billing - Frappe Cloud'
+			title: 'Billing - Frappe Cloud',
 		};
 	},
 	props: ['invoiceName'],
 	components: {
-		Tabs
+		Tabs,
 	},
 	computed: {
 		tabs() {
-			let tabRoute = subRoute => `/billing/${subRoute}`;
+			let tabRoute = (subRoute) => `/billing/${subRoute}`;
 			let tabs = [
 				{ label: 'Overview', route: 'overview' },
 				{ label: 'Invoices', route: 'invoices' },
 				{ label: 'Payment Methods', route: 'payment' },
-				{ label: 'Credit Balance', route: 'credit-balance' }
+				{ label: 'Credit Balance', route: 'credit-balance' },
 			];
 
-			return tabs.map(tab => {
+			return tabs.map((tab) => {
 				return {
 					...tab,
-					route: tabRoute(tab.route)
+					route: tabRoute(tab.route),
 				};
 			});
-		}
-	}
+		},
+	},
 };
 </script>

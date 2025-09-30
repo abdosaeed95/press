@@ -3,7 +3,7 @@
 		v-model="show"
 		:options="{
 			title: 'Code Review',
-			size: '6xl'
+			size: '6xl',
 		}"
 	>
 		<template v-if="getResults" #body-content>
@@ -57,9 +57,9 @@
 								{
 									label: 'Reject Release',
 									variant: 'solid',
-									onClick: rejectRelease
-								}
-							]
+									onClick: rejectRelease,
+								},
+							],
 						}"
 					>
 						<template #body-content>
@@ -114,7 +114,7 @@
 													'bg-yellow-200 border rounded-md':
 														lineText.includes(issue.match) &&
 														line.context.line_range[i] ===
-															line.context.line_number
+															line.context.line_number,
 												}"
 											>
 												<code class="p-2 text-sm whitespace-pre-wrap">
@@ -134,7 +134,7 @@
 												class="comment-item mt-2 p-2"
 												v-for="comment in getCommentsForLine(
 													file.name,
-													line.context.line_number
+													line.context.line_number,
 												)"
 												:key="comment.name"
 											>
@@ -188,14 +188,14 @@ import { toast } from 'vue-sonner';
 
 export default {
 	components: {
-		NewComment
+		NewComment,
 	},
 	props: ['row', 'app', 'isSystemUser'],
 	data() {
 		return {
 			show: true,
 			showRejectReleaseDialog: false,
-			rejectionReason: ''
+			rejectionReason: '',
 		};
 	},
 	computed: {
@@ -220,14 +220,14 @@ export default {
 			} else {
 				return 'red';
 			}
-		}
+		},
 	},
 	methods: {
 		getCommentsForLine(filename, lineNumber) {
 			// Filter comments by matching filename and line number
 			let filteredComments = this.getComments.filter(
-				comment =>
-					comment.filename === filename && comment.line_number === lineNumber
+				(comment) =>
+					comment.filename === filename && comment.line_number === lineNumber,
 			);
 
 			// Sort comments by time in descending order (latest first)
@@ -244,7 +244,7 @@ export default {
 				hour: '2-digit',
 				minute: '2-digit',
 				second: '2-digit',
-				hour12: true
+				hour12: true,
 			});
 		},
 		handleCommentSubmitted() {
@@ -256,7 +256,7 @@ export default {
 		approveRelease() {
 			this.$resources.codeScreening.setValue.submit({
 				status: 'Approved',
-				reviewed_by: this.$team?.doc?.user
+				reviewed_by: this.$team?.doc?.user,
 			});
 		},
 		rejectRelease() {
@@ -269,10 +269,10 @@ export default {
 			this.$resources.codeScreening.setValue.submit({
 				status: 'Rejected',
 				reason_for_rejection: this.rejectionReason,
-				reviewed_by: this.$team?.doc?.user
+				reviewed_by: this.$team?.doc?.user,
 			});
 			this.showRejectReleaseDialog = false;
-		}
+		},
 	},
 	resources: {
 		codeScreening() {
@@ -287,11 +287,11 @@ export default {
 					'app_release',
 					'status',
 					'result',
-					'code_comments'
+					'code_comments',
 				],
-				auto: true
+				auto: true,
 			};
-		}
-	}
+		},
+	},
 };
 </script>
