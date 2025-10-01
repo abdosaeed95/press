@@ -344,6 +344,12 @@ class BaseServer(Document, TagHelpers):
 		settings = frappe.get_single("Press Settings")
 		return settings.branch or "master"
 
+	def get_agent_repository_context(self) -> dict[str, str]:
+		return {
+			"agent_repository_url": self.get_agent_repository_url(),
+			"agent_repository_branch_or_commit_ref": self.get_agent_repository_branch(),
+		}
+
 	@frappe.whitelist()
 	def ping_agent(self):
 		agent = Agent(self.name, self.doctype)
@@ -477,8 +483,7 @@ class BaseServer(Document, TagHelpers):
 			ansible = Ansible(
 				playbook="update_agent.yml",
 				variables={
-					"agent_repository_url": self.get_agent_repository_url(),
-					"agent_repository_branch_or_commit_ref": self.get_agent_repository_branch(),
+					**self.get_agent_repository_context(),
 					"agent_update_args": "",
 				},
 				server=self,
@@ -1756,10 +1761,10 @@ class Server(BaseServer):
 
 	def _setup_server(self):
 		agent_password = self.get_password("agent_password")
-		agent_repository_url = self.get_agent_repository_url()
 		certificate = self.get_certificate()
 		log_server, kibana_password = self.get_log_server()
 		agent_sentry_dsn = frappe.db.get_single_value("Press Settings", "agent_sentry_dsn")
+		agent_repository_context = self.get_agent_repository_context()
 
 		try:
 			ansible = Ansible(
@@ -1773,7 +1778,6 @@ class Server(BaseServer):
 					"proxy_ip": self.get_proxy_ip(),
 					"workers": "2",
 					"agent_password": agent_password,
-					"agent_repository_url": agent_repository_url,
 					"agent_sentry_dsn": agent_sentry_dsn,
 					"monitoring_password": self.get_monitoring_password(),
 					"log_server": log_server,
@@ -1783,6 +1787,7 @@ class Server(BaseServer):
 					"certificate_intermediate_chain": certificate.intermediate_chain,
 					"docker_depends_on_mounts": self.docker_depends_on_mounts,
 					**self.get_mount_variables(),
+					**agent_repository_context,
 				},
 			)
 			play = ansible.run()
@@ -2041,7 +2046,7 @@ class Server(BaseServer):
 
 	def _rename_server(self):
 		agent_password = self.get_password("agent_password")
-		agent_repository_url = self.get_agent_repository_url()
+		agent_repository_context = self.get_agent_repository_context()
 		certificate_name = frappe.db.get_value(
 			"TLS Certificate", {"wildcard": True, "domain": self.domain}, "name"
 		)
@@ -2065,13 +2070,13 @@ class Server(BaseServer):
 					"proxy_ip": self.get_proxy_ip(),
 					"workers": "2",
 					"agent_password": agent_password,
-					"agent_repository_url": agent_repository_url,
 					"monitoring_password": monitoring_password,
 					"log_server": log_server,
 					"kibana_password": kibana_password,
 					"certificate_private_key": certificate.private_key,
 					"certificate_full_chain": certificate.full_chain,
 					"certificate_intermediate_chain": certificate.intermediate_chain,
+					**agent_repository_context,
 				},
 			)
 			play = ansible.run()

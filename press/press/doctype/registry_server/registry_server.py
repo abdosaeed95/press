@@ -61,7 +61,7 @@ class RegistryServer(BaseServer):
 
 	def _setup_server(self):
 		agent_password = self.get_password("agent_password")
-		agent_repository_url = self.get_agent_repository_url()
+		agent_repository_context = self.get_agent_repository_context()
 		monitoring_password = self.get_password("monitoring_password")
 		certificate_name = frappe.db.get_value(
 			"TLS Certificate", {"wildcard": True, "domain": self.domain}, "name"
@@ -78,7 +78,6 @@ class RegistryServer(BaseServer):
 					"workers": 1,
 					"domain": self.domain,
 					"agent_password": agent_password,
-					"agent_repository_url": agent_repository_url,
 					"monitoring_password": monitoring_password,
 					"private_ip": self.private_ip,
 					"registry_username": self.registry_username,
@@ -86,6 +85,7 @@ class RegistryServer(BaseServer):
 					"certificate_private_key": certificate.private_key,
 					"certificate_full_chain": certificate.full_chain,
 					"certificate_intermediate_chain": certificate.intermediate_chain,
+					**agent_repository_context,
 				},
 			)
 			play = ansible.run()

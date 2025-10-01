@@ -58,7 +58,7 @@ class AnalyticsServer(BaseServer):
 			self.plausible_password = frappe.generate_hash()
 
 	def _setup_server(self):
-		agent_repository_url = self.get_agent_repository_url()
+		agent_repository_context = self.get_agent_repository_context()
 		certificate_name = frappe.db.get_value(
 			"TLS Certificate", {"wildcard": True, "domain": self.domain}, "name"
 		)
@@ -82,7 +82,6 @@ class AnalyticsServer(BaseServer):
 					"domain": self.domain,
 					"log_server": log_server,
 					"agent_password": self.get_password("agent_password"),
-					"agent_repository_url": agent_repository_url,
 					"kibana_password": kibana_password,
 					"plausible_password": self.get_password("plausible_password"),
 					"plausible_secret": base64.b64encode(os.urandom(64)).decode(),
@@ -97,6 +96,7 @@ class AnalyticsServer(BaseServer):
 					"certificate_private_key": certificate.private_key,
 					"certificate_full_chain": certificate.full_chain,
 					"certificate_intermediate_chain": certificate.intermediate_chain,
+					**agent_repository_context,
 				},
 			)
 			play = ansible.run()

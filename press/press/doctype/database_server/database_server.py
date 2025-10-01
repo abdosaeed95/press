@@ -535,6 +535,8 @@ class DatabaseServer(BaseServer):
 
 	def _setup_server(self):
 		config = self._get_config()
+		agent_repository_context = self.get_agent_repository_context()
+
 		try:
 			ansible = Ansible(
 				playbook="self_hosted_db.yml" if getattr(self, "is_self_hosted", False) else "database.yml",
@@ -546,7 +548,6 @@ class DatabaseServer(BaseServer):
 					"server": self.name,
 					"workers": "2",
 					"agent_password": config.agent_password,
-					"agent_repository_url": config.agent_repository_url,
 					"monitoring_password": config.monitoring_password,
 					"log_server": config.log_server,
 					"kibana_password": config.kibana_password,
@@ -559,6 +560,7 @@ class DatabaseServer(BaseServer):
 					"certificate_intermediate_chain": config.certificate.intermediate_chain,
 					"mariadb_depends_on_mounts": self.mariadb_depends_on_mounts,
 					**self.get_mount_variables(),
+					**agent_repository_context,
 				},
 			)
 			play = ansible.run()
@@ -591,7 +593,6 @@ class DatabaseServer(BaseServer):
 		return frappe._dict(
 			dict(
 				agent_password=self.get_password("agent_password"),
-				agent_repository_url=self.get_agent_repository_url(),
 				mariadb_root_password=self.get_password("mariadb_root_password"),
 				certificate=certificate,
 				monitoring_password=frappe.get_doc("Cluster", self.cluster).get_password(
@@ -599,6 +600,7 @@ class DatabaseServer(BaseServer):
 				),
 				log_server=log_server,
 				kibana_password=kibana_password,
+				**self.get_agent_repository_context(),
 			)
 		)
 
@@ -617,7 +619,6 @@ class DatabaseServer(BaseServer):
 					"server": self.name,
 					"workers": "2",
 					"agent_password": config.agent_password,
-					"agent_repository_url": config.agent_repository_url,
 					"monitoring_password": config.monitoring_password,
 					"log_server": config.log_server,
 					"kibana_password": config.kibana_password,
@@ -626,6 +627,7 @@ class DatabaseServer(BaseServer):
 					"certificate_private_key": config.certificate.private_key,
 					"certificate_full_chain": config.certificate.full_chain,
 					"certificate_intermediate_chain": config.certificate.intermediate_chain,
+					**self.get_agent_repository_context(),
 				},
 			)
 			play = ansible.run()
@@ -990,7 +992,7 @@ class DatabaseServer(BaseServer):
 
 	def _rename_server(self):
 		agent_password = self.get_password("agent_password")
-		agent_repository_url = self.get_agent_repository_url()
+		agent_repository_context = self.get_agent_repository_context()
 		mariadb_root_password = self.get_password("mariadb_root_password")
 		certificate_name = frappe.db.get_value(
 			"TLS Certificate", {"wildcard": True, "domain": self.domain}, "name"
@@ -1012,7 +1014,6 @@ class DatabaseServer(BaseServer):
 					"server": self.name,
 					"workers": "2",
 					"agent_password": agent_password,
-					"agent_repository_url": agent_repository_url,
 					"monitoring_password": monitoring_password,
 					"log_server": log_server,
 					"kibana_password": kibana_password,
@@ -1022,6 +1023,7 @@ class DatabaseServer(BaseServer):
 					"certificate_private_key": certificate.private_key,
 					"certificate_full_chain": certificate.full_chain,
 					"certificate_intermediate_chain": certificate.intermediate_chain,
+					**agent_repository_context,
 				},
 			)
 			play = ansible.run()

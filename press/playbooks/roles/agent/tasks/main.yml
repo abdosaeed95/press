@@ -6,6 +6,7 @@
     repo: '{{ agent_repository_url }}'
     dest: /home/frappe/agent/repo
     remote: upstream
+    version: '{{ agent_repository_branch_or_commit_ref | default("master") }}'
 
 - name: Install Agent
   become: yes
@@ -19,7 +20,7 @@
 - name: Generate Agent Configuration File
   become: yes
   become_user: frappe
-  command: '/home/frappe/agent/env/bin/agent setup config --name {{ server }} --workers {{ workers }} {% if proxy_ip is defined and proxy_ip is truthy %}--proxy-ip {{ proxy_ip }}{% endif %} {% if agent_sentry_dsn is defined and agent_sentry_dsn is truthy %}--sentry-dsn {{ agent_sentry_dsn }}{% endif %}'
+  command: '/home/frappe/agent/env/bin/agent setup config --name {{ server }} --workers {{ workers }} {% if proxy_ip is defined and proxy_ip is truthy %}--proxy-ip {{ proxy_ip }}{% endif %} {% if agent_sentry_dsn is defined and agent_sentry_dsn is truthy %}--sentry-dsn {{ agent_sentry_dsn }}{% endif %} {% if agent_repository_url is defined and agent_repository_url is truthy %}--agent-repo-url {{ agent_repository_url }}{% endif %} {% if agent_repository_branch_or_commit_ref is defined and agent_repository_branch_or_commit_ref is truthy %}--agent-repo-branch {{ agent_repository_branch_or_commit_ref }}{% endif %}'
   args:
     chdir: /home/frappe/agent
 
