@@ -59,6 +59,8 @@ if TYPE_CHECKING:
 
 
 NAMESERVERS = ["1.1.1.1", "1.0.0.1", "8.8.8.8", "8.8.4.4"]
+# Server header values returned by first-party agents/servers.
+FIRST_PARTY_SERVER_HEADERS = {"frappe cloud", "fodista"}
 
 
 def protected(doctypes):
@@ -1741,8 +1743,9 @@ def check_domain_proxied(domain) -> str | None:
 	except requests.exceptions.RequestException as e:
 		frappe.throw("Unable to connect to the domain. Is the DNS correct?\n\n" + str(e))
 	else:
-		if (server := res.headers.get("server")) not in ("Frappe Cloud", None):  # eg: cloudflare
-			return server
+		if server := res.headers.get("server"):
+			if server.casefold() not in FIRST_PARTY_SERVER_HEADERS:  # eg: cloudflare
+				return server
 
 
 def check_dns_cname_a(name, domain, ignore_proxying=False):
