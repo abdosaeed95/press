@@ -422,6 +422,7 @@ class SelfHostedServer(Document):
 					"is_self_hosted": True,
 					"domain": self.hybrid_domain,
 					"self_hosted_server_domain": self.hybrid_domain,
+					"is_standalone": True,
 					"team": self.team,
 					"ip": self.ip,
 					"private_ip": self.private_ip,
@@ -649,7 +650,13 @@ class SelfHostedServer(Document):
 
 	def _setup_app_server(self):
 		app_server = frappe.get_doc("Server", self.server)
+		if not app_server.is_standalone:
+			app_server.is_standalone = True
+			app_server.save(ignore_permissions=True)
+
 		app_server.setup_server()
+		if app_server.is_server_setup and not app_server.is_standalone_setup:
+			app_server.setup_standalone()
 
 	@property
 	def subscription(self):
