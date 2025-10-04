@@ -5,7 +5,7 @@
   become_user: root
   gather_facts: yes
   roles:
+    - role: self_hosted_private_network
     - role: mariadb
     - role: mysqld_exporter
     - role: deadlock_logger
-    - role: self_hosted_private_network
