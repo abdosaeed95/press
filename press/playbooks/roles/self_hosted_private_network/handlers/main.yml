@@ -1,0 +1,7 @@
+---
+- name: restart setup veth service
+  become: true
+  systemd:
+    name: setup-veth.service
+    state: restarted
+    daemon_reload: true

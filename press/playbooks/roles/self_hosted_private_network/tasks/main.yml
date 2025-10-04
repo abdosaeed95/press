@@ -1,0 +1,60 @@
+---
+- name: Ensure network scripts directory exists
+  become: true
+  file:
+    path: /etc/network
+    state: directory
+    mode: '0755'
+
+- name: Install veth setup script
+  become: true
+  copy:
+    dest: /etc/network/setup_veth.sh
+    mode: '0755'
+    owner: root
+    group: root
+    content: |
+      #!/bin/bash
+      set -euo pipefail
+
+      if ip link show veth0 >/dev/null 2>&1; then
+          ip link del veth0 || true
+      fi
+
+      ip link add veth0 type veth peer name veth1
+      ip link set dev veth0 up
+      ip link set dev veth1 up
+      ip addr add 10.0.0.1/30 dev veth0 || true
+      ip addr add 10.0.0.2/30 dev veth1 || true
+  notify: restart setup veth service
+
+- name: Install setup-veth systemd service
+  become: true
+  copy:
+    dest: /etc/systemd/system/setup-veth.service
+    mode: '0644'
+    owner: root
+    group: root
+    content: |
+      [Unit]
+      Description=Configure veth pair for private network
+      After=network-pre.target
+      Before=network.target
+      Wants=network.target
+
+      [Service]
+      Type=oneshot
+      ExecStart=/etc/network/setup_veth.sh
+      RemainAfterExit=yes
+
+      [Install]
+      WantedBy=multi-user.target
+  notify: restart setup veth service
+
+- name: Enable setup-veth service
+  become: true
+  systemd:
+    name: setup-veth.service
+    enabled: true
+    state: started
+    daemon_reload: true

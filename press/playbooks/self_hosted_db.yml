@@ -8,3 +8,4 @@
     - role: mariadb
     - role: mysqld_exporter
     - role: deadlock_logger
+    - role: self_hosted_private_network

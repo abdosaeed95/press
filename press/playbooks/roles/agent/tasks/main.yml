@@ -20,9 +20,33 @@
 - name: Generate Agent Configuration File
   become: yes
   become_user: frappe
-  command: '/home/frappe/agent/env/bin/agent setup config --name {{ server }} --workers {{ workers }} {% if proxy_ip is defined and proxy_ip is truthy %}--proxy-ip {{ proxy_ip }}{% endif %} {% if agent_sentry_dsn is defined and agent_sentry_dsn is truthy %}--sentry-dsn {{ agent_sentry_dsn }}{% endif %} {% if agent_repository_url is defined and agent_repository_url is truthy %}--agent-repo-url {{ agent_repository_url }}{% endif %} {% if agent_repository_branch_or_commit_ref is defined and agent_repository_branch_or_commit_ref is truthy %}--agent-repo-branch {{ agent_repository_branch_or_commit_ref }}{% endif %}'
+  command: '/home/frappe/agent/env/bin/agent setup config --name {{ server }} --workers {{ workers }} {% if proxy_ip is defined and proxy_ip is truthy %}--proxy-ip {{ proxy_ip }}{% endif %} {% if agent_sentry_dsn is defined and agent_sentry_dsn is truthy %}--sentry-dsn {{ agent_sentry_dsn }}{% endif %}'
   args:
     chdir: /home/frappe/agent
+
+- name: Persist Agent Repository Metadata
+  become: yes
+  become_user: frappe
+  when:
+    - agent_repository_url is defined
+    - agent_repository_url|length > 0
+  shell: |
+    /home/frappe/agent/env/bin/python - <<'PY'
+    import json
+
+    config_path = "/home/frappe/agent/config.json"
+    with open(config_path) as fh:
+        data = json.load(fh)
+
+    data["agent_repository_url"] = "{{ agent_repository_url }}"
+    branch = "{{ agent_repository_branch_or_commit_ref | default('') }}"
+    if branch:
+        data["agent_repository_branch_or_commit_ref"] = branch
+
+    with open(config_path, "w") as fh:
+        json.dump(data, fh, sort_keys=True, indent=4)
+        fh.write("\n")
+    PY
 
 - name: Setup Agent SQLite Database
   become: yes
