@@ -48,6 +48,7 @@
     groups:
       - docker
     append: true
+  register: frappe_docker_group
 
 - name: Setup Docker Metrics
   template:
@@ -80,6 +81,12 @@
 
 - name: Get Docker Info
   command: docker info
+
+- name: Restart Agent processes if docker group changed
+  supervisorctl:
+    name: "agent:"
+    state: restarted
+  when: frappe_docker_group is changed
 
 - name: Start Agent processes
   supervisorctl:
