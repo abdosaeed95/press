@@ -650,9 +650,6 @@ class SelfHostedServer(Document):
 
 	def _setup_app_server(self):
 		app_server = frappe.get_doc("Server", self.server)
-		if not app_server.is_standalone:
-			app_server.is_standalone = True
-			app_server.save(ignore_permissions=True)
 
 		app_server.setup_server()
 		if app_server.is_server_setup and not app_server.is_standalone_setup:
