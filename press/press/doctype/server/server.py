@@ -1774,6 +1774,7 @@ class Server(BaseServer):
 				port=self._ssh_port(),
 				variables={
 					"server": self.name,
+					"domain": self.domain,
 					"private_ip": self.private_ip,
 					"proxy_ip": self.get_proxy_ip(),
 					"workers": "2",
