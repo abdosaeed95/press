@@ -218,14 +218,13 @@ RUN wget https://bootstrap.pypa.io/get-pip.py && python${PYTHON_VERSION} get-pip
 {% endif %}
 
 ENV {{ doc.get_dependency_version("bench", True) }}
-RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 \
-    python${PYTHON_VERSION} -m pip install --upgrade \
-      "frappe-bench==${BENCH_VERSION}" \
-      "Jinja2~=3.0.3" \
-      "setuptools" \
-    `#stage-bench-and-pip`
+RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 python${PYTHON_VERSION} -m pip install --upgrade frappe-bench==${BENCH_VERSION} `#stage-bench-bench`
+
+RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 python${PYTHON_VERSION} -m pip install Jinja2~=3.0.3
+RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 python${PYTHON_VERSION} -m pip install --upgrade setuptools
 
 RUN git config --global advice.detachedHead false
+
 ENV PYTHONUNBUFFERED=1
 
 # For the sake of completing the step
