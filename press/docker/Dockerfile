@@ -2,19 +2,24 @@
 FROM ubuntu:22.04
 
 ENV LANG C.UTF-8
-ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 
-ENV OPENBLAS_NUM_THREADS 1
-ENV MKL_NUM_THREADS 1
+ENV OPENBLAS_NUM_THREADS=1
+ENV MKL_NUM_THREADS=1
 
-# Install essential packages
+# Make Python/pip installs quieter & leaner
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1
+
+# Install essential packages (runtime + common tools)
 RUN --mount=type=cache,target=/var/cache/apt apt-get update \
   && apt-get install --yes --no-install-suggests --no-install-recommends \
   # Essentials
   build-essential \
   git \
   mariadb-client \
-  libmariadb-dev \
+  libmariadb3 \
   pkg-config \
   pv \
   ntp \
@@ -50,9 +55,6 @@ RUN --mount=type=cache,target=/var/cache/apt apt-get update \
   libxrender1 \
   xfonts-75dpi \
   xfonts-base \
-  # pycups dependencies
-  gcc \
-  libcups2-dev \
   # s3-attachment dependencies
   libmagic1 \
   && rm -rf /var/lib/apt/lists/* \
@@ -60,19 +62,19 @@ RUN --mount=type=cache,target=/var/cache/apt apt-get update \
 
 COPY --chown=root:root supervisord.conf /etc/supervisor/supervisord.conf
 
-# Install Redis from PPA
-RUN --mount=type=cache,target=/var/cache/apt curl -fsSL https://packages.redis.io/gpg | gpg --dearmor -o /usr/share/keyrings/redis-archive-keyring.gpg \
-  && echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb focal main" | tee /etc/apt/sources.list.d/redis.list \
+# Install Redis from packages.redis.io (Ubuntu 22.04 = jammy)
+RUN --mount=type=cache,target=/var/cache/apt \
+  curl -fsSL https://packages.redis.io/gpg | gpg --dearmor -o /usr/share/keyrings/redis-archive-keyring.gpg \
+  && echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb jammy main" > /etc/apt/sources.list.d/redis.list \
   && apt-get update \
-  && apt-get install --yes --no-install-suggests --no-install-recommends \
-  redis-server \
+  && apt-get install --yes --no-install-recommends redis-server \
   && rm -rf /var/lib/apt/lists/* `#stage-pre-redis`
 
 # Install Python from DeadSnakes PPA
 ENV {{ doc.get_dependency_version("python", True) }}
-RUN --mount=type=cache,target=/var/cache/apt add-apt-repository ppa:deadsnakes/ppa \
+RUN --mount=type=cache,target=/var/cache/apt add-apt-repository -y ppa:deadsnakes/ppa \
   && apt-get update \
-  && apt-get install --yes --no-install-suggests --no-install-recommends \
+  && apt-get install --yes --no-install-recommends \
     python${PYTHON_VERSION} \
     python${PYTHON_VERSION}-dev \
     {% if not remove_distutils -%}
@@ -84,7 +86,6 @@ RUN --mount=type=cache,target=/var/cache/apt add-apt-repository ppa:deadsnakes/p
 
 # Install wkhtmltopdf
 ENV {{ doc.get_dependency_version("wkhtmltopdf", True) }}
-
 
 {% if is_arm_build %}
   # ARM setup (0.12.5) & (0.12.6)
@@ -126,7 +127,7 @@ ENV {{ doc.get_dependency_version("wkhtmltopdf", True) }}
 RUN curl -fsSL https://code-server.dev/install.sh | sh `#stage-pre-code-server`
 {% endif %}
 
-# Install Fonts
+# Fonts
 RUN git clone --progress --depth 1 https://github.com/frappe/fonts.git /tmp/fonts \
   && rm -rf /etc/fonts && mv /tmp/fonts/etc_fonts /etc/fonts \
   && rm -rf /usr/share/fonts && mv /tmp/fonts/usr_share_fonts /usr/share/fonts \
@@ -134,14 +135,13 @@ RUN git clone --progress --depth 1 https://github.com/frappe/fonts.git /tmp/font
   && fc-cache -fv \
   `#stage-pre-fonts`
 
-
 # Set max_allowed_packet to 512 MB for mysqldump
-RUN echo "[mysqldump]\nmax_allowed_packet              = 512M" > /etc/mysql/conf.d/mysqldump.cnf
+RUN echo "[mysqldump]\nmax_allowed_packet = 512M" > /etc/mysql/conf.d/mysqldump.cnf
 
 # Add frappe user
 RUN useradd -ms /bin/bash frappe
 
-# Install Additional Packages
+# ---------- Additional Packages (templated) ----------
 {% for p in doc.additional_packages %}
 
 # Run before install scripts
@@ -150,7 +150,7 @@ RUN --mount=type=cache,target=/var/cache/apt {{ p.prerequisites }} \
   `#stage-pre_before-{{ p.package }}`
 {% endif %}
 
-# Install non Ubuntu packages
+# Install non-Ubuntu packages
 {% if p.package_manager not in ["apt-get", "apt"] %}
 RUN {{ p.package_manager }} install {{ p.package }} \
   `#stage-pre-{{ p.package }}`
@@ -158,31 +158,31 @@ RUN {{ p.package_manager }} install {{ p.package }} \
 # Install Ubuntu packages
 {% else %}
 RUN --mount=type=cache,target=/var/cache/apt apt-get update \
-  && apt-get install --yes --no-install-suggests --no-install-recommends {{ p.package }} \
+  && apt-get install --yes --no-install-recommends {{ p.package }} \
   && rm -rf /var/lib/apt/lists/* \
   `#stage-pre-{{ p.package }}`
 {% endif %}
 
 # Run after install scripts
 {% if p.after_install %}
-RUN  --mount=type=cache,target=/var/cache/apt {{ p.after_install }} \
+RUN --mount=type=cache,target=/var/cache/apt {{ p.after_install }} \
   && rm -rf /var/lib/apt/lists/* \
   `#stage-pre_after-{{ p.package }}`
 {% endif %}
 
 {% endfor %}
-
+# ----------------------------------------------------
 
 # symlink mysqldump to mariadb-dump
-RUN ln -s /usr/bin/mysqldump /usr/bin/mariadb-dump
+RUN ln -s /usr/bin/mysqldump /usr/bin/mariadb-dump || true
 
 # Switch to frappe
 USER frappe
 WORKDIR /home/frappe
 
-
-# Install Node using NVM
-ENV NVM_DIR /home/frappe/.nvm
+# Install Node using NVM (use bash shell for nvm)
+SHELL ["/bin/bash", "-lc"]
+ENV NVM_DIR=/home/frappe/.nvm
 ENV {{ doc.get_dependency_version("nvm", True) }}
 ENV {{ doc.get_dependency_version("node", True) }}
 
@@ -196,14 +196,16 @@ RUN wget https://raw.githubusercontent.com/nvm-sh/nvm/v${NVM_VERSION}/install.sh
   && nvm cache clear \
   `#stage-pre-node`
 
-ENV PATH "$PATH:/home/frappe/.nvm/versions/node/v${NODE_VERSION}/bin"
+ENV PATH="$PATH:/home/frappe/.nvm/versions/node/v${NODE_VERSION}/bin"
 
-# Install Yarn
+# Install Yarn (you can switch to corepack if desired)
 RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 npm install -g yarn `#stage-pre-yarn`
 
+# Back to default shell
+SHELL ["/bin/sh", "-c"]
 
-# Install Bench
-ENV PATH "$PATH:/home/frappe/.local/bin"
+# Install Bench + pip tooling
+ENV PATH="$PATH:/home/frappe/.local/bin"
 
 {% if requires_version_based_get_pip %}
 RUN wget https://bootstrap.pypa.io/pip/${PYTHON_VERSION}/get-pip.py && python${PYTHON_VERSION} get-pip.py `#stage-pre-pip`
@@ -212,31 +214,47 @@ RUN wget https://bootstrap.pypa.io/get-pip.py && python${PYTHON_VERSION} get-pip
 {% endif %}
 
 ENV {{ doc.get_dependency_version("bench", True) }}
-RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 python${PYTHON_VERSION} -m pip install --upgrade frappe-bench==${BENCH_VERSION} `#stage-bench-bench`
-
-RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 python${PYTHON_VERSION} -m pip install Jinja2~=3.0.3
-RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 python${PYTHON_VERSION} -m pip install --upgrade setuptools
+RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 \
+    python${PYTHON_VERSION} -m pip install --upgrade \
+      "frappe-bench==${BENCH_VERSION}" \
+      "Jinja2~=3.0.3" \
+      "setuptools" \
+    `#stage-bench-and-pip`
 
 RUN git config --global advice.detachedHead false
-
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONUNBUFFERED=1
 
 # For the sake of completing the step
 RUN `#stage-bench-env`
 
-# Set environment variables
+# Set environment variables (templated)
 {% for v in doc.environment_variables %}
-ENV {{v.key}} {{ v.value }}
+ENV {{ v.key }} {{ v.value }}
 {% endfor %}
 
 RUN git config --global --add safe.directory /home/frappe/context/apps/frappe/.git
-# Install Frappe app
-RUN --mount=type=cache,sharing=locked,target=/home/frappe/.cache,uid=1000,gid=1000 --mount=type=bind,source=apps/frappe,target=/home/frappe/context/apps/frappe bench init --python /usr/bin/python${PYTHON_VERSION} --no-backups --frappe-path file:///home/frappe/context/apps/frappe frappe-bench `#stage-apps-frappe`
+
+# Install Frappe app (init bench)
+RUN --mount=type=cache,sharing=locked,target=/home/frappe/.cache,uid=1000,gid=1000 \
+    --mount=type=bind,source=apps/frappe,target=/home/frappe/context/apps/frappe \
+    bench init --python /usr/bin/python${PYTHON_VERSION} --no-backups --frappe-path file:///home/frappe/context/apps/frappe frappe-bench \
+    `#stage-apps-frappe`
+
 WORKDIR /home/frappe/frappe-bench
 
-RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 /home/frappe/frappe-bench/env/bin/pip install pycups==2.0.1
+# ---------- Build pycups with temporary dev deps, then purge ----------
+USER root
+RUN --mount=type=cache,target=/var/cache/apt apt-get update \
+    && apt-get install -y --no-install-recommends gcc libcups2-dev \
+    && su - frappe -c "/home/frappe/frappe-bench/env/bin/pip install --no-cache-dir pycups==2.0.1" \
+    && apt-get purge -y gcc libcups2-dev \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/* \
+    `#stage-pycups-buildclean`
+USER frappe
+# ---------------------------------------------------------------------
 
-# Install Redisearch 2.0 from precompiled binaries
+# Install Redisearch 2.0 from precompiled binaries (your assets)
 COPY --chown=frappe:frappe redis /home/frappe/frappe-bench/redis
 COPY --chown=frappe:frappe .vimrc /home/frappe/.vimrc
 COPY --chown=frappe:frappe common_site_config.json /home/frappe/frappe-bench/sites/common_site_config.json
@@ -247,39 +265,36 @@ COPY --chown=frappe:frappe common_site_config.json /home/frappe/frappe-bench/sit
 
 RUN git config --global --add safe.directory /home/frappe/context/apps/{{ app.app }}/.git
 
-
-
   {% if app.app == "fodista" %}
   RUN --mount=type=cache,sharing=locked,target=/home/frappe/.cache,uid=1000,gid=1000 \
-    --mount=type=bind,source=apps/{{ app.app }},target=/home/frappe/context/apps/{{ app.app }} \
-    bench get-app file:///home/frappe/context/apps/{{ app.app }} --skip-assets \
-    {% if app.use_cached %}
-    --cache-key {{ app.hash }} {% if doc.compress_app_cache %}--compress-artifacts{% endif %} \
-    {% endif %}
-    `#stage-apps-{{ app.app }}`
+      --mount=type=bind,source=apps/{{ app.app }},target=/home/frappe/context/apps/{{ app.app }} \
+      bench get-app file:///home/frappe/context/apps/{{ app.app }} --skip-assets \
+      {% if app.use_cached %}
+      --cache-key {{ app.hash }} {% if doc.compress_app_cache %}--compress-artifacts{% endif %} \
+      {% endif %} \
+      `#stage-apps-{{ app.app }}`
 
-  # Step 2: Copy the .git folder after bench get-app is executed
+  # Copy .git after get-app to retain history
   COPY --chown=frappe:frappe apps/{{ app.app }}/.git /home/frappe/frappe-bench/apps/{{ app.app }}/.git
 
-  # Step 3: Submodule Update and Build with Caching
+  # Submodule update and build with caching
   RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 \
       --mount=type=cache,target=/home/frappe/frappe-bench/apps/{{ app.app }}/node_modules,uid=1000,gid=1000 \
       git -C /home/frappe/frappe-bench/apps/{{ app.app }} submodule update --init --recursive \
-      && cd /home/frappe/frappe-bench/apps/{{ app.app }}/dashboard && yarn install && NODE_ENV=production yarn run build \
+      && cd /home/frappe/frappe-bench/apps/{{ app.app }}/dashboard \
+      && yarn install \
+      && NODE_ENV=production yarn run build \
       && bench build --app {{ app.app }} \
       `#stage-apps-Build-{{ app.app }}`
-  
   {% else %}
 
   RUN --mount=type=cache,sharing=locked,target=/home/frappe/.cache,uid=1000,gid=1000 \
-  --mount=type=bind,source=apps/{{ app.app }},target=/home/frappe/context/apps/{{ app.app }} \
-  bench get-app file:///home/frappe/context/apps/{{ app.app }} \
-    {% if app.use_cached %}
-    # Bench get-app flags to use get-app cache
-    --cache-key {{ app.hash }} {% if doc.compress_app_cache %}--compress-artifacts{% endif %} \
-    {% endif %}
-  `#stage-apps-{{ app.app }}`
-
+      --mount=type=bind,source=apps/{{ app.app }},target=/home/frappe/context/apps/{{ app.app }} \
+      bench get-app file:///home/frappe/context/apps/{{ app.app }} \
+      {% if app.use_cached %}
+      --cache-key {{ app.hash }} {% if doc.compress_app_cache %}--compress-artifacts{% endif %} \
+      {% endif %} \
+      `#stage-apps-{{ app.app }}`
   {% endif %}
 
 {% endif %}
@@ -304,13 +319,24 @@ COPY --chown=frappe:frappe apps.txt /home/frappe/frappe-bench/sites/apps.txt
 
 # Create custom mounts
 {% for m in doc.container_mounts %}
-RUN mkdir -p {{ m.destination }} && \
-  chown -R frappe:frappe {{ m.destination }} \
+RUN mkdir -p {{ m.destination }} \
+  && chown -R frappe:frappe {{ m.destination }} \
   `#stage-mounts-create`
 {% endfor %}
 
-ENV FRAPPE_HARD_LINK_ASSETS True
-ENV HISTTIMEFORMAT "%Y-%m-%d %T "
+ENV FRAPPE_HARD_LINK_ASSETS=True
+ENV HISTTIMEFORMAT="%Y-%m-%d %T "
+
+# Optional: purge heavy build toolchain now that assets are built
+USER root
+RUN --mount=type=cache,target=/var/cache/apt apt-get purge -y build-essential \
+  && apt-get autoremove -y \
+  && rm -rf /var/lib/apt/lists/*
+USER frappe
+
+# Basic healthcheck (adjust endpoint if needed)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=5 \
+  CMD curl -fsS http://localhost:8000/api/method/ping || exit 1
 
 EXPOSE 8000 9000 2200 8088
 CMD ["supervisord"]
