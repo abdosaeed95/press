@@ -334,9 +334,6 @@ RUN --mount=type=cache,target=/var/cache/apt apt-get purge -y build-essential \
   && rm -rf /var/lib/apt/lists/*
 USER frappe
 
-# Basic healthcheck (adjust endpoint if needed)
-HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=5 \
-  CMD curl -fsS http://localhost:8000/api/method/ping || exit 1
 
 EXPOSE 8000 9000 2200 8088
 CMD ["supervisord"]
