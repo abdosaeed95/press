@@ -85,43 +85,47 @@ RUN --mount=type=cache,target=/var/cache/apt add-apt-repository -y ppa:deadsnake
   `#stage-pre-python`
 
 # Install wkhtmltopdf
+# Install wkhtmltopdf
 ENV {{ doc.get_dependency_version("wkhtmltopdf", True) }}
 
 {% if is_arm_build %}
-  # ARM setup (0.12.5) & (0.12.6)
-  {% if doc.get_dependency_version("wkhtmltopdf") == '0.12.5' %}
-  RUN wget https://github.com/adityahase/wkhtmltopdf/releases/download/0.12.5/wkhtmltox_0.12.5-1.focal_arm64.deb \
-    && dpkg -i wkhtmltox_0.12.5-1.focal_arm64.deb \
-    && rm wkhtmltox_0.12.5-1.focal_arm64.deb \
-    `#stage-pre-wkhtmltopdf`
-  {% endif %}
-
-  {% if doc.get_dependency_version("wkhtmltopdf") == '0.12.6' %}
-  RUN wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.focal_arm64.deb \
-    && dpkg -i wkhtmltox_0.12.6-1.focal_arm64.deb \
-    && rm wkhtmltox_0.12.6-1.focal_arm64.deb \
-    `#stage-pre-wkhtmltopdf`
+  # ARM (Ubuntu 22.04 jammy)
+  {% if doc.get_dependency_version("wkhtmltopdf") in ['0.12.6', '0.12.6.1', '0.12.6.1-2'] %}
+  RUN wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.jammy_arm64.deb \
+    && apt-get update && apt-get install -y --no-install-recommends \
+       xfonts-75dpi xfonts-base \
+    && dpkg -i wkhtmltox_0.12.6.1-2.jammy_arm64.deb \
+    && rm wkhtmltox_0.12.6.1-2.jammy_arm64.deb \
+    `#stage-pre-wkhtmltopdf (jammy arm64)`
+  {% elif doc.get_dependency_version("wkhtmltopdf") == '0.12.4' %}
+  RUN wget https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.4/wkhtmltox-0.12.4_linux-generic-amd64.tar.xz \
+    && tar -xvf wkhtmltox-0.12.4_linux-generic-amd64.tar.xz \
+    && sudo mv wkhtmltox/bin/wkhtmlto* /usr/local/bin/ \
+    && rm -rf wkhtmltox-0.12.4_linux-generic-amd64.tar.xz wkhtmltox \
+    `#stage-pre-wkhtmltopdf (generic 0.12.4)`
+  {% else %}
+  RUN echo "wkhtmltopdf {{ doc.get_dependency_version('wkhtmltopdf') }} isn't supported on Ubuntu 22.04. Use 0.12.6.1-2." && exit 1
   {% endif %}
 {% else %}
-  # Intel setup
-  {% if doc.get_dependency_version("wkhtmltopdf") == '0.12.6' %}
-  RUN wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.focal_amd64.deb \
-    && dpkg -i wkhtmltox_0.12.6-1.focal_amd64.deb \
-    && rm wkhtmltox_0.12.6-1.focal_amd64.deb \
-    `#stage-pre-wkhtmltopdf`
-  {% elif doc.get_dependency_version("wkhtmltopdf") == '0.12.5' %}
-  RUN wget https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox_0.12.5-1.focal_amd64.deb \
-    && dpkg -i wkhtmltox_0.12.5-1.focal_amd64.deb \
-    && rm wkhtmltox_0.12.5-1.focal_amd64.deb \
-    `#stage-pre-wkhtmltopdf`
+  # Intel/amd64 (Ubuntu 22.04 jammy)
+  {% if doc.get_dependency_version("wkhtmltopdf") in ['0.12.6', '0.12.6.1', '0.12.6.1-2'] %}
+  RUN wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.jammy_amd64.deb \
+    && apt-get update && apt-get install -y --no-install-recommends \
+       xfonts-75dpi xfonts-base \
+    && dpkg -i wkhtmltox_0.12.6.1-2.jammy_amd64.deb \
+    && rm wkhtmltox_0.12.6.1-2.jammy_amd64.deb \
+    `#stage-pre-wkhtmltopdf (jammy amd64)`
   {% elif doc.get_dependency_version("wkhtmltopdf") == '0.12.4' %}
   RUN wget https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.4/wkhtmltox-0.12.4_linux-generic-amd64.tar.xz \
     && tar -xvf wkhtmltox-0.12.4_linux-generic-amd64.tar.xz \
     && mv wkhtmltox/bin/wkhtmlto* /usr/local/bin/ \
     && rm -rf wkhtmltox-0.12.4_linux-generic-amd64.tar.xz wkhtmltox \
-    `#stage-pre-wkhtmltopdf`
+    `#stage-pre-wkhtmltopdf (generic 0.12.4)`
+  {% else %}
+  RUN echo "wkhtmltopdf {{ doc.get_dependency_version('wkhtmltopdf') }} isn't supported on Ubuntu 22.04. Use 0.12.6.1-2." && exit 1
   {% endif %}
 {% endif %}
+
 
 {% if doc.is_code_server_enabled %}
 RUN curl -fsSL https://code-server.dev/install.sh | sh `#stage-pre-code-server`
