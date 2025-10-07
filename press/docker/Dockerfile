@@ -1,5 +1,5 @@
 # syntax = docker/dockerfile:experimental
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 ENV LANG C.UTF-8
 ENV DEBIAN_FRONTEND noninteractive
