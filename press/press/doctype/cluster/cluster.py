@@ -466,10 +466,10 @@ class Cluster(Document):
 					"ToPort": 2222,
 				},
 				{
-					"FromPort": 3306,
+					"FromPort": 3307,
 					"IpProtocol": "tcp",
-					"IpRanges": [{"CidrIp": "0.0.0.0/0", "Description": "MariaDB from anywhere"}],
-					"ToPort": 3306,
+					"IpRanges": [{"CidrIp": "0.0.0.0/0", "Description": "ProxySQL from anywhere"}],
+					"ToPort": 3307,
 				},
 			],
 		)
@@ -612,11 +612,11 @@ class Cluster(Document):
 						tcp_options=TcpOptions(destination_port_range=PortRange(min=2222, max=2222)),
 					),
 					AddSecurityRuleDetails(
-						description="MariaDB from anywhere",
+						description="ProxySQL from anywhere",
 						direction="INGRESS",
 						protocol="6",
 						source="0.0.0.0/0",
-						tcp_options=TcpOptions(destination_port_range=PortRange(min=3306, max=3306)),
+						tcp_options=TcpOptions(destination_port_range=PortRange(min=3307, max=3307)),
 					),
 					AddSecurityRuleDetails(
 						description="Everything to anywhere",

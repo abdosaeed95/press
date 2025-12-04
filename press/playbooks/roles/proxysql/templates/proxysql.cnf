@@ -13,7 +13,7 @@ admin_variables=
 
 mysql_variables=
 {
-	interfaces="0.0.0.0:6033"
+	interfaces="0.0.0.0:3307"
 	default_schema="information_schema"
 	stacksize=1048576
 	server_version="5.5.30"
@@ -54,4 +54,3 @@ mysql_variables=
 	wait_timeout=300000
 	default_sql_safe_updates="ON"
 }
-
