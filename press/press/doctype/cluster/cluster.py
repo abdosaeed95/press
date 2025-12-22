@@ -466,10 +466,10 @@ class Cluster(Document):
 					"ToPort": 2222,
 				},
 				{
-					"FromPort": 3307,
+					"FromPort": 3306,
 					"IpProtocol": "tcp",
 					"IpRanges": [{"CidrIp": "0.0.0.0/0", "Description": "ProxySQL from anywhere"}],
-					"ToPort": 3307,
+					"ToPort": 3309,
 				},
 			],
 		)
@@ -616,7 +616,7 @@ class Cluster(Document):
 						direction="INGRESS",
 						protocol="6",
 						source="0.0.0.0/0",
-						tcp_options=TcpOptions(destination_port_range=PortRange(min=3307, max=3307)),
+						tcp_options=TcpOptions(destination_port_range=PortRange(min=3309, max=3309)),
 					),
 					AddSecurityRuleDetails(
 						description="Everything to anywhere",

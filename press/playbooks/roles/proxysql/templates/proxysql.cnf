@@ -11,9 +11,9 @@ admin_variables=
 	prometheus_memory_metrics_interval=60
 }
 
-mysql_variables=
-{
-	interfaces="0.0.0.0:3307"
+	mysql_variables=
+	{
+		interfaces="0.0.0.0:3309"
 	default_schema="information_schema"
 	stacksize=1048576
 	server_version="5.5.30"

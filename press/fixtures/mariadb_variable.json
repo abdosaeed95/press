@@ -310,7 +310,7 @@
  {
   "configurable_by_user": 0,
   "datatype": "Str",
-  "default_value": "3307",
+  "default_value": "3309",
   "doc_section": "server",
   "docstatus": 0,
   "doctype": "MariaDB Variable",
