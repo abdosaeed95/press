@@ -9,4 +9,4 @@
     - role: statsd_exporter_rename
     - role: filebeat_rename
     - role: sshd_hardening
-    - role: user_ssh_certificate
+    # - role: user_ssh_certificate

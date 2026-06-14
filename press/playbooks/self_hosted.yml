@@ -15,4 +15,4 @@
     - role: cadvisor
     - role: statsd_exporter
     - role: gpg_config
-    - role: user_ssh_certificate
+    # - role: user_ssh_certificate
