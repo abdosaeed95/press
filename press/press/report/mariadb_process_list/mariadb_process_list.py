@@ -83,7 +83,9 @@ def get_data(filters):
 	rows = agent.post("database/processes", data=data)
 
 	for row in rows:
-		row["Info"] = sqlparse.format((row["Info"] or "").strip(), keyword_case="upper", reindent=True)
+		row["Info"] = sqlparse.format(
+			(row["Info"] or "").strip(), keyword_case="upper", reindent=True
+		)
 	return rows
 
 

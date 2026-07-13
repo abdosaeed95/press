@@ -167,4 +167,7 @@ def create_and_verify_selfhosted(server):
 		setup(self_hosted_server_name)
 		return frappe.get_value("Self Hosted Server", self_hosted_server_name, "server")
 
-	frappe.throw("Server verification failed. Please check the server details and try again.")
+	else:
+		frappe.throw(
+			"Server verification failed. Please check the server details and try again."
+		)

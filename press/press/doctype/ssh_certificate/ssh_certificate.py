@@ -119,7 +119,9 @@ class SSHCertificate(Document):
 
 	def run(self, command):
 		try:
-			return subprocess.check_output(shlex.split(command), stderr=subprocess.STDOUT).decode()
+			return subprocess.check_output(
+				shlex.split(command), stderr=subprocess.STDOUT
+			).decode()
 		except subprocess.CalledProcessError as e:
 			log_error("Command failed", output={e.output.decode()}, doc=self)
 			raise

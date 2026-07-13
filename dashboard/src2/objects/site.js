@@ -1403,7 +1403,9 @@ export default {
 								onClick() {
 									let ConfigureAutoUpdateDialog = defineAsyncComponent(
 										() =>
-											import('../components/site/ConfigureAutoUpdateDialog.vue'),
+											import(
+												'../components/site/ConfigureAutoUpdateDialog.vue'
+											),
 									);
 
 									renderDialog(

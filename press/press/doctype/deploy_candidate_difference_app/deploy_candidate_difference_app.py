@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) 2020, Frappe and contributors
 # For license information, please see license.txt
 
@@ -30,6 +31,10 @@ class DeployCandidateDifferenceApp(Document):
 	def get_list_query(query):
 		apps = query.run(as_dict=True)
 		for app in apps:
-			app["source_tag"] = frappe.db.get_value("App Tag", {"hash": app["source_hash"]}, "tag")
-			app["destination_tag"] = frappe.db.get_value("App Tag", {"hash": app["destination_hash"]}, "tag")
+			app["source_tag"] = frappe.db.get_value(
+				"App Tag", {"hash": app["source_hash"]}, "tag"
+			)
+			app["destination_tag"] = frappe.db.get_value(
+				"App Tag", {"hash": app["destination_hash"]}, "tag"
+			)
 		return apps

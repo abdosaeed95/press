@@ -2,7 +2,7 @@
 	<Dialog
 		:options="{
 			title: 'Query Logs',
-			size: '2xl',
+			size: '2xl'
 		}"
 	>
 		<template #body-content>
@@ -18,7 +18,8 @@
 					<p class="text-sm text-gray-600">Query</p>
 					<pre
 						class="mt-1.5 max-h-52 overflow-y-auto whitespace-pre-wrap rounded bg-gray-50 px-2 py-1.5 text-sm text-gray-600"
-						>{{ selectedRow.query }}</pre>
+						>{{ selectedRow.query }}</pre
+					>
 				</div>
 				<div class="mt-3">
 					<p class="text-sm text-gray-600">Timestamp</p>
@@ -43,11 +44,11 @@ export default {
 	props: ['site'],
 	emits: ['rerunQuery'],
 	components: {
-		ObjectList,
+		ObjectList
 	},
 	data() {
 		return {
-			selectedRow: null,
+			selectedRow: null
 		};
 	},
 	computed: {
@@ -56,7 +57,7 @@ export default {
 				url: 'press.api.client.get_list',
 				doctype: 'SQL Playground Log',
 				filters: {
-					site: this.site,
+					site: this.site
 				},
 				fields: ['query', 'committed', 'creation'],
 				pageLength: 10,
@@ -72,7 +73,7 @@ export default {
 								return value.substring(0, 40) + '...';
 							}
 							return value;
-						},
+						}
 					},
 					{
 						label: 'Timestamp',
@@ -81,7 +82,7 @@ export default {
 						fieldname: 'creation',
 						format(value) {
 							return new Date(value).toLocaleString();
-						},
+						}
 					},
 					{
 						label: 'Committed',
@@ -91,21 +92,21 @@ export default {
 						type: 'Icon',
 						Icon(value) {
 							return value ? 'check' : 'x';
-						},
-					},
+						}
+					}
 				],
-				onRowClick: (row) => {
+				onRowClick: row => {
 					this.selectedRow = row;
-				},
+				}
 			};
-		},
+		}
 	},
 	methods: {
 		rerunQuery() {
 			const query = this.selectedRow.query;
 			this.selectedRow = null;
 			this.$emit('rerunQuery', query);
-		},
-	},
+		}
+	}
 };
 </script>

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) 2020, Frappe and Contributors
 # See license.txt
 
@@ -74,4 +75,6 @@ class TestSitePlanChange(unittest.TestCase):
 				"to_plan": self.nano_plan.name,
 			}
 		).insert(ignore_permissions=True)
-		self.assertEqual(frappe.db.get_value("Site", self.site.name, "plan"), self.nano_plan.name)
+		self.assertEqual(
+			frappe.db.get_value("Site", self.site.name, "plan"), self.nano_plan.name
+		)

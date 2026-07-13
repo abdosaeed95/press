@@ -7,9 +7,8 @@ import contextlib
 import json
 import os
 import time
-from collections.abc import Callable
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 import frappe
 import frappe.utils

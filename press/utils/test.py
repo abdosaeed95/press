@@ -1,6 +1,6 @@
 """Utility methods for writing tests"""
 
-from collections.abc import Callable
+from typing import Callable
 
 import frappe
 

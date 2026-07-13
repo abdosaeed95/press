@@ -41,20 +41,20 @@ class AppRelease(Document):
 		from frappe.types import DF
 
 		app: DF.Link
-		author: DF.Data | None
-		clone_directory: DF.Text | None
+		author: DF.Data | None  # noqa
+		clone_directory: DF.Text | None  # noqa
 		cloned: DF.Check
-		code_server_url: DF.Text | None
+		code_server_url: DF.Text | None  # noqa
 		hash: DF.Data
 		invalid_release: DF.Check
-		invalidation_reason: DF.Code | None
-		message: DF.Code | None
-		output: DF.Code | None
+		invalidation_reason: DF.Code | None  # noqa
+		message: DF.Code | None  # noqa
+		output: DF.Code | None  # noqa
 		public: DF.Check
 		source: DF.Link
 		status: DF.Literal["Draft", "Approved", "Awaiting Approval", "Rejected"]
 		team: DF.Link
-		timestamp: DF.Datetime | None
+		timestamp: DF.Datetime | None  # noqa
 	# end: auto-generated types
 
 	dashboard_fields = ["app", "source", "message", "hash", "author", "status"]  # noqa

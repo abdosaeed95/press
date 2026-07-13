@@ -2,22 +2,25 @@
 # For license information, please see license.txt
 
 from datetime import datetime
-from typing import TypedDict
+from typing import Optional, TypedDict
 
 import frappe
 from frappe.model.document import Document
 
-
-class ExecuteResult(TypedDict):
-	command: str
-	status: str
-	start: str
-	end: str
-	duration: float
-	output: str
-	directory: str | None
-	traceback: str | None
-	returncode: int | None
+ExecuteResult = TypedDict(
+	"ExecuteResult",
+	{
+		"command": str,
+		"status": str,
+		"start": str,
+		"end": str,
+		"duration": float,
+		"output": str,
+		"directory": Optional[str],
+		"traceback": Optional[str],
+		"returncode": Optional[int],
+	},
+)
 
 
 class BenchShellLog(Document):
@@ -47,7 +50,7 @@ def create_bench_shell_log(
 	res: "ExecuteResult",
 	bench: str,
 	cmd: str,
-	subdir: str | None,
+	subdir: Optional[str],
 	save_output: bool,
 ) -> None:
 	doc_dict = {

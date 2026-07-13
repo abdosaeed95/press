@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) 2020, Frappe and contributors
 # For license information, please see license.txt
 
@@ -38,7 +39,9 @@ class DeployCandidateDifference(Document):
 			)
 
 		source_creation = frappe.db.get_value("Deploy Candidate", self.source, "creation")
-		destination_creation = frappe.db.get_value("Deploy Candidate", self.destination, "creation")
+		destination_creation = frappe.db.get_value(
+			"Deploy Candidate", self.destination, "creation"
+		)
 		if source_creation > destination_creation:
 			frappe.throw(
 				"Destination Candidate must be created after Source Candidate",
@@ -55,8 +58,10 @@ class DeployCandidateDifference(Document):
 			},
 		):
 			frappe.throw(
-				f"Deploy Candidate Difference already exists for Release Group: {self.group} "
-				f", Source Release: {self.source} and Destination Release: {self.destination}",
+				"Deploy Candidate Difference already exists for Release Group: {} "
+				", Source Release: {} and Destination Release: {}".format(
+					self.group, self.source, self.destination
+				),
 				frappe.ValidationError,
 			)
 
@@ -88,7 +93,9 @@ class DeployCandidateDifference(Document):
 				difference.insert()
 				difference.set_deploy_type()
 			else:
-				difference = frappe.get_doc("App Release Difference", differences[0].name, for_update=True)
+				difference = frappe.get_doc(
+					"App Release Difference", differences[0].name, for_update=True
+				)
 				difference.reload()
 				difference.set_deploy_type()
 			self.append(
@@ -106,4 +113,6 @@ class DeployCandidateDifference(Document):
 				self.deploy_type = "Migrate"
 
 
-get_permission_query_conditions = get_permission_query_conditions_for_doctype("Deploy Candidate Difference")
+get_permission_query_conditions = get_permission_query_conditions_for_doctype(
+	"Deploy Candidate Difference"
+)

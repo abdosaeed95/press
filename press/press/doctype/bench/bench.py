@@ -5,10 +5,9 @@ from __future__ import annotations
 
 import json
 from collections import OrderedDict
-from collections.abc import Generator, Iterable
 from functools import cached_property
 from itertools import groupby
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Generator, Iterable, Literal
 
 import frappe
 import pytz

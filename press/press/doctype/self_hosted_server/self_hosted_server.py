@@ -84,6 +84,7 @@ class SelfHostedServer(Document):
 		self.validate_is_duplicate()
 
 	def autoname(self):
+		
 		self.name = f"{self.hostname}.{self.hybrid_domain}"
 		self.domain = self.hybrid_domain
 

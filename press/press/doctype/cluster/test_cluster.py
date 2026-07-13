@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) 2021, Frappe and Contributors
 # See license.txt
 
@@ -65,7 +66,9 @@ class TestCluster(unittest.TestCase):
 		for s in series:
 			create_test_virtual_machine_image(cluster=cluster, series=s)
 
-	@patch.object(ProxyServer, "validate", new=MagicMock())  # avoid TLSCertificate validation
+	@patch.object(
+		ProxyServer, "validate", new=MagicMock()
+	)  # avoid TLSCertificate validation
 	def _create_cluster(
 		self,
 		aws_access_key_id,
@@ -100,7 +103,9 @@ class TestCluster(unittest.TestCase):
 @patch.object(VirtualMachine, "get_latest_ubuntu_image", new=lambda x: "ami-123")
 @patch.object(VirtualMachineImage, "wait_for_availability", new=MagicMock())
 @patch.object(VirtualMachineImage, "after_insert", new=MagicMock())
-@patch("press.press.doctype.cluster.cluster.frappe.enqueue_doc", new=foreground_enqueue_doc)
+@patch(
+	"press.press.doctype.cluster.cluster.frappe.enqueue_doc", new=foreground_enqueue_doc
+)
 @patch("press.press.doctype.cluster.cluster.frappe.db.commit", new=MagicMock())
 class TestPrivateCluster(TestCluster):
 	@mock_aws
@@ -150,7 +155,9 @@ class TestPrivateCluster(TestCluster):
 		boto3.client("iam").create_group(GroupName="fc-vpc-customer")
 
 		Cluster.wait_for_aws_creds_seconds = 0
-		self._create_cluster(aws_access_key_id=None, aws_secret_access_key=None, add_default_servers=True)
+		self._create_cluster(
+			aws_access_key_id=None, aws_secret_access_key=None, add_default_servers=True
+		)
 
 		server_count_after = frappe.db.count("Server")
 		database_server_count_after = frappe.db.count("Database Server")
@@ -173,7 +180,9 @@ class TestPrivateCluster(TestCluster):
 
 @patch.object(VirtualMachineImage, "wait_for_availability", new=MagicMock())
 @patch("press.press.doctype.cluster.cluster.frappe.db.commit", new=MagicMock())
-@patch("press.press.doctype.cluster.cluster.frappe.enqueue_doc", new=foreground_enqueue_doc)
+@patch(
+	"press.press.doctype.cluster.cluster.frappe.enqueue_doc", new=foreground_enqueue_doc
+)
 @patch.object(VirtualMachineImage, "after_insert", new=MagicMock())
 class TestPublicCluster(TestCluster):
 	@mock_aws
@@ -215,7 +224,9 @@ class TestPublicCluster(TestCluster):
 		database_server_count_before = frappe.db.count("Database Server")
 		proxy_server_count_before = frappe.db.count("Proxy Server")
 
-		create_test_cluster(name="Mumbai 2", region="ap-south-1", public=True, add_default_servers=True)
+		create_test_cluster(
+			name="Mumbai 2", region="ap-south-1", public=True, add_default_servers=True
+		)
 
 		server_count_after = frappe.db.count("Server")
 		database_server_count_after = frappe.db.count("Database Server")
@@ -238,7 +249,9 @@ class TestPublicCluster(TestCluster):
 		settings.aws_access_key_id = key_pairs["AccessKey"]["AccessKeyId"]
 		settings.aws_secret_access_key = key_pairs["AccessKey"]["SecretAccessKey"]
 		settings.save()
-		cluster = self._create_cluster(aws_access_key_id=None, aws_secret_access_key=None, public=True)
+		cluster = self._create_cluster(
+			aws_access_key_id=None, aws_secret_access_key=None, public=True
+		)
 		self.assertEqual(cluster.aws_access_key_id, key_pairs["AccessKey"]["AccessKeyId"])
 		self.assertEqual(
 			cluster.get_password("aws_secret_access_key"),

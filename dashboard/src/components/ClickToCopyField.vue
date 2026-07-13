@@ -4,14 +4,15 @@
 			<pre
 				:class="{
 					'whitespace-pre-wrap': breakLines,
-					'overflow-x-auto': !breakLines,
+					'overflow-x-auto': !breakLines
 				}"
 				:style="
 					!breakLines
 						? 'scrollbar-width: none; -ms-overflow-style: none; -webkit-scrollbar: none;'
 						: ''
 				"
-				>{{ textContent }}</pre>
+				>{{ textContent }}</pre
+			>
 		</div>
 		<button
 			class="absolute right-2 top-2 rounded-sm border border-gray-200 bg-white p-1 text-xs text-gray-600"
@@ -30,16 +31,16 @@ export default {
 	props: {
 		textContent: {
 			type: String,
-			required: true,
+			required: true
 		},
 		breakLines: {
 			type: Boolean,
-			default: true,
-		},
+			default: true
+		}
 	},
 	data() {
 		return {
-			copied: false,
+			copied: false
 		};
 	},
 	methods: {
@@ -52,7 +53,7 @@ export default {
 				}, 4000);
 				toast.success('Copied to clipboard!');
 			});
-		},
-	},
+		}
+	}
 };
 </script>

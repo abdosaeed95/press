@@ -56,7 +56,7 @@ export default {
 					condition: () =>
 						Boolean(
 							this.$team.doc.country === 'Kenya' &&
-							this.$team.doc.mpesa_enabled,
+								this.$team.doc.mpesa_enabled,
 						),
 				},
 				{
