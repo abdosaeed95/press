@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) 2019, Frappe and contributors
 # For license information, please see license.txt
 
@@ -94,11 +95,15 @@ class UserSSHCertificate(Document):
 
 		# try generating a certificate for the /tmp key.
 		try:
-			command = f"ssh-keygen -s ca -I {self.name} -n {principal} -V +{self.validity} {tmp_pub_file}"
+			command = (
+				f"ssh-keygen -s ca -I {self.name} -n {principal} -V +{self.validity} {tmp_pub_file}"
+			)
 			subprocess.check_output(shlex.split(command), cwd="/etc/ssh")
 		except subprocess.CalledProcessError as e:
 			log_error("SSH Certificate Generation Error", exception=e)
-			frappe.throw("Failed to generate a certificate for the specified key. Please try again.")
+			frappe.throw(
+				"Failed to generate a certificate for the specified key. Please try again."
+			)
 		process = subprocess.Popen(
 			shlex.split(f"ssh-keygen -Lf {tmp_pub_file_prefix}-cert.pub"),
 			stdout=subprocess.PIPE,
@@ -128,7 +133,7 @@ class UserSSHCertificate(Document):
 
 @frappe.whitelist()
 def read_certificate(key_type, docname):
-	with open(f"/tmp/id_{key_type}-{docname}-cert.pub") as certificate:
+	with open("/tmp/id_{0}-{1}-cert.pub".format(key_type, docname)) as certificate:
 		try:
 			return certificate.read()
 		except Exception:

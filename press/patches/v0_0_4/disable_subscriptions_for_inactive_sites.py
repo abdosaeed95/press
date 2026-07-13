@@ -16,4 +16,6 @@ def execute():
 		.where(site.status.isin(["Archived", "Broken", "Suspended"]))
 	).run(pluck=True)
 
-	frappe.db.set_value("Subscription", {"enabled": 1, "name": ("in", inactive_sites)}, "enabled", 0)
+	frappe.db.set_value(
+		"Subscription", {"enabled": 1, "name": ("in", inactive_sites)}, "enabled", 0
+	)

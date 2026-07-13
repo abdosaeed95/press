@@ -33,7 +33,9 @@ class TeamInvoice:
 		self.get_draft_invoice()
 
 		if not self.draft_invoice:
-			log_error("No draft invoice created to update site usage", ledger_entry=ledger_entry.name)
+			log_error(
+				"No draft invoice created to update site usage", ledger_entry=ledger_entry.name
+			)
 			return
 
 		# return if this ledger_entry is already accounted for in an invoice

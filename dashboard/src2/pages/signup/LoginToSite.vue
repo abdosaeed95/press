@@ -189,10 +189,12 @@ export default {
 								this.currentBuildStep;
 							this.progressCount += 1;
 
-							if (!(
-								this.$resources.siteRequest.getProgress.error &&
-								this.progressCount <= 10
-							)) {
+							if (
+								!(
+									this.$resources.siteRequest.getProgress.error &&
+									this.progressCount <= 10
+								)
+							) {
 								this.progressCount = Math.round(data.progress * 10) / 10;
 								setTimeout(() => {
 									if (

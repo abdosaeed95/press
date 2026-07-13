@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) 2020, Frappe and contributors
 # For license information, please see license.txt
 
@@ -17,7 +18,9 @@ class Telegram:
 			as_dict=True,
 		)
 		self.group = group or settings.telegram_alerts_chat_group
-		telegram_group = frappe.db.get_value("Telegram Group", self.group, ["token", "chat_id"])
+		telegram_group = frappe.db.get_value(
+			"Telegram Group", self.group, ["token", "chat_id"]
+		)
 		token, chat_id = telegram_group if telegram_group else (None, None)
 		self.token = token or settings.telegram_bot_token
 		self.chat_id = chat_id
@@ -28,7 +31,7 @@ class Telegram:
 
 	def send(self, message, html=False, reraise=False):
 		if not message:
-			return None
+			return
 		try:
 			text = message[: telegram.MAX_MESSAGE_LENGTH]
 			parse_mode = self._get_parse_mode(html)
@@ -98,11 +101,11 @@ class Telegram:
 				"ping": frappe.ping,
 			}
 			return commands.get(arguments[0], what)(*arguments[1:])
-		if len(arguments) == 4:
+		elif len(arguments) == 4:
 			doctype, name, action, key = arguments
 			commands = {"get": get_value, "execute": execute}
 			return commands.get(action, what)(frappe.unscrub(doctype), name, key)
-		if len(arguments) >= 5:
+		elif len(arguments) >= 5:
 			doctype, name, action, key, *values = arguments
 			commands = {
 				"set": set_value,
@@ -110,7 +113,8 @@ class Telegram:
 			}
 			if action == "set" and len(values) == 1:
 				return commands.get(action, what)(frappe.unscrub(doctype), name, key, values[0])
-			return commands.get(action, what)(frappe.unscrub(doctype), name, key, *values)
+			else:
+				return commands.get(action, what)(frappe.unscrub(doctype), name, key, *values)
 		return what()
 
 

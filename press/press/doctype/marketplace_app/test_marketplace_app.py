@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) 2020, Frappe and Contributors
 # See license.txt
 
 import unittest
+from typing import Optional
 
 import frappe
 
@@ -11,7 +13,9 @@ from press.press.doctype.marketplace_app.utils import (
 )
 
 
-def create_test_marketplace_app(app: str, team: str | None = None, sources: list[dict] | None = None):
+def create_test_marketplace_app(
+	app: str, team: Optional[str] = None, sources: Optional[list[dict]] = None
+):
 	marketplace_app = frappe.get_doc(
 		{
 			"doctype": "Marketplace App",

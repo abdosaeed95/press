@@ -1,6 +1,7 @@
 # Copyright (c) 2023, Frappe and contributors
 # For license information, please see license.txt
 
+from typing import Dict
 
 import frappe
 from frappe.model.document import Document
@@ -75,25 +76,33 @@ def has_user_permission(doc: str, name: str, action: str, groups: list = None):
 		"Press User Permission", {"user": user, "type": "Config"}, "config", as_dict=True
 	)
 	if config:
-		allowed = check_config_perm(frappe.parse_json(config["config"]), doc, name, action, allowed)
+		allowed = check_config_perm(
+			frappe.parse_json(config["config"]), doc, name, action, allowed
+		)
 
 	return allowed
 
 
-def check_config_perm(config: dict, doctype: str, name: str, action: str, allowed: bool):
+def check_config_perm(
+	config: Dict, doctype: str, name: str, action: str, allowed: bool
+):
 	perm_types = config.keys()
 
 	if "global" in perm_types:
 		allowed = has_config_perm(config["global"], doctype, name, action, allowed, "global")
 
 	if "restricted" in perm_types:
-		allowed = has_config_perm(config["restricted"], doctype, name, action, allowed, "restricted")
+		allowed = has_config_perm(
+			config["restricted"], doctype, name, action, allowed, "restricted"
+		)
 
 	return allowed
 
 
-def has_config_perm(config: dict, doctype: str, name: str, action: str, allowed: bool, ptype: str):
-	if doctype in config:
+def has_config_perm(
+	config: Dict, doctype: str, name: str, action: str, allowed: bool, ptype: str
+):
+	if doctype in config.keys():
 		docnames = config[doctype].keys()
 		if name in docnames:
 			name = name

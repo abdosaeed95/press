@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) 2021, Frappe and contributors
 # For license information, please see license.txt
 
@@ -76,9 +77,9 @@ def should_update_trigger(doc):
 	# Return based on the set frequency
 	if doc.update_trigger_frequency == "Daily":
 		return should_update_trigger_for_daily(doc)
-	if doc.update_trigger_frequency == "Weekly":
+	elif doc.update_trigger_frequency == "Weekly":
 		return should_update_trigger_for_weekly(doc)
-	if doc.update_trigger_frequency == "Monthly":
+	elif doc.update_trigger_frequency == "Monthly":
 		return should_update_trigger_for_monthly(doc)
 
 	return False
@@ -95,7 +96,7 @@ def should_update_trigger_for_daily(doc, current_datetime=None):
 		and get_time(doc.update_trigger_time) <= get_time(auto_update_last_triggered_on)
 	):
 		return False
-	if get_time(doc.update_trigger_time) <= get_time(current_datetime):
+	elif get_time(doc.update_trigger_time) <= get_time(current_datetime):
 		return True
 
 	return False

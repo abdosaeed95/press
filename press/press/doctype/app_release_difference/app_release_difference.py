@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) 2020, Frappe and contributors
 # For license information, please see license.txt
 
@@ -36,7 +37,9 @@ class AppReleaseDifference(Document):
 
 	def validate(self):
 		if self.source_release == self.destination_release:
-			frappe.throw("Destination Release must be different from Source Release", frappe.ValidationError)
+			frappe.throw(
+				"Destination Release must be different from Source Release", frappe.ValidationError
+			)
 
 	def set_deploy_type(self):
 		if self.deploy_type != "Pending":
@@ -48,7 +51,7 @@ class AppReleaseDifference(Document):
 			try:
 				github_access_token = get_access_token(source.github_installation_id)
 			except KeyError:
-				frappe.throw(f"Could not get access token for app source {source.name}")
+				frappe.throw("Could not get access token for app source {0}".format(source.name))
 		else:
 			github_access_token = frappe.get_value("Press Settings", None, "github_access_token")
 
@@ -58,7 +61,9 @@ class AppReleaseDifference(Document):
 		except Exception:
 			self.add_comment(
 				"Info",
-				f"Could not get repository {source.repository}, so assuming migrate required",
+				"Could not get repository {0}, so assuming migrate required".format(
+					source.repository
+				),
 			)
 			self.deploy_type = "Migrate"  # fallback to migrate
 			self.save()

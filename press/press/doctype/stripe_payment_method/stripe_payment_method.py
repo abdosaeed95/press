@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) 2020, Frappe and contributors
 # For license information, please see license.txt
 
@@ -152,7 +153,9 @@ class StripePaymentMethod(Document):
 			log_error("Failed to detach payment method from stripe", data=e)
 
 
-get_permission_query_conditions = get_permission_query_conditions_for_doctype("Stripe Payment Method")
+get_permission_query_conditions = get_permission_query_conditions_for_doctype(
+	"Stripe Payment Method"
+)
 
 
 def on_doctype_update():

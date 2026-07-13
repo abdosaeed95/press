@@ -1,6 +1,5 @@
+from typing import Any, Generator, Optional
 import signal
-from collections.abc import Generator
-from typing import Any
 
 import frappe
 from frappe.core.doctype.rq_job.rq_job import fetch_job_ids
@@ -24,7 +23,7 @@ def get_background_jobs(
 	doctype: str,
 	name: str,
 	status: list[str] | None = None,
-	connection: "Redis | None" = None,
+	connection: "Optional[Redis]" = None,
 ) -> Generator[Job, Any, None]:
 	"""
 	Returns background jobs for a `doc` created using the `run_doc_method`
@@ -46,7 +45,7 @@ def get_background_jobs(
 
 def get_job_ids(
 	status: str | list[str],
-	connection: "Redis | None" = None,
+	connection: "Optional[Redis]" = None,
 ) -> Generator[str, Any, None]:
 	if isinstance(status, str):
 		status = [status]
@@ -70,7 +69,9 @@ def does_job_belong_to_doc(job: Job, doctype: str, name: str) -> bool:
 	if site and site != frappe.local.site:
 		return False
 
-	job_name = job.kwargs.get("job_type") or job.kwargs.get("job_name") or job.kwargs.get("method")
+	job_name = (
+		job.kwargs.get("job_type") or job.kwargs.get("job_name") or job.kwargs.get("method")
+	)
 	if job_name != "frappe.utils.background_jobs.run_doc_method":
 		return False
 

@@ -4,11 +4,9 @@
 # Copyright (c) 2020, Frappe Technologies Pvt. Ltd.
 
 import os
-
 import click
 import requests
 from html2text import html2text
-
 
 def get_remote_script(remote_site):
 	print("Retrieving Site Migrator...")
@@ -21,7 +19,7 @@ def get_remote_script(remote_site):
 			"Some errors occurred while recovering the migration script. Please contact us @ Frappe Cloud if this issue persists",
 			fg="yellow",
 		)
-		return None
+		return
 
 	return request.json()["message"]
 
@@ -40,6 +38,7 @@ def frappecloud_migrator():
 	print(f"Site Migrator stored at {script.name}")
 	os.execv(py, [py, script.name])
 
+	
 
 if __name__ == "__main__":
 	os.chdir("sites")
