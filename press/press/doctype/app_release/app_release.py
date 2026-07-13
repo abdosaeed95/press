@@ -41,20 +41,20 @@ class AppRelease(Document):
 		from frappe.types import DF
 
 		app: DF.Link
-		author: DF.Data | None  # noqa
-		clone_directory: DF.Text | None  # noqa
+		author: DF.Data | None
+		clone_directory: DF.Text | None
 		cloned: DF.Check
-		code_server_url: DF.Text | None  # noqa
+		code_server_url: DF.Text | None
 		hash: DF.Data
 		invalid_release: DF.Check
-		invalidation_reason: DF.Code | None  # noqa
-		message: DF.Code | None  # noqa
-		output: DF.Code | None  # noqa
+		invalidation_reason: DF.Code | None
+		message: DF.Code | None
+		output: DF.Code | None
 		public: DF.Check
 		source: DF.Link
 		status: DF.Literal["Draft", "Approved", "Awaiting Approval", "Rejected"]
 		team: DF.Link
-		timestamp: DF.Datetime | None  # noqa
+		timestamp: DF.Datetime | None
 	# end: auto-generated types
 
 	dashboard_fields = ["app", "source", "message", "hash", "author", "status"]  # noqa
@@ -239,7 +239,7 @@ class AppRelease(Document):
 				)
 
 				self.run("git config --unset credential.helper")
-		except:
+		except Exception:
 			pass
 
 	def _get_repo_url(self, source: "AppSource") -> str:
