@@ -922,7 +922,7 @@ class DeployCandidateBuild(Document):
 			return tarinfo
 
 		tmp_file_path = tempfile.mkstemp(suffix=".tar.gz")[1]
-		with tarfile.open(tmp_file_path, "w:gz", compresslevel=5) as tar:
+		with tarfile.open(tmp_file_path, "w:gz", compresslevel=9) as tar:
 			if frappe.conf.developer_mode:
 				tar.add(self.build_directory, arcname=".", filter=fix_content_permission)
 			else:
@@ -958,6 +958,10 @@ class DeployCandidateBuild(Document):
 			},
 			"no_cache": self.no_cache,
 			"no_push": self.no_push,
+			"image_compression": "zstd",
+			"image_compression_level": 22,
+			"force_compression": True,
+			"oci_mediatypes": True,
 			# Next few values are not used by agent but are
 			# read in `process_run_build`
 			"deploy_candidate_build": self.name,
