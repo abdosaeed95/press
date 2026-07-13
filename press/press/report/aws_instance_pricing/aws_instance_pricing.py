@@ -20,9 +20,7 @@ def get_data(filters):
 	if filters.cluster:
 		clusters = [filters.cluster]
 	else:
-		clusters = frappe.get_all(
-			"Cluster", filters={"public": 1, "cloud_provider": "AWS EC2"}, pluck="name"
-		)
+		clusters = frappe.get_all("Cluster", filters={"public": 1, "cloud_provider": "AWS EC2"}, pluck="name")
 	data = []
 	for cluster in clusters:
 		data.extend(get_cluster_data(filters, cluster))
@@ -77,9 +75,7 @@ def get_cluster_data(filters, cluster_name):
 				"memory": flt(product["product"]["attributes"]["memory"][:-4]),
 			}
 			for term in product["terms"].get("OnDemand", {}).values():
-				row["on_demand"] = (
-					flt(list(term["priceDimensions"].values())[0]["pricePerUnit"]["USD"]) * 750
-				)
+				row["on_demand"] = flt(list(term["priceDimensions"].values())[0]["pricePerUnit"]["USD"]) * 750
 			instance_type = parse_instance_type(row["instance"])
 			if not instance_type:
 				continue
@@ -129,9 +125,7 @@ def get_cluster_data(filters, cluster_name):
 			instance = find(rate["properties"], lambda x: x["name"] == "instanceType")["value"]
 			row = find(rows, lambda x: x["instance"] == instance)
 			years = rate["savingsPlanOffering"]["durationSeconds"] // 31536000
-			plan = (
-				"compute" if rate["savingsPlanOffering"]["planType"] == "Compute" else "instance"
-			)
+			plan = "compute" if rate["savingsPlanOffering"]["planType"] == "Compute" else "instance"
 			row[f"{years}yr_{plan}"] = flt(rate["rate"]) * 750
 
 	rows.sort(key=lambda x: (x["instance_type"], x["vcpu"], x["memory"]))
@@ -168,7 +162,7 @@ def parse_instance_type(instance_type):
 	instance_type, size = instance_type.split(".")
 	# Skip metal instances
 	if "metal" in size:
-		return
+		return None
 
 	family = None
 	for ff in FAMILIES:
@@ -178,7 +172,7 @@ def parse_instance_type(instance_type):
 
 	# Ignore other instance families
 	if family not in PREFERRED_FAMILIES:
-		return
+		return None
 
 	rest = instance_type.removeprefix(family)
 	generation = int(rest[0])
@@ -192,7 +186,7 @@ def parse_instance_type(instance_type):
 		processor = "i"
 
 	if rest:
-		return
+		return None
 
 	return family, generation, processor, size
 
@@ -205,6 +199,5 @@ def parse_size_multiplier(size):
 	}
 	if size in SIZES:
 		return SIZES[size]
-	else:
-		size = size.removesuffix("xlarge")
-		return float(size)
+	size = size.removesuffix("xlarge")
+	return float(size)

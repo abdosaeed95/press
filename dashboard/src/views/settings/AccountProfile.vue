@@ -13,7 +13,7 @@
 					:upload-args="{
 						doctype: 'User',
 						docname: $account.user.name,
-						method: 'press.api.account.update_profile_picture'
+						method: 'press.api.account.update_profile_picture',
 					}"
 				>
 					<template v-slot="{ openFileSelector, uploading, progress, error }">
@@ -88,9 +88,9 @@
 					{
 						variant: 'solid',
 						label: 'Save Changes',
-						onClick: () => $resources.updateProfile.submit()
-					}
-				]
+						onClick: () => $resources.updateProfile.submit(),
+					},
+				],
 			}"
 			v-model="showProfileEditDialog"
 		>
@@ -112,9 +112,9 @@
 						variant: 'solid',
 						theme: 'red',
 						loading: $resources.disableAccount.loading,
-						onClick: () => $resources.disableAccount.submit()
-					}
-				]
+						onClick: () => $resources.disableAccount.submit(),
+					},
+				],
 			}"
 			v-model="showDisableAccountDialog"
 		>
@@ -143,9 +143,9 @@
 						label: 'Enable Account',
 						variant: 'solid',
 						loading: $resources.enableAccount.loading,
-						onClick: () => $resources.enableAccount.submit()
-					}
-				]
+						onClick: () => $resources.enableAccount.submit(),
+					},
+				],
 			}"
 			v-model="showEnableAccountDialog"
 		>
@@ -174,7 +174,7 @@ export default {
 	name: 'AccountProfile',
 	components: {
 		FileUploader,
-		FinalizeInvoicesDialog
+		FinalizeInvoicesDialog,
 	},
 	data() {
 		return {
@@ -182,13 +182,13 @@ export default {
 			showEnableAccountDialog: false,
 			showDisableAccountDialog: false,
 			showBecomePublisherButton: false,
-			showFinalizeInvoicesDialog: false
+			showFinalizeInvoicesDialog: false,
 		};
 	},
 	computed: {
 		teamEnabled() {
 			return $account.team.enabled;
-		}
+		},
 	},
 	resources: {
 		updateProfile() {
@@ -198,12 +198,12 @@ export default {
 				params: {
 					first_name,
 					last_name,
-					email
+					email,
 				},
 				onSuccess() {
 					this.showProfileEditDialog = false;
 					this.notifySuccess();
-				}
+				},
 			};
 		},
 		disableAccount: {
@@ -218,11 +218,11 @@ export default {
 						title: 'Account disabled',
 						message: 'Your account was disabled successfully',
 						icon: 'check',
-						color: 'green'
+						color: 'green',
 					});
 					this.$account.fetchAccount();
 				}
-			}
+			},
 		},
 		enableAccount: {
 			url: 'press.api.account.enable_account',
@@ -231,20 +231,20 @@ export default {
 					title: 'Account enabled',
 					message: 'Your account was enabled successfully',
 					icon: 'check',
-					color: 'green'
+					color: 'green',
 				});
 				this.$account.fetchAccount();
 				this.showEnableAccountDialog = false;
-			}
+			},
 		},
 		becomePublisher() {
 			return {
 				url: 'press.api.marketplace.become_publisher',
 				onSuccess() {
 					this.$router.push('/marketplace');
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		onProfilePhotoChange() {
@@ -255,7 +255,7 @@ export default {
 			notify({
 				title: 'Updated profile information',
 				icon: 'check',
-				color: 'green'
+				color: 'green',
 			});
 		},
 		confirmPublisherAccount() {
@@ -264,12 +264,12 @@ export default {
 				message:
 					'You will be able to publish apps to our Marketplace upon confirmation.',
 				actionLabel: 'Yes',
-				action: closeDialog => {
+				action: (closeDialog) => {
 					this.$resources.becomePublisher.submit();
 					closeDialog();
-				}
+				},
 			});
-		}
-	}
+		},
+	},
 };
 </script>

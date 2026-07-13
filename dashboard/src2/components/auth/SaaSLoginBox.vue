@@ -49,7 +49,7 @@ export default {
 	name: 'SaaSLoginBox',
 	props: ['title', 'subtitle', 'logo'],
 	components: {
-		FCLogo
+		FCLogo,
 	},
 	mounted() {
 		const params = new URLSearchParams(window.location.search);
@@ -58,14 +58,14 @@ export default {
 			notify({
 				title: 'Token Invalid or Expired',
 				color: 'red',
-				icon: 'x'
+				icon: 'x',
 			});
 		}
 	},
 	methods: {
 		redirectForFrappeioAuth() {
 			window.location = '/f-login';
-		}
-	}
+		},
+	},
 };
 </script>

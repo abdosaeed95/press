@@ -8,9 +8,9 @@
 					label: 'Add New Version',
 					variant: 'solid',
 					loading: $resources.addVersion.loading,
-					onClick: () => $resources.addVersion.submit()
-				}
-			]
+					onClick: () => $resources.addVersion.submit(),
+				},
+			],
 		}"
 		@close="
 			() => {
@@ -55,7 +55,7 @@ export default {
 			versions: [],
 			branches: [],
 			selectedBranch: null,
-			selectedVersion: null
+			selectedVersion: null,
 		};
 	},
 	props: ['app', 'show'],
@@ -66,12 +66,12 @@ export default {
 				auto: true,
 				params: {
 					name: this.app.name,
-					source: this.app.sources[0]?.source
+					source: this.app.sources[0]?.source,
 				},
 				onSuccess(d) {
 					this.versions = d.versions;
 					this.branches = d.branches;
-				}
+				},
 			};
 		},
 		addVersion() {
@@ -80,7 +80,7 @@ export default {
 				params: {
 					name: this.app.name,
 					branch: this.selectedBranch,
-					version: this.selectedVersion
+					version: this.selectedVersion,
 				},
 				onSuccess() {
 					window.location.reload();
@@ -89,16 +89,16 @@ export default {
 					notify({
 						title: e,
 						color: 'red',
-						icon: 'x'
+						icon: 'x',
 					});
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		branchList() {
-			return this.branches.map(d => d.name);
-		}
-	}
+			return this.branches.map((d) => d.name);
+		},
+	},
 };
 </script>

@@ -24,6 +24,6 @@
 
 <script>
 export default {
-	props: ['options']
+	props: ['options'],
 };
 </script>

@@ -53,7 +53,7 @@ export default {
 		Plans,
 		Address,
 		Payment,
-		PlanChangeSuccessful
+		PlanChangeSuccessful,
 	},
 	props: ['secretKey'],
 	data() {
@@ -62,7 +62,7 @@ export default {
 			selectedPlan: '',
 			step: 1,
 			newAddress: {},
-			errorMessage: null
+			errorMessage: null,
 		};
 	},
 	resources: {
@@ -70,7 +70,7 @@ export default {
 			return {
 				url: 'press.api.developer.marketplace.get_subscription',
 				params: {
-					secret_key: this.secretKey
+					secret_key: this.secretKey,
 				},
 				auto: true,
 				onSuccess(r) {
@@ -78,9 +78,9 @@ export default {
 				},
 				onError(e) {
 					this.errorMessage = e;
-				}
+				},
 			};
-		}
-	}
+		},
+	},
 };
 </script>

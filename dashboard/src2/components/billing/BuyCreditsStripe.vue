@@ -4,7 +4,7 @@
 			class="block"
 			:class="{
 				'pointer-events-none h-0.5 opacity-0': step != 'Add Card Details',
-				'mt-4': step == 'Add Card Details'
+				'mt-4': step == 'Add Card Details',
 			}"
 		>
 			<span class="text-sm leading-4 text-gray-700">
@@ -53,12 +53,12 @@ import { DashboardError } from '../../utils/error';
 const props = defineProps({
 	amount: {
 		type: Number,
-		default: 0
+		default: 0,
 	},
 	minimumAmount: {
 		type: Number,
-		default: 0
-	}
+		default: 0,
+	},
 });
 
 const emit = defineEmits(['success']);
@@ -84,7 +84,7 @@ const createPaymentIntent = createResource({
 	validate() {
 		if (props.amount < props.minimumAmount && !team.doc.erpnext_partner) {
 			throw new DashboardError(
-				`Amount must be greater than or equal to ${props.minimumAmount}`
+				`Amount must be greater than or equal to ${props.minimumAmount}`,
 			);
 		}
 	},
@@ -111,26 +111,26 @@ const createPaymentIntent = createResource({
 					'"Apple Color Emoji"',
 					'"Segoe UI Emoji"',
 					'"Segoe UI Symbol"',
-					'"Noto Color Emoji"'
+					'"Noto Color Emoji"',
 				].join(', '),
 				fontSmoothing: 'antialiased',
 				fontSize: '13px',
 				'::placeholder': {
-					color: '#C7C7C7'
-				}
+					color: '#C7C7C7',
+				},
 			},
 			invalid: {
 				color: '#7C7C7C',
-				iconColor: '#7C7C7C'
-			}
+				iconColor: '#7C7C7C',
+			},
 		};
 		card.value = elements.value.create('card', {
 			hidePostalCode: true,
 			style: style,
 			classes: {
 				complete: '',
-				focus: 'bg-gray-100'
-			}
+				focus: 'bg-gray-100',
+			},
 		});
 
 		step.value = 'Add Card Details';
@@ -138,19 +138,19 @@ const createPaymentIntent = createResource({
 			card.value.mount(cardElementRef.value);
 		});
 
-		card.value.addEventListener('change', event => {
+		card.value.addEventListener('change', (event) => {
 			cardErrorMessage.value = event.error?.message || null;
 		});
 		card.value.addEventListener('ready', () => {
 			ready.value = true;
 		});
-	}
+	},
 });
 
 async function onBuyClick() {
 	paymentInProgress.value = true;
 	let payload = await stripe.value.confirmCardPayment(clientSecret.value, {
-		payment_method: { card: card.value }
+		payment_method: { card: card.value },
 	});
 
 	if (payload.error) {
@@ -158,7 +158,7 @@ async function onBuyClick() {
 		paymentInProgress.value = false;
 	} else {
 		toast.success(
-			'Payment processed successfully, we will update your account shortly on confirmation from Stripe'
+			'Payment processed successfully, we will update your account shortly on confirmation from Stripe',
 		);
 		paymentInProgress.value = false;
 		emit('success');

@@ -85,11 +85,11 @@ import { notify } from '@/utils/toast';
 export default {
 	name: 'AccountAPI',
 	components: {
-		ClickToCopyField
+		ClickToCopyField,
 	},
 	data() {
 		return {
-			showCreateSecretDialog: false
+			showCreateSecretDialog: false,
 		};
 	},
 
@@ -101,17 +101,17 @@ export default {
 					notify({
 						title: 'Created new API Secret',
 						icon: 'check',
-						color: 'green'
+						color: 'green',
 					});
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		createSecretdialogClosed() {
 			this.$account.fetchAccount();
 			this.$resources.createSecret.reset();
-		}
-	}
+		},
+	},
 };
 </script>

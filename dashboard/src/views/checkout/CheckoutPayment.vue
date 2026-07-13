@@ -48,7 +48,7 @@ export default {
 	emits: ['complete'],
 	components: {
 		AddressForm,
-		StripeLogo
+		StripeLogo,
 	},
 	data() {
 		return {
@@ -58,7 +58,7 @@ export default {
 			setupIntent: null,
 			cardHolderName: '',
 			gstNotApplicable: false,
-			addingCard: false
+			addingCard: false,
 		};
 	},
 	async mounted() {
@@ -68,15 +68,15 @@ export default {
 		countryList() {
 			return {
 				url: 'press.api.account.country_list',
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	methods: {
 		async setupCard() {
 			let result = await frappeRequest({
 				url: 'press.api.developer.marketplace.get_publishable_key_and_setup_intent',
-				params: { secret_key: this.secretKey }
+				params: { secret_key: this.secretKey },
 			});
 			//window.posthog.capture('init_client_add_card', 'fc_signup');
 			let { publishable_key, setup_intent } = result;
@@ -91,25 +91,25 @@ export default {
 					fontSmoothing: 'antialiased',
 					fontSize: '13px',
 					'::placeholder': {
-						color: theme.colors.gray['400']
-					}
+						color: theme.colors.gray['400'],
+					},
 				},
 				invalid: {
 					color: theme.colors.red['600'],
-					iconColor: theme.colors.red['600']
-				}
+					iconColor: theme.colors.red['600'],
+				},
 			};
 			this.card = this.elements.create('card', {
 				hidePostalCode: true,
 				style: style,
 				classes: {
 					complete: '',
-					focus: 'bg-gray-100'
-				}
+					focus: 'bg-gray-100',
+				},
 			});
 			this.card.mount(this.$refs['card-element']);
 
-			this.card.addEventListener('change', event => {
+			this.card.addEventListener('change', (event) => {
 				this.cardErrorMessage = event.error?.message || null;
 			});
 			this.card.addEventListener('ready', () => {
@@ -143,11 +143,11 @@ export default {
 								city: this.address.city,
 								state: this.address.state,
 								postal_code: this.address.postal_code,
-								country: this.getCountryCode(this.address.country)
-							}
-						}
-					}
-				}
+								country: this.getCountryCode(this.address.country),
+							},
+						},
+					},
+				},
 			);
 
 			if (error) {
@@ -164,8 +164,8 @@ export default {
 							url: 'press.api.developer.marketplace.setup_intent_success',
 							params: {
 								secret_key: this.secretKey,
-								setup_intent: setupIntent
-							}
+								setup_intent: setupIntent,
+							},
 						});
 
 						this.addingCard = false;
@@ -174,8 +174,8 @@ export default {
 							url: 'press.api.developer.marketplace.change_site_plan',
 							params: {
 								secret_key: this.secretKey,
-								plan: this.selectedPlan.name
-							}
+								plan: this.selectedPlan.name,
+							},
 						});
 						this.$emit('update:step', 4);
 					} catch (error) {
@@ -189,10 +189,10 @@ export default {
 		getCountryCode(country) {
 			country = 'India';
 			let code = this.$resources.countryList.data.find(
-				d => d.name === country
+				(d) => d.name === country,
 			).code;
 			return code.toUpperCase();
-		}
-	}
+		},
+	},
 };
 </script>

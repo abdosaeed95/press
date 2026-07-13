@@ -8,7 +8,7 @@ export default async function call(method, args) {
 	let headers = {
 		Accept: 'application/json',
 		'Content-Type': 'application/json; charset=utf-8',
-		'X-Frappe-Site-Name': window.location.hostname
+		'X-Frappe-Site-Name': window.location.hostname,
 	};
 
 	let team = localStorage.getItem('current_team') || null;
@@ -25,7 +25,7 @@ export default async function call(method, args) {
 	const res = await fetch(`/api/method/${method}`, {
 		method: 'POST',
 		headers,
-		body: JSON.stringify(args)
+		body: JSON.stringify(args),
 	});
 
 	if (res.ok) {
@@ -43,7 +43,7 @@ export default async function call(method, args) {
 			// eslint-disable-next-line no-empty
 		} catch (e) {}
 		let errorParts = [
-			[method, error.exc_type, error._error_message].filter(Boolean).join(' ')
+			[method, error.exc_type, error._error_message].filter(Boolean).join(' '),
 		];
 		if (error.exc) {
 			exception = error.exc;
@@ -60,7 +60,7 @@ export default async function call(method, args) {
 			? JSON.parse(error._server_messages)
 			: [];
 		e.messages = e.messages.concat(error.message);
-		e.messages = e.messages.map(m => {
+		e.messages = e.messages.map((m) => {
 			try {
 				return JSON.parse(m).message;
 			} catch (error) {

@@ -20,13 +20,13 @@ import FileUploader from '@/components/FileUploader.vue';
 export default {
 	name: 'AvatarUploader',
 	components: {
-		FileUploader
+		FileUploader,
 	},
 	props: ['image', 'label'],
 	methods: {
 		onChange(file) {
 			this.$emit('update:image', file.file_url);
-		}
-	}
+		},
+	},
 };
 </script>

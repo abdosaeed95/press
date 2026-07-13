@@ -20,8 +20,7 @@
 					<p class="ml-1 font-mono text-sm">Query:</p>
 					<pre
 						class="mt-1 whitespace-pre-wrap rounded-lg border-2 border-gray-200 bg-gray-100 p-3 text-sm text-gray-700"
-						>{{ query }}</pre
-					>
+						>{{ query }}</pre>
 				</div>
 				<ErrorMessage
 					class="mt-2"

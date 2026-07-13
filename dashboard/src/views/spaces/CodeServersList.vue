@@ -45,8 +45,8 @@ export default {
 	props: {
 		servers: {
 			type: Object,
-			default: () => {}
-		}
-	}
+			default: () => {},
+		},
+	},
 };
 </script>

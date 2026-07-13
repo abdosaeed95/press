@@ -27,11 +27,11 @@ const teamMembersListOptions = ref({
 				return h(UserWithAvatarCell, {
 					avatarImage: row.user_image,
 					fullName: row.full_name,
-					email: row.email
+					email: row.email,
 				});
 			},
-			width: 1
-		}
+			width: 1,
+		},
 	],
 	rowActions({ row }) {
 		let team = getTeam();
@@ -57,13 +57,13 @@ const teamMembersListOptions = ref({
 										hide();
 										return 'Member Removed';
 									},
-									error: e => getToastErrorMessage(e)
-								}
+									error: (e) => getToastErrorMessage(e),
+								},
 							);
-						}
+						},
 					});
-				}
-			}
+				},
+			},
 		];
 	},
 	actions() {
@@ -72,24 +72,24 @@ const teamMembersListOptions = ref({
 				label: 'Settings',
 				iconLeft: 'settings',
 				onClick() {
-					const TeamSettingsDialog = defineAsyncComponent(() =>
-						import('./TeamSettingsDialog.vue')
+					const TeamSettingsDialog = defineAsyncComponent(
+						() => import('./TeamSettingsDialog.vue'),
 					);
 					renderDialog(h(TeamSettingsDialog));
-				}
+				},
 			},
 			{
 				label: 'Add Member',
 				variant: 'solid',
 				iconLeft: 'plus',
 				onClick() {
-					const InviteTeamMemberDialog = defineAsyncComponent(() =>
-						import('./InviteTeamMemberDialog.vue')
+					const InviteTeamMemberDialog = defineAsyncComponent(
+						() => import('./InviteTeamMemberDialog.vue'),
 					);
 					renderDialog(h(InviteTeamMemberDialog));
-				}
-			}
+				},
+			},
 		];
-	}
+	},
 });
 </script>

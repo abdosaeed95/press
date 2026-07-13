@@ -15,7 +15,7 @@ export default {
 	name: 'BenchJobs',
 	props: ['benchName', 'jobName'],
 	components: {
-		AgentJobs
+		AgentJobs,
 	},
 	methods: {
 		jobResource() {
@@ -27,12 +27,12 @@ export default {
 				auto: true,
 				orderBy: 'creation desc',
 				start: 0,
-				pageLength: 10
+				pageLength: 10,
 			};
 		},
 		jobRoute(job) {
 			return `/groups/${this.benchName}/jobs/${job.name}`;
-		}
-	}
+		},
+	},
 };
 </script>

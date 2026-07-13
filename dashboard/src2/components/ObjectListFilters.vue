@@ -33,7 +33,9 @@
 							!$isMobile ? control.placeholder || control.label : null
 						"
 						:modelValue="control.value"
-						@update:modelValue="value => onFilterControlChange(control, value)"
+						@update:modelValue="
+							(value) => onFilterControlChange(control, value)
+						"
 					/>
 				</component>
 			</template>
@@ -53,11 +55,11 @@ export default {
 		Dialog,
 		Tooltip,
 		DialogWrapper,
-		FilterControl
+		FilterControl,
 	},
 	data() {
 		return {
-			showDialog: false
+			showDialog: false,
 		};
 	},
 	methods: {
@@ -68,7 +70,7 @@ export default {
 				control.value = value;
 			}
 			this.$emit('update:filter', control);
-		}
+		},
 	},
 	computed: {
 		wrapperProps() {
@@ -77,14 +79,14 @@ export default {
 			}
 			return {
 				modelValue: this.showDialog,
-				'onUpdate:modelValue': value => {
+				'onUpdate:modelValue': (value) => {
 					this.showDialog = value;
 				},
 				options: {
-					title: 'Filters'
-				}
+					title: 'Filters',
+				},
 			};
-		}
-	}
+		},
+	},
 };
 </script>

@@ -10,10 +10,10 @@
 						$resources.transferSite.submit({
 							team_mail_id: emailOfTransferTeam,
 							name: site?.name,
-							reason
-						})
-				}
-			]
+							reason,
+						}),
+				},
+			],
 		}"
 		v-model="show"
 	>
@@ -44,7 +44,7 @@ export default {
 	data() {
 		return {
 			reason: '',
-			emailOfTransferTeam: ''
+			emailOfTransferTeam: '',
 		};
 	},
 	computed: {
@@ -54,8 +54,8 @@ export default {
 			},
 			set(value) {
 				this.$emit('update:modelValue', value);
-			}
-		}
+			},
+		},
 	},
 	resources: {
 		transferSite() {
@@ -76,11 +76,11 @@ export default {
 						title: 'Site transfer request sent',
 						message: `The team ${this.emailOfTransferTeam} will receive a request to accept the site transfer.`,
 						color: 'green',
-						icon: 'check'
+						icon: 'check',
 					});
-				}
+				},
 			};
-		}
-	}
+		},
+	},
 };
 </script>

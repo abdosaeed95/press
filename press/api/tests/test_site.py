@@ -673,17 +673,20 @@ insights 0.8.3	    HEAD
 		database = create_test_remote_file().name
 		public = create_test_remote_file().name
 		private = create_test_remote_file().name
-		with fake_agent_job(
-			"New Site from Backup",
-			"Success",
-			data=frappe._dict(
-				output="""frappe	15.0.0-dev HEAD
+		with (
+			fake_agent_job(
+				"New Site from Backup",
+				"Success",
+				data=frappe._dict(
+					output="""frappe	15.0.0-dev HEAD
 erpnext 0.8.3	    HEAD
 """
+				),
 			),
-		), fake_agent_job(
-			"Add Site to Upstream",
-			"Success",
+			fake_agent_job(
+				"Add Site to Upstream",
+				"Success",
+			),
 		):
 			new(
 				{

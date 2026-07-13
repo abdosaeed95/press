@@ -7,9 +7,9 @@
 					label: 'Update',
 					variant: 'solid',
 					loading: $resources.editTitle.loading,
-					onClick: () => $resources.editTitle.submit()
-				}
-			]
+					onClick: () => $resources.editTitle.submit(),
+				},
+			],
 		}"
 		v-model="show"
 	>
@@ -26,7 +26,7 @@ export default {
 	emits: ['update:modelValue'],
 	data() {
 		return {
-			benchTitle: this.bench.title
+			benchTitle: this.bench.title,
 		};
 	},
 	resources: {
@@ -35,7 +35,7 @@ export default {
 				url: 'press.api.bench.rename',
 				params: {
 					name: this.bench?.name,
-					title: this.benchTitle
+					title: this.benchTitle,
 				},
 				validate() {
 					if (this.benchTitle === this.bench?.title) {
@@ -45,9 +45,9 @@ export default {
 				onSuccess() {
 					this.show = false;
 					this.bench.title = this.benchTitle;
-				}
+				},
 			};
-		}
+		},
 	},
 	computed: {
 		show: {
@@ -56,8 +56,8 @@ export default {
 			},
 			set(value) {
 				this.$emit('update:modelValue', value);
-			}
-		}
-	}
+			},
+		},
+	},
 };
 </script>

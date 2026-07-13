@@ -17,8 +17,8 @@
 				{
 					'border-b-0': i !== plans.length - 1,
 					'rounded-b-md border-b': i === plans.length - 1,
-					'pointer-events-none': plan.disabled
-				}
+					'pointer-events-none': plan.disabled,
+				},
 			]"
 			v-for="(plan, i) in plans"
 			:key="plan.name"
@@ -29,7 +29,7 @@
 					type="radio"
 					class="form-radio text-gray-900"
 					:checked="selectedPlan === plan"
-					@change="e => (selectedPlan = e.target.checked ? plan : null)"
+					@change="(e) => (selectedPlan = e.target.checked ? plan : null)"
 				/>
 			</div>
 			<div class="w-1/4 text-gray-900" :class="{ 'opacity-25': plan.disabled }">
@@ -70,6 +70,6 @@
 export default {
 	name: 'SitePlansTable',
 	props: ['plans', 'selectedPlan'],
-	emits: ['update:selectedPlan']
+	emits: ['update:selectedPlan'],
 };
 </script>

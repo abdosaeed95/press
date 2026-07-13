@@ -17,7 +17,7 @@ export default {
 	name: 'SelfHostedServerVerify',
 	props: ['ssh_key'],
 	components: {
-		ClickToCopyField
-	}
+		ClickToCopyField,
+	},
 };
 </script>

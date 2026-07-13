@@ -51,11 +51,11 @@ export default {
 				params: {
 					name: this.bench?.name,
 					bench: this.instanceName,
-					log: this.logName
+					log: this.logName,
 				},
-				auto: Boolean(this.logName)
+				auto: Boolean(this.logName),
 			};
-		}
+		},
 	},
 	computed: {
 		log() {
@@ -64,7 +64,7 @@ export default {
 		logLines() {
 			if (this.log && this.logName) return this.log.split('\n').slice(-4096);
 			return [];
-		}
-	}
+		},
+	},
 };
 </script>

@@ -47,7 +47,7 @@
 					:columns="[
 						{ label: 'Space Name', name: 'name', width: 2 },
 						{ label: 'Status', name: 'status' },
-						{ label: '', name: 'actions', width: 0.5 }
+						{ label: '', name: 'actions', width: 0.5 },
 					]"
 					:rows="servers"
 					v-slot="{ rows, columns }"
@@ -64,7 +64,7 @@
 									row.plan
 										? `${$planTitle(row.plan)}${
 												row.plan.price_usd > 0 ? '/mo' : ''
-										  }`
+											}`
 										: ''
 								}}
 							</span>
@@ -130,12 +130,12 @@ export default {
 		Table,
 		TableHeader,
 		TableRow,
-		TableCell
+		TableCell,
 	},
 	data() {
 		return {
 			searchTerm: '',
-			space_status: 'All'
+			space_status: 'All',
 		};
 	},
 	resources: {
@@ -145,13 +145,13 @@ export default {
 				auto: true,
 				params: { space_filter: { status: this.space_status } },
 				cache: ['SpaceList', this.space_status, this.$account.team.name],
-				onSuccess: data => {
+				onSuccess: (data) => {
 					this.fuse = new Fuse(data['servers'], {
-						keys: ['name']
+						keys: ['name'],
 					});
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		showBillingDialog() {
@@ -165,16 +165,16 @@ export default {
 			return [
 				{
 					label: 'All',
-					value: 'All'
+					value: 'All',
 				},
 				{
 					label: 'Active',
-					value: 'Active'
+					value: 'Active',
 				},
 				{
 					label: 'Broken',
-					value: 'Broken'
-				}
+					value: 'Broken',
+				},
 			];
 		},
 		dropdownItems(space) {
@@ -183,10 +183,10 @@ export default {
 					label: 'Open',
 					onClick: () => {
 						window.open(`https://${space.name}`, '_blank');
-					}
-				}
+					},
+				},
 			];
-		}
+		},
 	},
 	computed: {
 		servers() {
@@ -194,15 +194,15 @@ export default {
 				return [];
 			}
 			if (this.searchTerm) {
-				return this.fuse.search(this.searchTerm).map(result => result.item);
+				return this.fuse.search(this.searchTerm).map((result) => result.item);
 			}
 
-			return this.$resources.spaces.data.servers.map(server => ({
+			return this.$resources.spaces.data.servers.map((server) => ({
 				name: server.name,
 				status: server.status,
-				route: `/codeservers/${server.name}/overview`
+				route: `/codeservers/${server.name}/overview`,
 			}));
-		}
-	}
+		},
+	},
 };
 </script>

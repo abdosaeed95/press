@@ -28,8 +28,8 @@ import { ref } from 'vue';
 const props = defineProps({
 	showMessage: {
 		type: Boolean,
-		default: false
-	}
+		default: false,
+	},
 });
 const emit = defineEmits(['success']);
 const show = defineModel();

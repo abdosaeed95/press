@@ -12,9 +12,9 @@
 								label: server?.title,
 								route: {
 									name: 'SecurityOverview',
-									params: { serverName: server?.name }
-								}
-							}
+									params: { serverName: server?.name },
+								},
+							},
 						]"
 					>
 					</Breadcrumbs>
@@ -46,27 +46,27 @@ export default {
 	name: 'Security',
 	pageMeta() {
 		return {
-			title: `Security - ${this.serverName} - Frappe Cloud`
+			title: `Security - ${this.serverName} - Frappe Cloud`,
 		};
 	},
 	props: ['serverName'],
 	components: {
-		Tabs
+		Tabs,
 	},
 	resources: {
 		server() {
 			return {
 				url: 'press.api.server.get',
 				params: {
-					name: this.serverName
+					name: this.serverName,
 				},
 				auto: true,
 				onSuccess() {
 					this.routeToGeneral();
 				},
-				onError: this.$routeTo404PageIfNotFound
+				onError: this.$routeTo404PageIfNotFound,
 			};
-		}
+		},
 	},
 	methods: {
 		routeToGeneral() {
@@ -74,7 +74,7 @@ export default {
 				let path = this.$route.fullPath;
 				this.$router.replace(`${path}/overview`);
 			}
-		}
+		},
 	},
 	computed: {
 		server() {
@@ -82,13 +82,13 @@ export default {
 		},
 
 		tabs() {
-			let tabRoute = subRoute => `/security/${this.serverName}/${subRoute}`;
+			let tabRoute = (subRoute) => `/security/${this.serverName}/${subRoute}`;
 			let tabs = [
 				{ label: 'Overview', route: 'overview' },
 				{ label: 'Security Updates', route: 'security_update' },
 				{ label: 'Firewall Configuration', route: 'firewall' },
 				{ label: 'SSH Session Log', route: 'ssh_session_logs' },
-				{ label: 'Nginx Overview', route: 'nginx_overview' }
+				{ label: 'Nginx Overview', route: 'nginx_overview' },
 			];
 
 			let tabsByStatus = {
@@ -97,23 +97,23 @@ export default {
 					'Security Updates',
 					'Firewall Configuration',
 					'SSH Session Log',
-					'Nginx Overview'
-				]
+					'Nginx Overview',
+				],
 			};
 			if (this.server) {
 				let tabsToShow = tabsByStatus[this.server.status];
 				if (tabsToShow?.length) {
-					tabs = tabs.filter(tab => tabsToShow.includes(tab.label));
+					tabs = tabs.filter((tab) => tabsToShow.includes(tab.label));
 				}
-				return tabs.map(tab => {
+				return tabs.map((tab) => {
 					return {
 						...tab,
-						route: tabRoute(tab.route)
+						route: tabRoute(tab.route),
 					};
 				});
 			}
 			return [];
-		}
-	}
+		},
+	},
 };
 </script>

@@ -56,7 +56,7 @@
 								@click="
 									$resources.retryAddDomain.submit({
 										name: site.name,
-										domain: d.domain
+										domain: d.domain,
 									})
 								"
 							>
@@ -179,7 +179,7 @@
 					@click="
 						$resources.checkDNS.submit({
 							name: site.name,
-							domain: newDomain
+							domain: newDomain,
 						})
 					"
 				>
@@ -193,7 +193,7 @@
 					@click="
 						$resources.addDomain.submit({
 							name: site.name,
-							domain: newDomain
+							domain: newDomain,
 						})
 					"
 				>
@@ -213,7 +213,7 @@ export default {
 	data() {
 		return {
 			showDialog: false,
-			newDomain: null
+			newDomain: null,
 		};
 	},
 	resources: {
@@ -221,14 +221,14 @@ export default {
 			return {
 				url: 'press.api.site.domains',
 				params: { name: this.site?.name },
-				auto: true
+				auto: true,
 			};
 		},
 		checkDNS: {
 			url: 'press.api.site.check_dns',
 			validate() {
 				if (!this.newDomain) return 'Domain cannot be empty';
-			}
+			},
 		},
 		addDomain: {
 			url: 'press.api.site.add_domain',
@@ -236,38 +236,38 @@ export default {
 				this.$resources.checkDNS.reset();
 				this.$resources.domains.reload();
 				this.showDialog = false;
-			}
+			},
 		},
 		removeDomain: {
 			url: 'press.api.site.remove_domain',
 			onSuccess() {
 				this.$resources.domains.reload();
-			}
+			},
 		},
 		retryAddDomain: {
 			url: 'press.api.site.retry_add_domain',
 			onSuccess() {
 				this.$resources.domains.fetch();
-			}
+			},
 		},
 		setHostName: {
 			url: 'press.api.site.set_host_name',
 			onSuccess() {
 				this.$resources.domains.reload();
-			}
+			},
 		},
 		setupRedirect: {
 			url: 'press.api.site.set_redirect',
 			onSuccess() {
 				this.$resources.domains.reload();
-			}
+			},
 		},
 		removeRedirect: {
 			url: 'press.api.site.unset_redirect',
 			onSuccess() {
 				this.$resources.domains.reload();
-			}
-		}
+			},
+		},
 	},
 	computed: {
 		domains() {
@@ -280,25 +280,25 @@ export default {
 			return this.$resources.checkDNS.data;
 		},
 		primaryDomain() {
-			return this.$resources.domains.data.filter(d => d.primary)[0].domain;
-		}
+			return this.$resources.domains.data.filter((d) => d.primary)[0].domain;
+		},
 	},
 	watch: {
 		newDomain() {
 			this.$resources.checkDNS.reset();
-		}
+		},
 	},
 	methods: {
 		actionItems(domain) {
 			return [
 				{
 					label: 'Remove',
-					onClick: () => this.confirmRemoveDomain(domain.domain)
+					onClick: () => this.confirmRemoveDomain(domain.domain),
 				},
 				{
 					label: 'Set Primary',
 					condition: () => domain.status == 'Active' && !domain.primary,
-					onClick: () => this.confirmSetPrimary(domain.domain)
+					onClick: () => this.confirmSetPrimary(domain.domain),
 				},
 				{
 					label: 'Redirect to Primary',
@@ -306,7 +306,7 @@ export default {
 						domain.status == 'Active' &&
 						!domain.primary &&
 						!domain.redirect_to_primary,
-					onClick: () => this.confirmSetupRedirect(domain.domain)
+					onClick: () => this.confirmSetupRedirect(domain.domain),
 				},
 				{
 					label: 'Remove Redirect',
@@ -314,9 +314,9 @@ export default {
 						domain.status == 'Active' &&
 						!domain.primary &&
 						domain.redirect_to_primary,
-					onClick: () => this.confirmRemoveRedirect(domain.domain)
-				}
-			].filter(d => (d.condition ? d.condition() : true));
+					onClick: () => this.confirmRemoveRedirect(domain.domain),
+				},
+			].filter((d) => (d.condition ? d.condition() : true));
 		},
 		confirmRemoveDomain(domain) {
 			this.$confirm({
@@ -324,18 +324,18 @@ export default {
 				message: `Are you sure you want to remove the domain <b>${domain}</b>?`,
 				actionLabel: 'Remove',
 				actionColor: 'red',
-				action: closeDialog => {
+				action: (closeDialog) => {
 					closeDialog();
 					this.$resources.removeDomain.submit({
 						name: this.site.name,
-						domain: domain
+						domain: domain,
 					});
-				}
+				},
 			});
 		},
 		confirmSetPrimary(domain) {
 			let workingRedirects = false;
-			this.$resources.domains.data.forEach(d => {
+			this.$resources.domains.data.forEach((d) => {
 				if (d.redirect_to_primary) {
 					workingRedirects = true;
 				}
@@ -345,20 +345,20 @@ export default {
 				notify({
 					title: 'Please Remove all Active Redirects',
 					color: 'red',
-					icon: 'x'
+					icon: 'x',
 				});
 			} else {
 				this.$confirm({
 					title: 'Set as Primary Domain',
 					message: `Setting as primary will make <b>${domain}</b> the primary URL for your site. Do you want to continue?`,
 					actionLabel: 'Set Primary',
-					action: closeDialog => {
+					action: (closeDialog) => {
 						closeDialog();
 						this.$resources.setHostName.submit({
 							name: this.site.name,
-							domain: domain
+							domain: domain,
 						});
-					}
+					},
 				});
 			}
 		},
@@ -367,13 +367,13 @@ export default {
 				title: 'Redirect to Primary Domain',
 				message: `Redirect to Primary will redirect <b>${domain}</b> to <b>${this.primaryDomain}</b>. Do you want to continue?`,
 				actionLabel: 'Redirect to Primary',
-				action: closeDialog => {
+				action: (closeDialog) => {
 					closeDialog();
 					this.$resources.setupRedirect.submit({
 						name: this.site.name,
-						domain: domain
+						domain: domain,
 					});
-				}
+				},
 			});
 		},
 		confirmRemoveRedirect(domain) {
@@ -381,15 +381,15 @@ export default {
 				title: 'Remove Redirect',
 				message: `Remove Redirect will remove previously set up redirect from <b>${domain}</b> to <b>${this.primaryDomain}</b>. Do you want to continue?`,
 				actionLabel: 'Remove Redirect',
-				action: closeDialog => {
+				action: (closeDialog) => {
 					closeDialog();
 					this.$resources.removeRedirect.submit({
 						name: this.site.name,
-						domain: domain
+						domain: domain,
 					});
-				}
+				},
 			});
-		}
-	}
+		},
+	},
 };
 </script>

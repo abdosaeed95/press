@@ -24,7 +24,7 @@ import ClickToCopyField from '../../ClickToCopyField.vue';
 export default {
 	name: 'AccountReferral',
 	components: {
-		ClickToCopyField
+		ClickToCopyField,
 	},
 	computed: {
 		referralLink() {
@@ -38,7 +38,7 @@ export default {
 		},
 		creditAmountInTeamCurrency() {
 			return this.$team.doc?.country == 'India' ? '₹750' : '$10';
-		}
-	}
+		},
+	},
 };
 </script>

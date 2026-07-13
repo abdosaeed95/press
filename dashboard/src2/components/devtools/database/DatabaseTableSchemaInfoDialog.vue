@@ -2,7 +2,7 @@
 	<Dialog
 		:options="{
 			title: this.tableName,
-			size: '2xl'
+			size: '2xl',
 		}"
 	>
 		<template #body-content>
@@ -19,7 +19,7 @@ export default {
 	name: 'DatabaseTableSchemaInfoDialog',
 	props: ['tableName', 'columns'],
 	components: {
-		ObjectList
+		ObjectList,
 	},
 	computed: {
 		listOptions() {
@@ -29,13 +29,13 @@ export default {
 					{
 						label: 'Column',
 						fieldname: 'column',
-						width: 0.5
+						width: 0.5,
 					},
 					{
 						label: 'Data Type',
 						fieldname: 'data_type',
 						width: 0.2,
-						align: 'center'
+						align: 'center',
 					},
 					{
 						label: 'Nullable',
@@ -44,17 +44,17 @@ export default {
 						format(value) {
 							return value ? 'Yes' : 'No';
 						},
-						align: 'center'
+						align: 'center',
 					},
 					{
 						label: 'Default',
 						fieldname: 'default',
 						width: 0.3,
-						align: 'center'
-					}
-				]
+						align: 'center',
+					},
+				],
 			};
-		}
-	}
+		},
+	},
 };
 </script>

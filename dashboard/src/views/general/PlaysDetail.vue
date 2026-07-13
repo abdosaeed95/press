@@ -13,7 +13,7 @@ export default {
 	name: 'PlaysDetail',
 	props: ['playName'],
 	components: {
-		StepsDetail
+		StepsDetail,
 	},
 	inject: ['viewportWidth'],
 	resources: {
@@ -21,15 +21,15 @@ export default {
 			return {
 				url: 'press.api.server.play',
 				params: {
-					play: this.playName
+					play: this.playName,
 				},
-				auto: Boolean(this.playName)
+				auto: Boolean(this.playName),
 			};
-		}
+		},
 	},
 	data() {
 		return {
-			runningPlay: null
+			runningPlay: null,
 		};
 	},
 	computed: {
@@ -42,7 +42,7 @@ export default {
 				let when = this.formatDate(this.play.creation, 'relative');
 				return `Completed ${when} in ${this.$formatDuration(
 					this.play.duration,
-					'hh:mm:ss'
+					'hh:mm:ss',
 				)}`;
 			}
 			if (this.play.status == 'Undelivered') {
@@ -58,10 +58,10 @@ export default {
 					status: step.status,
 					output: step.output,
 					running: this.isStepRunning(step),
-					completed: this.isStepCompleted(step, index)
+					completed: this.isStepCompleted(step, index),
 				};
 			});
-		}
+		},
 	},
 	mounted() {
 		this.$socket.emit('doc_subscribe', 'Ansible Play', this.playName);
@@ -81,7 +81,7 @@ export default {
 		isStepRunning(step) {
 			if (!this.runningPlay) return false;
 			let runningStep = this.runningPlay.steps.find(
-				s => s.name == step.step_name
+				(s) => s.name == step.step_name,
 			);
 			return runningStep?.status === 'Running';
 		},
@@ -90,7 +90,7 @@ export default {
 				return this.runningPlay.current.index > index;
 			}
 			return step.status === 'Success';
-		}
-	}
+		},
+	},
 };
 </script>

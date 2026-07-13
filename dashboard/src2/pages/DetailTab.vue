@@ -17,7 +17,7 @@ export default {
 	name: 'DetailTab',
 	props: ['document', 'tab'],
 	components: {
-		ObjectList
+		ObjectList,
 	},
 	methods: {
 		getFilters(tab) {
@@ -25,7 +25,7 @@ export default {
 		},
 		getProps(tab) {
 			return tab.props ? tab.props(this.document) : {};
-		}
+		},
 	},
 	computed: {
 		listOptions() {
@@ -33,10 +33,10 @@ export default {
 				...this.tab.list,
 				filters: this.getFilters(this.tab),
 				context: {
-					documentResource: this.document
-				}
+					documentResource: this.document,
+				},
 			};
-		}
-	}
+		},
+	},
 };
 </script>

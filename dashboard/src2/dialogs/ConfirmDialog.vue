@@ -43,7 +43,7 @@ export default {
 				this.fields.reduce((acc, field) => {
 					acc[field.fieldname] = field.default || null;
 					return acc;
-				}, {})
+				}, {}),
 		};
 	},
 	components: { FormControl, ErrorMessage, LinkControl },
@@ -55,13 +55,13 @@ export default {
 					this.primaryAction?.onClick || this.onSuccess;
 				let result = primaryActionHandler({
 					hide: this.hide,
-					values: this.values
+					values: this.values,
 				});
 				if (result?.then) {
 					this.isLoading = true;
 					result
 						.then(() => (this.isLoading = false))
-						.catch(error => {
+						.catch((error) => {
 							this.error = error;
 							this.isLoading = false;
 						});
@@ -76,7 +76,7 @@ export default {
 		},
 		hide() {
 			this.showDialog = false;
-		}
+		},
 	},
 	computed: {
 		primaryActionProps() {
@@ -85,9 +85,9 @@ export default {
 				variant: 'solid',
 				...this.primaryAction,
 				loading: this.isLoading,
-				onClick: this.onConfirm
+				onClick: this.onConfirm,
 			};
-		}
-	}
+		},
+	},
 };
 </script>

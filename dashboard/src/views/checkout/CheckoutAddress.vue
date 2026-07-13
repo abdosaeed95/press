@@ -111,7 +111,7 @@ export default {
 			postalCode: null,
 			gstin: 'Not Applicable',
 			gstApplicable: false,
-			indianStates: indianStates
+			indianStates: indianStates,
 		};
 	},
 	resources: {
@@ -127,8 +127,8 @@ export default {
 						city: this.city,
 						state: this.state,
 						postal_code: this.postalCode,
-						gstin: this.gstin
-					}
+						gstin: this.gstin,
+					},
 				},
 				onSuccess(r) {
 					this.$emit('update:newAddress', {
@@ -136,12 +136,12 @@ export default {
 						country: this.country,
 						city: this.city,
 						state: this.state,
-						pincode: this.postalCode
+						pincode: this.postalCode,
 					});
 					this.$emit('update:step', 3);
-				}
+				},
 			};
-		}
-	}
+		},
+	},
 };
 </script>

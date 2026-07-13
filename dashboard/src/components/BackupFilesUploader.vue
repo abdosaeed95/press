@@ -7,7 +7,7 @@
 				:key="file.type"
 				:type="file.type"
 				@success="onFileUpload(file, $event)"
-				:fileValidator="f => databaseBackupChecker(f, file.type)"
+				:fileValidator="(f) => databaseBackupChecker(f, file.type)"
 				:s3="true"
 			>
 				<template
@@ -17,7 +17,7 @@
 						progress,
 						error,
 						success,
-						openFileSelector
+						openFileSelector,
 					}"
 				>
 					<ListItem
@@ -33,10 +33,10 @@
 									uploading
 										? `Uploading ${progress}%`
 										: success
-										? formatBytes(fileObj.size)
-										: error
-										? error
-										: file.description
+											? formatBytes(fileObj.size)
+											: error
+												? error
+												: file.description
 								}}
 							</span>
 						</template>
@@ -75,7 +75,7 @@ export default {
 					title: 'Database Backup',
 					description:
 						'Upload the database backup file. Usually file name ends in .sql.gz or .sql',
-					file: null
+					file: null,
 				},
 				{
 					icon: '<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9.39111 6.3913H26.3476V22.2174C26.3476 25.9478 23.2955 29 19.565 29H9.39111V6.3913Z" stroke="#1F272E" stroke-width="1.5" stroke-miterlimit="10"/><path d="M13.9131 13.1739H21.8261" stroke="#1F272E" stroke-width="1.5" stroke-miterlimit="10"/><path d="M13.9131 17.6957H21.8261" stroke="#1F272E" stroke-width="1.5" stroke-miterlimit="10"/><path d="M13.9131 22.2173H19.8479" stroke="#1F272E" stroke-width="1.5" stroke-miterlimit="10"/><path d="M22.9565 6.3913V3H6V25.6087H9.3913" stroke="#1F272E" stroke-width="1.5" stroke-miterlimit="10"/></svg>',
@@ -84,7 +84,7 @@ export default {
 					title: 'Public Files',
 					description:
 						'Upload the public files backup. Usually file name ends in -files.tar',
-					file: null
+					file: null,
 				},
 				{
 					icon: '<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8.39111 6.3913H25.3476V22.2174C25.3476 25.9478 22.2955 29 18.565 29H8.39111V6.3913Z" stroke="#1F272E" stroke-width="1.5" stroke-miterlimit="10"/><path d="M21.9565 6.3913V3H5V25.6087H8.3913" stroke="#1F272E" stroke-width="1.5" stroke-miterlimit="10"/></svg>',
@@ -93,7 +93,7 @@ export default {
 					title: 'Private Files',
 					description:
 						'Upload the private files backup. Usually file name ends in -private-files.tar',
-					file: null
+					file: null,
 				},
 				{
 					icon: '<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8.39111 6.3913H25.3476V22.2174C25.3476 25.9478 22.2955 29 18.565 29H8.39111V6.3913Z" stroke="#1F272E" stroke-width="1.5" stroke-miterlimit="10"/><path d="M21.9565 6.3913V3H5V25.6087H8.3913" stroke="#1F272E" stroke-width="1.5" stroke-miterlimit="10"/></svg>',
@@ -102,9 +102,9 @@ export default {
 					title: 'Site Config (required if backup is encrypted)',
 					description:
 						'Upload the site config file. Usually file name ends in -site_config_backup.json',
-					file: null
-				}
-			]
+					file: null,
+				},
+			],
 		};
 	},
 	methods: {
@@ -118,14 +118,14 @@ export default {
 				// valid strings are "database.sql.gz", "database.sql", "database.sql (1).gz", "database.sql (2).gz"
 				if (!/\.sql( \(\d\))?\.gz$|\.sql$/.test(file.name)) {
 					throw new Error(
-						'Database backup file should end with the name "database.sql.gz" or "database.sql"'
+						'Database backup file should end with the name "database.sql.gz" or "database.sql"',
 					);
 				}
 				if (
 					![
 						'application/x-gzip',
 						'application/gzip',
-						'application/sql'
+						'application/sql',
 					].includes(file.type)
 				) {
 					throw new Error('Invalid database backup file');
@@ -141,7 +141,7 @@ export default {
 					throw new Error(`Invalid ${type} files backup file`);
 				}
 			}
-		}
-	}
+		},
+	},
 };
 </script>

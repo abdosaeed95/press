@@ -10,16 +10,16 @@
 							label: 'Apps',
 							route: {
 								name: 'Marketplace',
-								params: { appName: app.name }
-							}
+								params: { appName: app.name },
+							},
 						},
 						{
 							label: app.title,
 							route: {
 								name: 'MarketplaceAppOverview',
-								params: { appName: app.name }
-							}
-						}
+								params: { appName: app.name },
+							},
+						},
 					]"
 				>
 					<template v-slot:actions>
@@ -62,22 +62,22 @@ export default {
 	name: 'MarketplaceApp',
 	props: ['appName'],
 	components: {
-		Tabs
+		Tabs,
 	},
 	resources: {
 		app() {
 			return {
 				url: 'press.api.marketplace.get_app',
 				params: {
-					name: this.appName
+					name: this.appName,
 				},
 				auto: true,
 				onError: this.$routeTo404PageIfNotFound,
 				onSuccess() {
 					this.routeToGeneral();
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		routeToGeneral() {
@@ -85,7 +85,7 @@ export default {
 				let path = this.$route.fullPath;
 				this.$router.replace(`${path}/overview`);
 			}
-		}
+		},
 	},
 	computed: {
 		app() {
@@ -104,7 +104,7 @@ export default {
 					'Releases',
 					'Analytics',
 					'Subscriptions',
-					'Pricing'
+					'Pricing',
 				],
 				'Attention Required': [
 					'Overview',
@@ -112,10 +112,10 @@ export default {
 					'Review',
 					'Analytics',
 					'Subscriptions',
-					'Pricing'
-				]
+					'Pricing',
+				],
 			};
-			let tabRoute = subRoute =>
+			let tabRoute = (subRoute) =>
 				`/marketplace/apps/${this.appName}/${subRoute}`;
 			let tabs = [
 				{ label: 'Overview', route: 'overview' },
@@ -123,24 +123,24 @@ export default {
 				{ label: 'Review', route: 'review' },
 				{ label: 'Analytics', route: 'analytics' },
 				{ label: 'Subscriptions', route: 'subscriptions' },
-				{ label: 'Pricing', route: 'pricing' }
+				{ label: 'Pricing', route: 'pricing' },
 			];
 
 			if (this.app) {
 				let tabsToShow = tabsByStatus[this.app.status];
 
 				if (tabsToShow?.length) {
-					tabs = tabs.filter(tab => tabsToShow.includes(tab.label));
+					tabs = tabs.filter((tab) => tabsToShow.includes(tab.label));
 				}
-				return tabs.map(tab => {
+				return tabs.map((tab) => {
 					return {
 						...tab,
-						route: tabRoute(tab.route)
+						route: tabRoute(tab.route),
 					};
 				});
 			}
 			return [];
-		}
-	}
+		},
+	},
 };
 </script>

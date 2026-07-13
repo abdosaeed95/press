@@ -29,12 +29,12 @@ export default {
 	data() {
 		return {
 			payoutDialog: false,
-			showPayout: null
+			showPayout: null,
 		};
 	},
 	components: {
 		ObjectList,
-		PayoutTable
+		PayoutTable,
 	},
 	computed: {
 		options() {
@@ -45,7 +45,7 @@ export default {
 					'mode_of_payment',
 					'status',
 					'net_total_inr',
-					'net_total_usd'
+					'net_total_usd',
 				],
 				filterControls: () => {
 					return [
@@ -54,8 +54,8 @@ export default {
 							label: 'Status',
 							class: !this.$isMobile ? 'w-36' : '',
 							fieldname: 'status',
-							options: ['', 'Draft', 'Paid', 'Commissioned']
-						}
+							options: ['', 'Draft', 'Paid', 'Commissioned'],
+						},
 					];
 				},
 				orderBy: 'creation desc',
@@ -67,9 +67,9 @@ export default {
 							return Intl.DateTimeFormat('en-US', {
 								year: 'numeric',
 								month: 'short',
-								day: 'numeric'
+								day: 'numeric',
 							}).format(new Date(value));
-						}
+						},
 					},
 					{ label: 'Payment Mode', fieldname: 'mode_of_payment' },
 					{ label: 'Status', fieldname: 'status', type: 'Badge' },
@@ -86,15 +86,15 @@ export default {
 							}
 
 							return this.$format.userCurrency(total);
-						}
-					}
+						},
+					},
 				],
-				onRowClick: row => {
+				onRowClick: (row) => {
 					this.showPayout = row;
 					this.payoutDialog = true;
-				}
+				},
 			};
-		}
-	}
+		},
+	},
 };
 </script>

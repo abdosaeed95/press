@@ -4,7 +4,7 @@
 			class="flex cursor-pointer select-none flex-row items-center justify-between gap-2 p-4"
 			@click="toggleVisibility"
 			:class="{
-				'!pb-2': isVisible
+				'!pb-2': isVisible,
 			}"
 		>
 			<div>
@@ -30,22 +30,22 @@ export default {
 	props: {
 		label: {
 			type: String,
-			required: true
+			required: true,
 		},
 		subLabel: {
 			type: String,
-			default: ''
-		}
+			default: '',
+		},
 	},
 	data() {
 		return {
-			isVisible: false
+			isVisible: false,
 		};
 	},
 	methods: {
 		toggleVisibility() {
 			this.isVisible = !this.isVisible;
-		}
-	}
+		},
+	},
 };
 </script>

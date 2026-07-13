@@ -118,8 +118,9 @@ class TestBench(FrappeTestCase):
 		bench.memory_max = high_memory_max
 		bench.save()
 
-		with patch.object(Bench, "get_free_memory", new=lambda x: low_prometheus_memeory), self.assertRaises(
-			frappe.ValidationError
+		with (
+			patch.object(Bench, "get_free_memory", new=lambda x: low_prometheus_memeory),
+			self.assertRaises(frappe.ValidationError),
 		):
 			# Should not rebuild due to low server mem
 			self.assertEqual(bench.get_memory_info(), (True, low_prometheus_memeory / (1024**3), 2))

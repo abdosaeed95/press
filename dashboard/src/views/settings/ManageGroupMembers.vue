@@ -31,7 +31,7 @@
 								() =>
 									$resources.removeGroupUser.submit({
 										name: group.name,
-										user: user
+										user: user,
 									})
 							"
 						/>
@@ -53,7 +53,7 @@
 				@click="
 					$resources.addGroupUser.submit({
 						name: group.name,
-						user: member.value
+						user: member.value,
 					})
 				"
 			/>
@@ -67,51 +67,51 @@ export default {
 	data() {
 		return {
 			member: {},
-			autoCompleteList: []
+			autoCompleteList: [],
 		};
 	},
 	props: ['show', 'group'],
 	watch: {
 		group() {
 			this.$resources.groupUsers.submit();
-		}
+		},
 	},
 	resources: {
 		removeGroupUser: {
 			url: 'press.api.account.remove_permission_group_user',
 			onSuccess() {
 				this.$resources.groupUsers.fetch();
-			}
+			},
 		},
 		addGroupUser: {
 			url: 'press.api.account.add_permission_group_user',
 			onSuccess() {
 				this.$resources.groupUsers.fetch();
 				this.member = {};
-			}
+			},
 		},
 		groupUsers() {
 			return {
 				url: 'press.api.account.permission_group_users',
 				params: {
-					name: this.group.name
+					name: this.group.name,
 				},
 				onSuccess(r) {
 					this.autoCompleteList = this.$account.team_members
-						.filter(user => {
+						.filter((user) => {
 							return (
 								!r.includes(user.name) && user.name != this.$account.team.user
 							);
 						})
-						.map(user => {
+						.map((user) => {
 							return {
 								label: user.name,
-								value: user.name
+								value: user.name,
 							};
 						});
-				}
+				},
 			};
-		}
-	}
+		},
+	},
 };
 </script>

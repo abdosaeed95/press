@@ -12,7 +12,7 @@ frappe.query_reports['MariaDB Slow Queries'] = {
 			reqd: 1,
 			get_query: function () {
 				return {
-					filters: { status: ["!=", "Archived"] },
+					filters: { status: ['!=', 'Archived'] },
 				};
 			},
 		},

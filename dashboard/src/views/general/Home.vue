@@ -24,7 +24,7 @@ export default {
 	data() {
 		return {
 			sites: null,
-			plans: null
+			plans: null,
 		};
 	},
 	mounted() {
@@ -43,7 +43,7 @@ export default {
 			if (this.sites.length === 0) {
 				this.redirectToSites();
 			}
-		}
-	}
+		},
+	},
 };
 </script>

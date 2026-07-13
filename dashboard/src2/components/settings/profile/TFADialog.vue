@@ -4,7 +4,7 @@
 		:options="{
 			title: is2FAEnabled
 				? 'Disable Two-Factor Authentication'
-				: 'Enable Two-Factor Authentication'
+				: 'Enable Two-Factor Authentication',
 		}"
 	>
 		<template #body-content>
@@ -20,16 +20,16 @@ export default {
 	props: {
 		modelValue: {
 			type: Boolean,
-			required: true
-		}
+			required: true,
+		},
 	},
 	components: {
-		Configure2FA
+		Configure2FA,
 	},
 	methods: {
 		closeDialog() {
 			this.show = false;
-		}
+		},
 	},
 	computed: {
 		is2FAEnabled() {
@@ -41,8 +41,8 @@ export default {
 			},
 			set(value) {
 				this.$emit('update:modelValue', value);
-			}
-		}
-	}
+			},
+		},
+	},
 };
 </script>

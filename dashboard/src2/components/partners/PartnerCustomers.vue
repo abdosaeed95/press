@@ -5,7 +5,7 @@
 			v-model="contributionDialog"
 			:options="{
 				size: '3xl',
-				title: 'Last 6 Month\'s Contribution'
+				title: 'Last 6 Month\'s Contribution',
 			}"
 		>
 			<template #body-content>
@@ -48,7 +48,7 @@
 						$resources.transferCredits.submit({
 							amount: amount,
 							customer: customerTeam.name,
-							partner: $team.doc.name
+							partner: $team.doc.name,
 						})
 					"
 				>
@@ -85,7 +85,7 @@ export default {
 		PartnerCustomerInvoices,
 		Dialog,
 		ErrorMessage,
-		ObjectList
+		ObjectList,
 	},
 	data() {
 		return {
@@ -94,7 +94,7 @@ export default {
 			transferCreditsDialog: false,
 			customerTeam: null,
 			amount: 0.0,
-			showConfirmationDialog: false
+			showConfirmationDialog: false,
 		};
 	},
 	resources: {
@@ -106,13 +106,13 @@ export default {
 					this.transferCreditsDialog = false;
 					this.showConfirmationDialog = true;
 					toast.success('Credits Transferred');
-				}
+				},
 			};
 		},
 		getBalance: {
 			url: 'press.api.billing.get_balance_credit',
-			auto: true
-		}
+			auto: true,
+		},
 	},
 	computed: {
 		partnerCustomerList() {
@@ -121,37 +121,37 @@ export default {
 					return {
 						url: 'press.api.partner.get_partner_customers',
 						transform(data) {
-							return data.map(d => {
+							return data.map((d) => {
 								return {
 									email: d.user,
 									billing_name: d.billing_name || '',
 									payment_mode: d.payment_mode || '',
 									currency: d.currency,
-									name: d.name
+									name: d.name,
 								};
 							});
 						},
 						initialData: [],
-						auto: true
+						auto: true,
 					};
 				},
 				columns: [
 					{
 						label: 'Name',
-						fieldname: 'billing_name'
+						fieldname: 'billing_name',
 					},
 					{
 						label: 'Email',
-						fieldname: 'email'
+						fieldname: 'email',
 					},
 					{
 						label: 'Payment Mode',
-						fieldname: 'payment_mode'
+						fieldname: 'payment_mode',
 					},
 					{
 						label: 'Currency',
 						fieldname: 'currency',
-						width: 0.5
+						width: 0.5,
 					},
 					{
 						label: 'Contributions',
@@ -164,9 +164,9 @@ export default {
 								onClick: () => {
 									this.showInvoice = row;
 									this.contributionDialog = true;
-								}
+								},
 							};
-						}
+						},
 					},
 					{
 						label: '',
@@ -180,13 +180,13 @@ export default {
 								onClick: () => {
 									this.transferCreditsDialog = true;
 									this.customerTeam = row;
-								}
+								},
 							};
-						}
-					}
-				]
+						},
+					},
+				],
 			};
-		}
+		},
 	},
 	methods: {
 		formatCurrency(value) {
@@ -197,9 +197,9 @@ export default {
 		},
 		creditBalance() {
 			return this.formatCurrency(
-				parseFloat(this.$resources.getBalance.data) - parseFloat(this.amount)
+				parseFloat(this.$resources.getBalance.data) - parseFloat(this.amount),
 			);
-		}
-	}
+		},
+	},
 };
 </script>

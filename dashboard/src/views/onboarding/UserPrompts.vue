@@ -8,9 +8,9 @@ import { defineAsyncComponent } from 'vue';
 export default {
 	name: 'UserPrompts',
 	components: {
-		UpdateBillingDetails: defineAsyncComponent(() =>
-			import('../../../src2/components/UpdateBillingDetails.vue')
-		)
+		UpdateBillingDetails: defineAsyncComponent(
+			() => import('../../../src2/components/UpdateBillingDetails.vue'),
+		),
 	},
 	resources: {
 		prompts() {
@@ -21,13 +21,13 @@ export default {
 					if (document.cookie.includes('user_id=Guest')) {
 						return 'Not logged in';
 					}
-				}
+				},
 			};
-		}
+		},
 	},
 	data() {
 		return {
-			show: true
+			show: true,
 		};
 	},
 	computed: {
@@ -44,7 +44,7 @@ export default {
 				return data[1];
 			}
 			return null;
-		}
-	}
+		},
+	},
 };
 </script>

@@ -11,7 +11,7 @@ let objects = {
 	Bench: bench,
 	Marketplace: marketplace,
 	Server: server,
-	Notification: notification
+	Notification: notification,
 };
 
 export function getObject(name) {

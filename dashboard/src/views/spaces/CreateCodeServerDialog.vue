@@ -7,9 +7,9 @@
 					label: 'Create',
 					variant: 'solid',
 					loading: $resources.newCodeServer.loading,
-					onClick: () => $resources.newCodeServer.submit()
-				}
-			]
+					onClick: () => $resources.newCodeServer.submit(),
+				},
+			],
 		}"
 		:modelValue="show"
 		@after-leave="
@@ -61,7 +61,7 @@ export default {
 			// TODO: Add global state and get domain from there
 			domain: 'frappe.space',
 			subdomain: '',
-			subdomainAvailable: false
+			subdomainAvailable: false,
 		};
 	},
 	methods: {
@@ -73,7 +73,7 @@ export default {
 			if (!error) {
 				let subdomainTaken = await this.$call('press.api.spaces.exists', {
 					subdomain: this.subdomain,
-					domain: this.domain
+					domain: this.domain,
 				});
 				if (subdomainTaken) {
 					error = `${this.subdomain}.${this.domain} already exists.`;
@@ -98,7 +98,7 @@ export default {
 				return 'Subdomain contains invalid characters. Use lowercase characters, numbers and hyphens';
 			}
 			return null;
-		}
+		},
 	},
 	resources: {
 		newCodeServer() {
@@ -107,16 +107,16 @@ export default {
 				params: {
 					subdomain: this.subdomain,
 					bench: this.version,
-					domain: this.domain
+					domain: this.domain,
 				},
 				onSuccess(r) {
 					this.$router.replace(`/codeservers/${r}/jobs`);
 				},
 				onError(e) {
 					this.errorMessage = e.message;
-				}
+				},
 			};
-		}
-	}
+		},
+	},
 };
 </script>

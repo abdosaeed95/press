@@ -7,8 +7,8 @@ from datetime import datetime
 import frappe
 from frappe.model.document import Document
 
-from press.utils.billing import convert_stripe_money
 from press.api.billing import get_stripe
+from press.utils.billing import convert_stripe_money
 
 
 class StripePaymentEvent(Document):

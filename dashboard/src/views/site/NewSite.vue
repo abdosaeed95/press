@@ -6,7 +6,7 @@
 			<Breadcrumbs
 				:items="[
 					{ label: 'Sites', route: { name: 'Sites' } },
-					{ label: 'New', route: { name: 'NewSite' } }
+					{ label: 'New', route: { name: 'NewSite' } },
 				]"
 			/>
 		</header>
@@ -26,7 +26,7 @@
 					<Hostname
 						v-show="activeStep.name === 'Hostname'"
 						v-model="subdomain"
-						@error="error => (subdomainValid = !Boolean(error))"
+						@error="(error) => (subdomainValid = !Boolean(error))"
 					/>
 					<Apps
 						v-show="activeStep.name === 'Apps'"
@@ -46,7 +46,7 @@
 							:group="selectedGroup"
 							:editable="false"
 							class="mb-9"
-							@change="plan => (selectedAppPlans[app.name] = plan.name)"
+							@change="(plan) => (selectedAppPlans[app.name] = plan.name)"
 						/>
 					</div>
 
@@ -136,7 +136,7 @@ export default {
 		Apps,
 		Restore,
 		Plans,
-		ChangeAppPlanSelector
+		ChangeAppPlanSelector,
 	},
 	data() {
 		return {
@@ -152,7 +152,7 @@ export default {
 			selectedFiles: {
 				database: null,
 				public: null,
-				private: null
+				private: null,
 			},
 			skipFailingPatches: false,
 			selectedPlan: null,
@@ -163,7 +163,7 @@ export default {
 					name: 'Hostname',
 					validate: () => {
 						return this.subdomainValid;
-					}
+					},
 				},
 				{
 					name: 'Apps',
@@ -176,18 +176,18 @@ export default {
 							this.validationMessage = null;
 						}
 						return true;
-					}
+					},
 				},
 				{
-					name: 'Restore'
+					name: 'Restore',
 				},
 				{
-					name: 'Plan'
-				}
+					name: 'Plan',
+				},
 			],
 			agreedToRegionConsent: false,
 			selectedAppPlans: {},
-			loadingPlans: false
+			loadingPlans: false,
 		};
 	},
 	async mounted() {
@@ -205,8 +205,8 @@ export default {
 			let { title, creation, team } = await this.$call(
 				'press.api.bench.get_title_and_creation',
 				{
-					name: this.bench
-				}
+					name: this.bench,
+				},
 			);
 			this.benchName = this.bench;
 			this.benchTitle = title;
@@ -214,7 +214,9 @@ export default {
 			if (team == this.$account.team.name) {
 				// Select a zero cost plan and remove the plan selection step
 				this.selectedPlan = { name: 'Unlimited' };
-				let plan_step_index = this.steps.findIndex(step => step.name == 'Plan');
+				let plan_step_index = this.steps.findIndex(
+					(step) => step.name == 'Plan',
+				);
 				this.steps.splice(plan_step_index, 1);
 			}
 		}
@@ -233,8 +235,8 @@ export default {
 						files: this.selectedFiles,
 						share_details_consent: this.shareDetailsConsent,
 						skip_failing_patches: this.skipFailingPatches,
-						selected_app_plans: this.selectedAppPlans
-					}
+						selected_app_plans: this.selectedAppPlans,
+					},
 				},
 				onSuccess(data) {
 					let { site, job = '' } = data;
@@ -254,9 +256,9 @@ export default {
 					if (!canCreate) {
 						return 'Cannot create site';
 					}
-				}
+				},
 			};
-		}
+		},
 	},
 	computed: {
 		wantsToRestore() {
@@ -264,7 +266,7 @@ export default {
 				return true;
 			}
 			return false;
-		}
+		},
 	},
 	methods: {
 		async nextStep(activeStep, next) {
@@ -276,8 +278,8 @@ export default {
 					'press.api.marketplace.get_apps_with_plans',
 					{
 						apps: JSON.stringify(this.selectedApps),
-						release_group: this.selectedGroup
-					}
+						release_group: this.selectedGroup,
+					},
 				);
 
 				if (this.appsWithPlans && this.appsWithPlans.length > 0) {
@@ -298,10 +300,10 @@ export default {
 			next();
 		},
 		addPlanSelectionStep() {
-			const appsStepIndex = this.steps.findIndex(step => step.name == 'Apps');
+			const appsStepIndex = this.steps.findIndex((step) => step.name == 'Apps');
 
 			const selectAppPlansStepIndex = this.steps.findIndex(
-				step => step.name == 'Select App Plans'
+				(step) => step.name == 'Select App Plans',
 			);
 			if (selectAppPlansStepIndex < 0) {
 				this.steps.splice(appsStepIndex + 1, 0, {
@@ -317,18 +319,18 @@ export default {
 						}
 
 						return true;
-					}
+					},
 				});
 			}
 		},
 		removePlanSelectionStepIfExists() {
 			const selectAppPlansStepIndex = this.steps.findIndex(
-				step => step.name == 'Select App Plans'
+				(step) => step.name == 'Select App Plans',
 			);
 			if (selectAppPlansStepIndex >= 0) {
 				this.steps.splice(selectAppPlansStepIndex, 1);
 			}
-		}
-	}
+		},
+	},
 };
 </script>

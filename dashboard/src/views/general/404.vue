@@ -13,8 +13,8 @@ export default {
 	name: '404NotFound',
 	data() {
 		return {
-			surprise: false
+			surprise: false,
 		};
-	}
+	},
 };
 </script>

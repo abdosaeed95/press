@@ -9,27 +9,27 @@ export default {
 	name: 'Table',
 	props: {
 		columns: Array,
-		rows: Array
+		rows: Array,
 	},
 	provide() {
 		return {
 			columns: this._columns,
-			rows: this.rows
+			rows: this.rows,
 		};
 	},
 	computed: {
 		_columns() {
-			return this.columns.map(column => {
+			return this.columns.map((column) => {
 				return {
 					...column,
 					width: column.width || 1,
-					name: column.name
+					name: column.name,
 				};
 			});
 		},
 		$rows() {
 			return this.rows;
-		}
-	}
+		},
+	},
 };
 </script>

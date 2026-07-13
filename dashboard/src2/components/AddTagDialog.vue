@@ -8,10 +8,10 @@
 					variant: 'solid',
 					onClick: () =>
 						addNewTag(
-							selectedTag?.value === '__new__' ? newTag : selectedTag.value
-						)
-				}
-			]
+							selectedTag?.value === '__new__' ? newTag : selectedTag.value,
+						),
+				},
+			],
 		}"
 		v-model="show"
 	>
@@ -28,7 +28,7 @@
 				v-model="newTag"
 				label="Enter new tag and press enter"
 				placeholder="production, staging, testing"
-				@keydown.enter="e => addNewTag(e.target.value)"
+				@keydown.enter="(e) => addNewTag(e.target.value)"
 			/>
 		</template>
 	</Dialog>
@@ -38,7 +38,7 @@ import {
 	Autocomplete,
 	Dialog,
 	FormControl,
-	getCachedDocumentResource
+	getCachedDocumentResource,
 } from 'frappe-ui';
 
 export default {
@@ -50,7 +50,7 @@ export default {
 		return {
 			selectedTag: null,
 			newTag: '',
-			show: true
+			show: true,
 		};
 	},
 	resources: {
@@ -61,9 +61,9 @@ export default {
 				filters: { doctype_name: this.doctype },
 				fields: ['tag'],
 				pageLength: 1000,
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	methods: {
 		addNewTag(value) {
@@ -74,18 +74,18 @@ export default {
 				this.$emit('added', value);
 				this.show = false;
 			});
-		}
+		},
 	},
 	computed: {
 		tagOptions() {
 			return [
 				{ label: 'Create new tag', value: '__new__' },
-				...(this.$resources.existingTags.data || []).map(d => ({
+				...(this.$resources.existingTags.data || []).map((d) => ({
 					label: d.tag,
-					value: d.tag
-				}))
+					value: d.tag,
+				})),
 			];
-		}
-	}
+		},
+	},
 };
 </script>

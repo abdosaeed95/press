@@ -14,7 +14,7 @@
 					{ label: 'Query', name: 'query', class: 'w-7/12' },
 					{ label: 'Duration', name: 'duration', class: 'w-1/12' },
 					{ label: 'Rows Examined', name: 'examined', class: 'w-1/12' },
-					{ label: 'Rows Sent', name: 'sent', class: 'w-1/12' }
+					{ label: 'Rows Sent', name: 'sent', class: 'w-1/12' },
 				]"
 				:data="formatSlowQueries"
 				title="MariaDB Slow Queries Report"
@@ -60,7 +60,7 @@ export default {
 	name: 'SiteMariaDBSlowQueries',
 	props: ['site'],
 	components: {
-		Report
+		Report,
 	},
 	data() {
 		return {
@@ -69,12 +69,12 @@ export default {
 					name: 'pattern',
 					label: 'Search:',
 					type: 'text',
-					value: this.pattern
+					value: this.pattern,
 				},
 				{ name: 'start', label: 'From:', type: 'datetime-local', value: '' },
-				{ name: 'end', label: 'To:', type: 'datetime-local', value: '' }
+				{ name: 'end', label: 'To:', type: 'datetime-local', value: '' },
 			],
-			max_lines: 20
+			max_lines: 20,
 		};
 	},
 	watch: {
@@ -86,7 +86,7 @@ export default {
 		},
 		endTime() {
 			this.reset();
-		}
+		},
 	},
 	resources: {
 		slowQueries() {
@@ -97,28 +97,28 @@ export default {
 					start: this.startTime || this.today,
 					end: this.endTime || this.today,
 					pattern: this.pattern,
-					max_lines: this.max_lines
+					max_lines: this.max_lines,
 				},
 				auto: true,
 				pageLength: 10,
 				keepData: true,
-				initialData: []
+				initialData: [],
 			};
 		},
 		getPlan() {
 			return {
 				url: 'press.api.site.current_plan',
 				params: {
-					name: this.site?.name
+					name: this.site?.name,
 				},
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	methods: {
 		reset() {
 			this.$resources.slowQueries.reset();
-		}
+		},
 	},
 	computed: {
 		startTime() {
@@ -132,19 +132,19 @@ export default {
 		},
 		formatSlowQueries() {
 			let data = [];
-			this.$resources.slowQueries.data.forEach(row => {
+			this.$resources.slowQueries.data.forEach((row) => {
 				let time = this.formatDate(row.timestamp, 'TIME_24_WITH_SHORT_OFFSET');
 				let out = [
 					{ name: 'Timestamp', value: time, class: 'w-2/12' },
 					{ name: 'Query', value: row.query, class: 'w-7/12' },
 					{ name: 'Duration', value: row.duration, class: 'w-1/12' },
 					{ name: 'Examined', value: row.rows_examined, class: 'w-1/12' },
-					{ name: 'Sent', value: row.sent, class: 'w-1/12' }
+					{ name: 'Sent', value: row.sent, class: 'w-1/12' },
 				];
 				data.push(out);
 			});
 			return data;
-		}
-	}
+		},
+	},
 };
 </script>

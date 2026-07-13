@@ -11,8 +11,7 @@
 			<p class="text-xs text-gray-600">Request</p>
 			<pre
 				class="mt-2 max-h-52 overflow-y-auto whitespace-pre-wrap rounded bg-gray-50 px-2 py-1.5 text-sm text-gray-600"
-				>{{ $resources.attempt?.data?.request_payload }}</pre
-			>
+				>{{ $resources.attempt?.data?.request_payload }}</pre>
 		</div>
 		<div
 			v-if="
@@ -28,8 +27,7 @@
 			<p class="text-xs text-gray-600">Response</p>
 			<pre
 				class="mt-2 max-h-52 overflow-y-auto whitespace-pre-wrap rounded bg-gray-50 px-2 py-1.5 text-sm text-gray-600"
-				>{{ $resources.attempt?.data?.response_body }}</pre
-			>
+				>{{ $resources.attempt?.data?.response_body }}</pre>
 		</div>
 		<div>
 			<p class="text-xs text-gray-600">Timestamp</p>
@@ -53,7 +51,7 @@ export default {
 			validated: false,
 			request: null,
 			response: null,
-			response_status_code: null
+			response_status_code: null,
 		};
 	},
 	resources: {
@@ -62,24 +60,24 @@ export default {
 				url: 'press.api.webhook.attempt',
 				makeParams: () => {
 					return {
-						name: this.$props.id
+						name: this.$props.id,
 					};
 				},
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	computed: {
 		data() {
 			return this.$resources.attempt.data || {};
-		}
+		},
 	},
 	methods: {
 		is_valid_status_code(status_code) {
 			if (!status_code) return false;
 			if (status_code == '0') return false;
 			return true;
-		}
-	}
+		},
+	},
 };
 </script>

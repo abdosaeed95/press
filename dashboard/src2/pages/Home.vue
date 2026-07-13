@@ -5,7 +5,7 @@
 			<Dropdown
 				:options="[
 					{ label: 'Site', route: { name: 'New Site' } },
-					{ label: 'Bench Group', route: { name: 'New Release Group' } }
+					{ label: 'Bench Group', route: { name: 'New Release Group' } },
 				]"
 			>
 				<Button
@@ -36,9 +36,9 @@ export default {
 	components: {
 		Header,
 		HomeSummary,
-		Onboarding: defineAsyncComponent(() =>
-			import('../components/Onboarding.vue')
-		)
-	}
+		Onboarding: defineAsyncComponent(
+			() => import('../components/Onboarding.vue'),
+		),
+	},
 };
 </script>

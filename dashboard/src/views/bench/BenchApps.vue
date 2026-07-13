@@ -89,7 +89,7 @@
 					<FormControl
 						class="mb-2"
 						placeholder="Search for Apps"
-						v-on:input="e => updateSearchTerm(e.target.value)"
+						v-on:input="(e) => updateSearchTerm(e.target.value)"
 					/>
 					<LoadingText class="py-2" v-if="$resources.installableApps.loading" />
 					<AppSourceSelector
@@ -114,10 +114,10 @@
 						@click="
 							$resources.addApps.submit({
 								name: benchName,
-								apps: selectedApps.map(app => ({
+								apps: selectedApps.map((app) => ({
 									app: app.app,
-									source: app.source.name
-								}))
+									source: app.source.name,
+								})),
 							})
 						"
 					>
@@ -142,7 +142,7 @@ export default {
 	name: 'BenchApps',
 	components: {
 		AppSourceSelector,
-		ChangeAppBranchDialog
+		ChangeAppBranchDialog,
 	},
 	props: ['benchName', 'bench'],
 	data() {
@@ -152,7 +152,7 @@ export default {
 			appToPatch: null,
 			appToChangeBranchOf: null,
 			searchTerm: '',
-			filteredOptions: []
+			filteredOptions: [],
 		};
 	},
 	resources: {
@@ -160,24 +160,24 @@ export default {
 			return {
 				url: 'press.api.bench.apps',
 				params: {
-					name: this.benchName
+					name: this.benchName,
 				},
-				auto: true
+				auto: true,
 			};
 		},
 		installableApps() {
 			return {
 				url: 'press.api.bench.installable_apps',
 				params: {
-					name: this.benchName
+					name: this.benchName,
 				},
 				onSuccess(data) {
 					this.fuse = new Fuse(data, {
 						limit: 20,
-						keys: ['title']
+						keys: ['title'],
 					});
 					this.filteredOptions = data;
-				}
+				},
 			};
 		},
 		fetchLatestAppUpdate() {
@@ -185,7 +185,7 @@ export default {
 				url: 'press.api.bench.fetch_latest_app_update',
 				onSuccess() {
 					window.location.reload();
-				}
+				},
 			};
 		},
 		addApps() {
@@ -193,15 +193,15 @@ export default {
 				url: 'press.api.bench.add_apps',
 				onSuccess() {
 					window.location.reload();
-				}
+				},
 			};
 		},
 		removeApp() {
 			return {
 				url: 'press.api.bench.remove_app',
 				onSuccess(app_name) {
-					this.$resources.apps.setData(data =>
-						data.filter(app => app.name !== app_name)
+					this.$resources.apps.setData((data) =>
+						data.filter((app) => app.name !== app_name),
 					);
 				},
 				onError(e) {
@@ -209,18 +209,18 @@ export default {
 						title: 'Error',
 						message: e,
 						icon: 'x',
-						color: 'red'
+						color: 'red',
 					});
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		updateSearchTerm(value) {
 			if (value) {
 				this.filteredOptions = this.fuse
 					.search(value)
-					.map(result => result.item);
+					.map((result) => result.item);
 			} else {
 				this.filteredOptions = this.$resources.installableApps.data;
 			}
@@ -232,36 +232,36 @@ export default {
 					onClick: () =>
 						window.open(
 							`${window.location.protocol}//${window.location.host}/app/app/${app.name}`,
-							'_blank'
+							'_blank',
 						),
-					condition: () => this.$account.user.user_type == 'System User'
+					condition: () => this.$account.user.user_type == 'System User',
 				},
 				{
 					label: 'Fetch Latest Update',
-					onClick: () => this.fetchLatestUpdate(app)
+					onClick: () => this.fetchLatestUpdate(app),
 				},
 				{
 					label: 'Remove App',
 					onClick: () => this.confirmRemoveApp(app),
-					condition: () => app.name != 'frappe'
+					condition: () => app.name != 'frappe',
 				},
 				{
 					label: 'Change Branch',
 					onClick: () => {
 						this.appToChangeBranchOf = app;
-					}
+					},
 				},
 				{
 					label: 'Visit Repo',
 					onClick: () =>
-						window.open(`${app.repository_url}/tree/${app.branch}`, '_blank')
-				}
+						window.open(`${app.repository_url}/tree/${app.branch}`, '_blank'),
+				},
 			].filter(Boolean);
 		},
 		fetchLatestUpdate(app) {
 			this.$resources.fetchLatestAppUpdate.submit({
 				name: this.benchName,
-				app: app.name
+				app: app.name,
 			});
 		},
 		confirmRemoveApp(app) {
@@ -270,15 +270,15 @@ export default {
 				message: `Are you sure you want to remove app ${app.name} from this bench?`,
 				actionLabel: 'Remove App',
 				actionColor: 'red',
-				action: closeDialog => {
+				action: (closeDialog) => {
 					this.$resources.removeApp.submit({
 						name: this.benchName,
-						app: app.name
+						app: app.name,
 					});
 					closeDialog();
-				}
+				},
 			});
-		}
-	}
+		},
+	},
 };
 </script>

@@ -131,7 +131,7 @@ export default {
 
 			if (this.selectedGithubUserData) {
 				let defaultBranch = this.selectedGithubUserData.repos.find(
-					(r) => r.name === val.label
+					(r) => r.name === val.label,
 				).default_branch;
 				this.selectedBranch = { label: defaultBranch, value: defaultBranch };
 			} else this.selectedBranch = '';
@@ -186,7 +186,7 @@ export default {
 		selectedGithubUserData() {
 			if (!this.selectedGithubUser) return null;
 			return this.options.installations.find(
-				(i) => i.id === Number(this.selectedGithubUser.value)
+				(i) => i.id === Number(this.selectedGithubUser.value),
 			);
 		},
 		needsAuthorization() {
@@ -199,7 +199,7 @@ export default {
 		},
 		requiresReAuth() {
 			return this.$resources.options?.error?.messages.includes(
-				'Bad credentials'
+				'Bad credentials',
 			);
 		},
 		state() {

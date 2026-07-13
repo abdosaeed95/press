@@ -29,7 +29,7 @@ export default {
 	data() {
 		return {
 			show: true,
-			newComment: ''
+			newComment: '',
 		};
 	},
 	methods: {
@@ -38,20 +38,20 @@ export default {
 				name: this.approval_request_name,
 				filename: this.filename,
 				line_number: this.line_number,
-				comment: this.newComment
+				comment: this.newComment,
 			};
 			this.$resources.addComment.submit(commentData);
 			this.newComment = '';
 			this.$emit('comment-submitted');
-		}
+		},
 	},
 	resources: {
 		addComment() {
 			return {
 				url: 'press.api.marketplace.add_code_review_comment',
-				method: 'POST'
+				method: 'POST',
 			};
-		}
-	}
+		},
+	},
 };
 </script>

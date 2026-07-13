@@ -99,7 +99,7 @@ export default {
 	components: {
 		AddressForm,
 		StripeCard,
-		BuyPrepaidCredits
+		BuyPrepaidCredits,
 	},
 	data() {
 		return {
@@ -107,7 +107,7 @@ export default {
 			paymentMode: null,
 			buyCreditsFrom: 'Card Payment',
 			minCreditsToBuy: this.$account.team.currency == 'INR' ? 750 : 10,
-			address: {}
+			address: {},
 		};
 	},
 	resources: {
@@ -115,22 +115,22 @@ export default {
 			return {
 				url: 'press.api.account.update_billing_information',
 				params: {
-					billing_details: this.address
+					billing_details: this.address,
 				},
 				onSuccess() {
 					this.$account.fetchAccount();
-				}
+				},
 			};
 		},
 		changePaymentMode() {
 			return {
 				url: 'press.api.billing.change_payment_mode',
 				params: {
-					mode: this.paymentMode
+					mode: this.paymentMode,
 				},
 				onSuccess() {
 					this.$account.fetchAccount();
-				}
+				},
 			};
 		},
 		prepaidCredits() {
@@ -139,9 +139,9 @@ export default {
 				onSuccess() {
 					this.showDialog = false;
 					this.$account.fetchAccount();
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		onSuccess() {
@@ -158,7 +158,7 @@ export default {
 			} else {
 				this.$resources.updateBillingInformation.submit();
 			}
-		}
+		},
 	},
 	computed: {
 		description() {
@@ -177,7 +177,7 @@ export default {
 		},
 		paymentModeOptions() {
 			return ['', 'Card', 'Prepaid Credits'];
-		}
-	}
+		},
+	},
 };
 </script>

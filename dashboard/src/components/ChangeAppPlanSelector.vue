@@ -45,13 +45,13 @@ import AppPlanCard from '@/components/AppPlanCard.vue';
 export default {
 	name: 'ChangeAppPlanSelector',
 	components: {
-		AppPlanCard
+		AppPlanCard,
 	},
 	props: ['app', 'group', 'frappeVersion', 'currentPlan', 'editable'],
 	emits: ['change'],
 	data() {
 		return {
-			selectedPlan: null
+			selectedPlan: null,
 		};
 	},
 	resources: {
@@ -62,7 +62,7 @@ export default {
 					app: this.app,
 					include_disabled: false,
 					release_group: this.group,
-					frappe_version: this.frappeVersion
+					frappe_version: this.frappeVersion,
 				},
 				onSuccess(plans) {
 					if (this.currentPlan) {
@@ -74,24 +74,24 @@ export default {
 						}
 					}
 				},
-				auto: true
+				auto: true,
 			};
 		},
 		getMarketplaceAppInfo() {
 			return {
 				url: 'press.api.marketplace.get_app_info',
 				params: {
-					app: this.app
+					app: this.app,
 				},
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	methods: {
 		handleCardClick(plan) {
 			this.selectedPlan = plan;
 			this.$emit('change', plan);
-		}
+		},
 	},
 	computed: {
 		plans() {
@@ -109,7 +109,7 @@ export default {
 			) {
 				return this.$resources.getMarketplaceAppInfo.data;
 			}
-		}
-	}
+		},
+	},
 };
 </script>

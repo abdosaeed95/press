@@ -10,7 +10,7 @@ export default class FileUploader {
 
 	trigger(event, data) {
 		let handlers = this.listeners[event] || [];
-		handlers.forEach(handler => {
+		handlers.forEach((handler) => {
 			handler.call(this, data);
 		});
 	}
@@ -21,11 +21,11 @@ export default class FileUploader {
 			xhr.upload.addEventListener('loadstart', () => {
 				this.trigger('start');
 			});
-			xhr.upload.addEventListener('progress', e => {
+			xhr.upload.addEventListener('progress', (e) => {
 				if (e.lengthComputable) {
 					this.trigger('progress', {
 						uploaded: e.loaded,
-						total: e.total
+						total: e.total,
 					});
 				}
 			});

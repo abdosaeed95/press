@@ -13,12 +13,12 @@ export default {
 	emits: ['done'],
 	props: {
 		name: String,
-		title: String
+		title: String,
 	},
 	methods: {
 		show() {
 			addressableErrorDialog(this.name, () => this.$emit('done'));
-		}
-	}
+		},
+	},
 };
 </script>

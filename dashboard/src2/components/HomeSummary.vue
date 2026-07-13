@@ -41,17 +41,17 @@ export default {
 					return {
 						dt: 'Team',
 						dn: this.$team.doc.name,
-						method: 'get_home_data'
+						method: 'get_home_data',
 					};
 				},
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	computed: {
 		sites() {
 			return this.$resources.home.data?.message.sites || [];
-		}
-	}
+		},
+	},
 };
 </script>

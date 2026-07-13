@@ -2,15 +2,14 @@
 	<Dialog
 		:options="{
 			title: 'Normalized Query',
-			size: '2xl'
+			size: '2xl',
 		}"
 		v-model="show"
 	>
 		<template #body-content>
 			<pre
 				class="mt-2 whitespace-pre-wrap rounded-lg border-2 border-gray-200 bg-gray-100 p-3 text-sm text-gray-700"
-				>{{ query }}</pre
-			>
+				>{{ query }}</pre>
 			<div class="mt-2 flex text-sm">
 				<span class="ml-auto">Duration: {{ duration.toFixed(2) }} seconds</span>
 			</div>
@@ -20,6 +19,6 @@
 
 <script>
 export default {
-	props: ['query', 'duration']
+	props: ['query', 'duration'],
 };
 </script>

@@ -13,13 +13,13 @@ export default {
 	name: 'BillingOverview',
 	pageMeta() {
 		return {
-			title: 'Billing - Frappe Cloud'
+			title: 'Billing - Frappe Cloud',
 		};
 	},
 	props: ['invoiceName'],
 	components: {
 		BillingSummary,
-		AlertBillingInformation
-	}
+		AlertBillingInformation,
+	},
 };
 </script>

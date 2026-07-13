@@ -11,6 +11,6 @@
 <script>
 export default {
 	name: 'AnalyticsCard',
-	props: ['title']
+	props: ['title'],
 };
 </script>

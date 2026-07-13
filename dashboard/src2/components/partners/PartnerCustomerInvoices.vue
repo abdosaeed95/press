@@ -12,12 +12,12 @@ export default {
 	name: 'PartnerCustomerInvoices',
 	props: ['customerTeam', 'customerCurrency'],
 	components: {
-		ObjectList
+		ObjectList,
 	},
 	data() {
 		return {
 			team: this.customerTeam,
-			currency: this.customerCurrency
+			currency: this.customerCurrency,
 		};
 	},
 	computed: {
@@ -35,27 +35,27 @@ export default {
 							return Intl.DateTimeFormat('en-US', {
 								year: 'numeric',
 								month: 'short',
-								day: 'numeric'
+								day: 'numeric',
 							}).format(new Date(value));
-						}
+						},
 					},
 					{ label: 'Total', fieldname: 'total', format: this.formatCurrency },
 					{
 						label: 'Amount Due',
 						fieldname: 'amount_due',
-						format: this.formatCurrency
-					}
+						format: this.formatCurrency,
+					},
 				],
 				filters: {
 					team: this.team,
 					due_date: [
 						'>=',
-						dayjs().subtract(5, 'month').endOf('month').format('YYYY-MM-DD')
+						dayjs().subtract(5, 'month').endOf('month').format('YYYY-MM-DD'),
 					],
-					partner_customer: true
-				}
+					partner_customer: true,
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		formatCurrency(value) {
@@ -63,7 +63,7 @@ export default {
 				return '';
 			}
 			return currency(value, this.currency);
-		}
-	}
+		},
+	},
 };
 </script>

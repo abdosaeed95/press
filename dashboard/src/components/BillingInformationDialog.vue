@@ -19,7 +19,7 @@ export default {
 	props: ['modelValue'],
 	emits: ['update:modelValue', 'success'],
 	components: {
-		StripeCard
+		StripeCard,
 	},
 	computed: {
 		showDialog: {
@@ -28,8 +28,8 @@ export default {
 			},
 			set(value) {
 				this.$emit('update:modelValue', value);
-			}
-		}
-	}
+			},
+		},
+	},
 };
 </script>

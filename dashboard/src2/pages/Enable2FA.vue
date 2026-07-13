@@ -17,7 +17,7 @@ import AlertBanner from '../components/AlertBanner.vue';
 export default {
 	components: {
 		Configure2FA,
-		AlertBanner
+		AlertBanner,
 	},
 	methods: {
 		handleEnabled() {
@@ -28,7 +28,7 @@ export default {
 			setTimeout(() => {
 				this.$router.push({ name: 'Site List' });
 			}, 100);
-		}
-	}
+		},
+	},
 };
 </script>

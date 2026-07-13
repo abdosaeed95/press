@@ -2,7 +2,7 @@
 	<Dialog
 		:options="{
 			title: `Processes - ${bench}`,
-			size: '4xl'
+			size: '4xl',
 		}"
 		v-model="show"
 	>
@@ -18,7 +18,7 @@ import { getProcessesColumns } from '../../objects/bench';
 import ObjectList from '../ObjectList.vue';
 
 const props = defineProps({
-	bench: String
+	bench: String,
 });
 const show = ref(true);
 
@@ -27,11 +27,11 @@ const listOptions = ref({
 		return {
 			url: 'press.api.bench.get_processes',
 			params: { name: props.bench },
-			auto: true
+			auto: true,
 		};
 	},
 	emptyStateMessage: 'No processes found.',
 	columns: getProcessesColumns(),
-	selectable: false
+	selectable: false,
 });
 </script>

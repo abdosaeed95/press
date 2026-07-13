@@ -25,8 +25,8 @@ export default {
 	data() {
 		return {
 			dialogOpen: false,
-			team: null
+			team: null,
 		};
-	}
+	},
 };
 </script>
