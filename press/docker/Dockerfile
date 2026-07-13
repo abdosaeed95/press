@@ -250,17 +250,26 @@ RUN git config --global --add safe.directory /home/frappe/context/apps/{{ app.ap
       {% endif %} \
       `#stage-apps-{{ app.app }}`
 
-  # Copy .git after get-app to retain history
+  {% if doc.is_code_server_enabled %}
+  # Code-server images retain Git metadata for interactive development.
   COPY --chown=frappe:frappe apps/{{ app.app }}/.git /home/frappe/frappe-bench/apps/{{ app.app }}/.git
+  {% endif %}
+
+  # Use the submodule source prepared by App Release without embedding Git credentials.
+  COPY --chown=frappe:frappe apps/{{ app.app }}/dashboard /home/frappe/frappe-bench/apps/{{ app.app }}/dashboard
 
   # Submodule update and build with caching
   RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 \
-      --mount=type=cache,target=/home/frappe/frappe-bench/apps/{{ app.app }}/node_modules,uid=1000,gid=1000 \
-      git -C /home/frappe/frappe-bench/apps/{{ app.app }} submodule update --init --recursive \
-      && cd /home/frappe/frappe-bench/apps/{{ app.app }}/dashboard \
-      && yarn install \
+      {% if not doc.is_code_server_enabled %}
+      --mount=type=cache,sharing=locked,target=/home/frappe/frappe-bench/apps/{{ app.app }}/dashboard/node_modules,uid=1000,gid=1000 \
+      {% endif %}
+      cd /home/frappe/frappe-bench/apps/{{ app.app }}/dashboard \
+      && yarn install --frozen-lockfile --non-interactive \
       && NODE_ENV=production yarn run build \
       && bench build --app {{ app.app }} \
+      {% if not doc.is_code_server_enabled %}
+      && rm -rf .next out .playwright playwright-report test-results output/playwright \
+      {% endif %}
       `#stage-apps-Build-{{ app.app }}`
   {% else %}
 
@@ -270,6 +279,15 @@ RUN git config --global --add safe.directory /home/frappe/context/apps/{{ app.ap
       {% if app.use_cached %}
       --cache-key {{ app.hash }} {% if doc.compress_app_cache %}--compress-artifacts{% endif %} \
       {% endif %} \
+      {% if not doc.is_code_server_enabled %}
+      && find /home/frappe/frappe-bench/apps/{{ app.app }} -type d -name node_modules -prune -exec rm -rf '{}' + \
+      && rm -rf /home/frappe/frappe-bench/apps/{{ app.app }}/dashboard/.next \
+        /home/frappe/frappe-bench/apps/{{ app.app }}/dashboard/out \
+        /home/frappe/frappe-bench/apps/{{ app.app }}/dashboard/.playwright \
+        /home/frappe/frappe-bench/apps/{{ app.app }}/dashboard/playwright-report \
+        /home/frappe/frappe-bench/apps/{{ app.app }}/dashboard/test-results \
+        /home/frappe/frappe-bench/apps/{{ app.app }}/dashboard/output/playwright \
+      {% endif %}
       `#stage-apps-{{ app.app }}`
   {% endif %}
 

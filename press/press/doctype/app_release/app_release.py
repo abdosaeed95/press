@@ -141,9 +141,9 @@ class AppRelease(Document):
 		self.invalid_release = True
 		self.invalidation_reason = reason
 
-	def run(self, command):
+	def run(self, command, environment=None):
 		try:
-			return run(command, self.clone_directory)
+			return run(command, self.clone_directory, environment)
 		except Exception as e:
 			self.cleanup()
 			log_error(
@@ -219,25 +219,24 @@ class AppRelease(Document):
 
 			if app.custom_contains_submodules == 1:
 				token = get_access_token(source.github_installation_id)
-				authenticated_url = url.replace("https://", f"https://x-access-token:{token}@")
-
-				# Update submodule URLs with the token
 				submodule_urls = (
 					self.run("git config --file .gitmodules --get-regexp url").strip().split("\n")
 				)
-				for line in submodule_urls:
-					submodule_path, submodule_url = line.split()
-					submodule_url_with_token = submodule_url.replace(
-						"https://", f"https://x-access-token:{token}@"
-					)
-					self.run(
-						f"git config --file .gitmodules {submodule_path} {submodule_url_with_token}"
-					)
-
 				self.output += self.run("git submodule sync")
 
-				# Initialize and update submodules to the commit recorded in the parent branch
-				self.output += self.run("git submodule update --init --recursive --jobs 4")
+				environment = os.environ.copy()
+				environment["GIT_CONFIG_COUNT"] = str(len(submodule_urls))
+				for index, line in enumerate(submodule_urls):
+					_, submodule_url = line.split()
+					authenticated_url = submodule_url.replace("https://", f"https://x-access-token:{token}@")
+					environment[f"GIT_CONFIG_KEY_{index}"] = f"url.{authenticated_url}.insteadOf"
+					environment[f"GIT_CONFIG_VALUE_{index}"] = submodule_url
+
+				# Authenticate only for this process so credentials never enter .gitmodules.
+				self.output += self.run(
+					"git submodule update --init --recursive --jobs 4 --depth 1 --recommend-shallow",
+					environment,
+				)
 
 				self.run("git config --unset credential.helper")
 		except:
@@ -505,8 +504,10 @@ def is_update_after_deployed(update_release: AppReleaseDict, deployed_release: A
 	return update_release["creation"] > deployed_release["creation"]
 
 
-def run(command, cwd):
-	return subprocess.check_output(shlex.split(command), stderr=subprocess.STDOUT, cwd=cwd).decode()
+def run(command, cwd, environment=None):
+	return subprocess.check_output(
+		shlex.split(command), stderr=subprocess.STDOUT, cwd=cwd, env=environment
+	).decode()
 
 
 def check_python_syntax(dirpath: str) -> str:

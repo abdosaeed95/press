@@ -164,3 +164,7 @@ press/public/css/marketplace-next.css
 # IDE
 .idea
 .vscode
+.superpowers/
+.agents/skills/superpowers/
+.codex/superpowers/
+superpowers/
