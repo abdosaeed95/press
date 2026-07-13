@@ -7,9 +7,9 @@
 					v-if="sources.length > 1"
 					v-model="selectedSource"
 					:options="
-						sources.map(s => ({
+						sources.map((s) => ({
 							label: `${s.source_information.repository}:${s.source_information.branch}`,
-							value: s.source
+							value: s.source,
 						}))
 					"
 				/>
@@ -117,14 +117,14 @@ import { notify } from '@/utils/toast';
 export default {
 	props: {
 		app: {
-			type: Object
-		}
+			type: Object,
+		},
 	},
 	data() {
 		return {
 			showRejectionFeedbackDialog: false,
 			rejectionFeedback: '',
-			selectedSource: null
+			selectedSource: null,
 		};
 	},
 	mounted() {
@@ -146,28 +146,28 @@ export default {
 				url: 'press.api.marketplace.releases',
 				filters: {
 					app: this.app.app,
-					source: this.selectedSource
+					source: this.selectedSource,
 				},
 				start: 0,
 				pageLength: 15,
-				auto: true
+				auto: true,
 			};
 		},
 		appSource() {
 			return {
 				url: 'press.api.marketplace.get_app_source',
 				params: {
-					name: this.selectedSource
-				}
+					name: this.selectedSource,
+				},
 			};
 		},
 		latestApproved() {
 			return {
 				url: 'press.api.marketplace.latest_approved_release',
 				params: {
-					source: this.selectedSource
+					source: this.selectedSource,
 				},
-				auto: true
+				auto: true,
 			};
 		},
 		createApprovalRequest() {
@@ -177,8 +177,8 @@ export default {
 					this.resetReleaseListState();
 				},
 				onError(err) {
-					const requestAlreadyExists = err.messages.some(msg =>
-						msg.includes('already awaiting approval')
+					const requestAlreadyExists = err.messages.some((msg) =>
+						msg.includes('already awaiting approval'),
 					);
 
 					if (requestAlreadyExists)
@@ -186,16 +186,16 @@ export default {
 							title: 'Request already exists',
 							message: err.messages.join('\n'),
 							color: 'red',
-							icon: 'x'
+							icon: 'x',
 						});
 					else
 						notify({
 							title: 'Error',
 							message: err.messages.join('\n'),
 							color: 'red',
-							icon: 'x'
+							icon: 'x',
 						});
-				}
+				},
 			};
 		},
 		cancelApprovalRequest() {
@@ -203,9 +203,9 @@ export default {
 				url: 'press.api.marketplace.cancel_approval_request',
 				onSuccess() {
 					this.resetReleaseListState();
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		isPublishable(release) {
@@ -219,14 +219,14 @@ export default {
 			let { app } = this.app;
 			this.$resources.createApprovalRequest.submit({
 				name: app,
-				app_release: appRelease
+				app_release: appRelease,
 			});
 		},
 		cancelApprovalRequest(appRelease) {
 			let { app } = this.app;
 			this.$resources.cancelApprovalRequest.submit({
 				marketplace_app: app,
-				app_release: appRelease
+				app_release: appRelease,
 			});
 		},
 		resetReleaseListState() {
@@ -243,10 +243,10 @@ export default {
 				message:
 					'Are you sure you want to publish this release to marketplace? Upon confirmation, the release will be sent for approval by the review team.',
 				actionLabel: 'Publish',
-				action: closeDialog => {
+				action: (closeDialog) => {
 					closeDialog();
 					this.createApprovalRequest(appRelease);
-				}
+				},
 			});
 		},
 		confirmCancelRequest(appRelease) {
@@ -256,10 +256,10 @@ export default {
 					'Are you sure you want to <strong>cancel</strong> the publish request for this release?',
 				actionLabel: 'Proceed',
 				actionColor: 'red',
-				action: closeDialog => {
+				action: (closeDialog) => {
 					closeDialog();
 					this.cancelApprovalRequest(appRelease);
-				}
+				},
 			});
 		},
 		getCommitUrl(releaseHash) {
@@ -269,7 +269,7 @@ export default {
 			if (this.selectedSource && data.source == this.selectedSource) {
 				this.resetReleaseListState();
 			}
-		}
+		},
 	},
 	computed: {
 		releasesList() {
@@ -290,7 +290,7 @@ export default {
 			// Return only the unique sources
 			let tempArray = [];
 			for (let source of this.app.sources) {
-				if (!tempArray.find(x => x.source === source.source)) {
+				if (!tempArray.find((x) => x.source === source.source)) {
 					tempArray.push(source);
 				}
 			}
@@ -298,7 +298,7 @@ export default {
 		},
 		repoUrl() {
 			return this.$resources.appSource?.data?.repository_url;
-		}
+		},
 	},
 	watch: {
 		selectedSource(value) {
@@ -306,8 +306,8 @@ export default {
 				this.resetReleaseListState();
 				this.$resources.appSource.submit({ name: value });
 			}
-		}
+		},
 	},
-	components: { CommitTag }
+	components: { CommitTag },
 };
 </script>

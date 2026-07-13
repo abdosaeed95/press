@@ -36,9 +36,9 @@
 								loading: createSecret.loading,
 								onClick() {
 									createSecret.submit();
-								}
-							}
-						]
+								},
+							},
+						],
 					}"
 				>
 					<template #body-content>
@@ -145,7 +145,7 @@ const createSecret = createResource({
 		} else {
 			toast.success('API Secret created successfully');
 		}
-	}
+	},
 });
 
 const addSSHKey = createResource({
@@ -157,9 +157,9 @@ const addSSHKey = createResource({
 		toast.error(
 			err.messages.length
 				? err.messages.join('\n')
-				: 'SSH Key could not be added'
+				: 'SSH Key could not be added',
 		);
-	}
+	},
 });
 
 const makeKeyDefault = createResource({
@@ -171,9 +171,9 @@ const makeKeyDefault = createResource({
 		toast.error(
 			err.messages.length
 				? err.messages.join('\n')
-				: 'SSH Key could not be marked as default'
+				: 'SSH Key could not be marked as default',
 		);
-	}
+	},
 });
 
 const deleteSSHKey = createResource({
@@ -185,9 +185,9 @@ const deleteSSHKey = createResource({
 		toast.error(
 			err.messages.length
 				? err.messages.join('\n')
-				: 'SSH Key could not be deleted'
+				: 'SSH Key could not be deleted',
 		);
-	}
+	},
 });
 
 const sshKeyListOptions = computed(() => ({
@@ -195,7 +195,7 @@ const sshKeyListOptions = computed(() => ({
 		return {
 			url: 'press.api.account.get_user_ssh_keys',
 			initialData: [],
-			auto: true
+			auto: true,
 		};
 	},
 	columns: [
@@ -203,29 +203,29 @@ const sshKeyListOptions = computed(() => ({
 			label: 'SSH Fingerprint',
 			fieldname: 'ssh_fingerprint',
 			class: 'font-mono',
-			format: value => `SHA256:${value}`,
+			format: (value) => `SHA256:${value}`,
 			suffix(row) {
 				return row.is_default
 					? h(Badge, {
 							label: 'Default',
 							theme: 'green',
-							class: 'ml-2'
-					  })
+							class: 'ml-2',
+						})
 					: null;
-			}
+			},
 		},
 		{
 			label: 'Added On',
 			fieldname: 'creation',
 			width: 0.1,
-			format: value => date(value, 'll')
-		}
+			format: (value) => date(value, 'll'),
+		},
 	],
 	primaryAction({ listResource }) {
 		return {
 			label: 'Add SSH Key',
 			slots: { prefix: icon('plus') },
-			onClick: () => renderAddNewKeyDialog(listResource)
+			onClick: () => renderAddNewKeyDialog(listResource),
 		};
 	},
 	rowActions({ row }) {
@@ -235,21 +235,21 @@ const sshKeyListOptions = computed(() => ({
 				condition: () => !row.is_default,
 				onClick() {
 					makeKeyDefault.submit({
-						key_name: row.name
+						key_name: row.name,
 					});
-				}
+				},
 			},
 			{
 				label: 'Delete',
 				onClick() {
 					deleteSSHKey.submit({
 						doctype: 'User SSH Key',
-						name: row.name
+						name: row.name,
 					});
-				}
-			}
+				},
+			},
 		];
-	}
+	},
 }));
 
 function renderAddNewKeyDialog(listResource) {
@@ -263,8 +263,8 @@ function renderAddNewKeyDialog(listResource) {
 				type: 'textarea',
 				placeholder:
 					"Begins with 'ssh-rsa', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-ed25519', 'sk-ecdsa-sha2-nistp256@openssh.com', or 'sk-ssh-ed25519@openssh.com'",
-				required: true
-			}
+				required: true,
+			},
 		],
 		primaryAction: {
 			label: 'Add SSH Key',
@@ -276,18 +276,18 @@ function renderAddNewKeyDialog(listResource) {
 						doc: {
 							doctype: 'User SSH Key',
 							ssh_public_key: values.sshKey,
-							user: $team.doc.user_info.name
-						}
+							user: $team.doc.user_info.name,
+						},
 					})
 					.then(() => {
 						listResource.reload();
 						hide();
 					})
-					.catch(error => {
+					.catch((error) => {
 						toast.error(error.message);
 					});
-			}
-		}
+			},
+		},
 	});
 }
 
@@ -295,10 +295,10 @@ const webhookListResource = createResource({
 	url: 'press.api.client.get_list',
 	params: {
 		doctype: 'Press Webhook',
-		fields: ['name', 'enabled', 'endpoint']
+		fields: ['name', 'enabled', 'endpoint'],
 	},
 	initialData: [],
-	auto: false
+	auto: false,
 });
 
 const deleteWebhook = createResource({
@@ -311,9 +311,9 @@ const deleteWebhook = createResource({
 		toast.error(
 			err.messages.length
 				? err.messages.join('\n')
-				: 'Webhook could not be deleted'
+				: 'Webhook could not be deleted',
 		);
-	}
+	},
 });
 
 const webhookListOptions = computed(() => ({
@@ -323,7 +323,7 @@ const webhookListOptions = computed(() => ({
 			label: 'Endpoint',
 			fieldname: 'endpoint',
 			width: 1,
-			format: value => value.substring(0, 50)
+			format: (value) => value.substring(0, 50),
 		},
 		{
 			label: 'Status',
@@ -335,14 +335,14 @@ const webhookListOptions = computed(() => ({
 				return row.enabled
 					? h(Badge, {
 							label: 'Enabled',
-							theme: 'green'
-					  })
+							theme: 'green',
+						})
 					: h(Badge, {
 							label: 'Disabled',
-							theme: 'red'
-					  });
-			}
-		}
+							theme: 'red',
+						});
+			},
+		},
 	],
 	rowActions({ row }) {
 		return [
@@ -352,7 +352,7 @@ const webhookListOptions = computed(() => ({
 				onClick() {
 					selectedWebhook.value = row;
 					showActivateWebhookDialog.value = true;
-				}
+				},
 			},
 			{
 				label: 'Disable',
@@ -370,28 +370,28 @@ const webhookListOptions = computed(() => ({
 									.submit({
 										dt: 'Press Webhook',
 										dn: row.name,
-										method: 'disable'
+										method: 'disable',
 									})
 									.then(hide);
 								return disableWebhook.promise;
-							}
-						}
+							},
+						},
 					});
-				}
+				},
 			},
 			{
 				label: 'Attempts',
 				onClick: () => {
 					selectedWebhook.value = row;
 					showWebhookAttempts.value = true;
-				}
+				},
 			},
 			{
 				label: 'Edit',
 				onClick() {
 					selectedWebhook.value = row;
 					showEditWebhookDialog.value = true;
-				}
+				},
 			},
 			{
 				label: 'Delete',
@@ -407,31 +407,31 @@ const webhookListOptions = computed(() => ({
 								deleteWebhook
 									.submit({
 										doctype: 'Press Webhook',
-										name: row.name
+										name: row.name,
 									})
 									.then(hide);
 								return deleteWebhook.promise;
-							}
-						}
+							},
+						},
 					});
-				}
-			}
+				},
+			},
 		];
 	},
 	primaryAction() {
 		return {
 			label: 'Add Webhook',
 			slots: { prefix: icon('plus') },
-			onClick: () => (showAddWebhookDialog.value = true)
+			onClick: () => (showAddWebhookDialog.value = true),
 		};
 	},
 	secondaryAction() {
 		return {
 			label: 'Refresh',
 			icon: 'refresh-ccw',
-			onClick: () => webhookListResource.reload()
+			onClick: () => webhookListResource.reload(),
 		};
-	}
+	},
 }));
 
 const disableWebhook = createResource({
@@ -444,9 +444,9 @@ const disableWebhook = createResource({
 		toast.error(
 			err.messages.length
 				? err.messages.join('\n')
-				: 'Webhook could not be disabled'
+				: 'Webhook could not be disabled',
 		);
-	}
+	},
 });
 
 const onNewWebhookSuccess = () => {
@@ -459,7 +459,7 @@ const onWebHookActivated = () => {
 	showActivateWebhookDialog.value = false;
 };
 
-const onWebHookUpdated = activationRequired => {
+const onWebHookUpdated = (activationRequired) => {
 	webhookListResource.reload();
 	showEditWebhookDialog.value = false;
 	if (activationRequired) {

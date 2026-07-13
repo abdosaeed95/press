@@ -8,8 +8,8 @@ describe('FeatureList Component', () => {
 
 		const wrapper = mount(FeatureList, {
 			props: {
-				features: ['Feature 1', 'Feature 2']
-			}
+				features: ['Feature 1', 'Feature 2'],
+			},
 		});
 
 		expect(wrapper.findAll('li').length).toBe(2);

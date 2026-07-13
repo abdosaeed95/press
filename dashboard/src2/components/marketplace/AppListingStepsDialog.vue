@@ -3,7 +3,7 @@
 		v-model="show"
 		:options="{
 			title: 'Steps to complete before the app can be published',
-			size: '2xl'
+			size: '2xl',
 		}"
 	>
 		<template #body-content>
@@ -21,7 +21,7 @@
 				variant="solid"
 				label="Mark app ready for review"
 				:loading="appDoc.markAppReadyForReview.loading"
-				:disabled="$resources.reviewSteps.data.some(step => !step.completed)"
+				:disabled="$resources.reviewSteps.data.some((step) => !step.completed)"
 				@click="appDoc.markAppReadyForReview.submit"
 			/>
 		</template>
@@ -35,11 +35,11 @@ import ObjectList from '../ObjectList.vue';
 export default {
 	props: ['app'],
 	components: {
-		ObjectList
+		ObjectList,
 	},
 	data() {
 		return {
-			show: true
+			show: true,
 		};
 	},
 	resources: {
@@ -47,13 +47,13 @@ export default {
 			return {
 				url: 'press.api.marketplace.review_steps',
 				params: {
-					name: this.app
+					name: this.app,
 				},
 				cache: ['Marketplace App Review Steps', this.app],
 				auto: true,
-				initialData: []
+				initialData: [],
 			};
-		}
+		},
 	},
 	computed: {
 		appDoc() {
@@ -66,7 +66,7 @@ export default {
 				columns: [
 					{
 						label: 'Step',
-						fieldname: 'step'
+						fieldname: 'step',
 					},
 					{
 						label: 'Completed',
@@ -76,7 +76,7 @@ export default {
 						align: 'center',
 						Icon(value) {
 							return value ? 'check' : '';
-						}
+						},
 					},
 					{
 						label: '',
@@ -90,13 +90,13 @@ export default {
 							return {
 								label: 'View',
 								variant: 'ghost',
-								route
+								route,
 							};
-						}
-					}
-				]
+						},
+					},
+				],
 			};
-		}
-	}
+		},
+	},
 };
 </script>

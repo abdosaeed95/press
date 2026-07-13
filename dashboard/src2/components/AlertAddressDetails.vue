@@ -27,8 +27,8 @@ export default {
 	components: { AlertBanner, UpdateBillingDetails },
 	data() {
 		return {
-			showBillingDetailsDialog: false
+			showBillingDetailsDialog: false,
 		};
-	}
+	},
 };
 </script>

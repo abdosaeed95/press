@@ -7,9 +7,9 @@
 					label: 'Change',
 					variant: 'solid',
 					loading: $resources.changePaymentMode.loading,
-					onClick: () => $resources.changePaymentMode.submit()
-				}
-			]
+					onClick: () => $resources.changePaymentMode.submit(),
+				},
+			],
 		}"
 		:modelValue="modelValue"
 		@update:modelValue="$emit('update:modelValue', $event)"
@@ -54,18 +54,18 @@ export default {
 	props: ['modelValue'],
 	emits: ['update:modelValue'],
 	components: {
-		BillingInformationDialog: defineAsyncComponent(() =>
-			import('./BillingInformationDialog.vue')
+		BillingInformationDialog: defineAsyncComponent(
+			() => import('./BillingInformationDialog.vue'),
 		),
-		PrepaidCreditsDialog: defineAsyncComponent(() =>
-			import('@/components/PrepaidCreditsDialog.vue')
-		)
+		PrepaidCreditsDialog: defineAsyncComponent(
+			() => import('@/components/PrepaidCreditsDialog.vue'),
+		),
 	},
 	data() {
 		return {
 			showBillingInformationDialog: false,
 			showPrepaidCreditsDialog: false,
-			paymentMode: this.$account.team.payment_mode
+			paymentMode: this.$account.team.payment_mode,
 		};
 	},
 	watch: {
@@ -73,14 +73,14 @@ export default {
 			if (!value) {
 				this.paymentMode = this.$account.team.payment_mode;
 			}
-		}
+		},
 	},
 	resources: {
 		changePaymentMode() {
 			return {
 				url: 'press.api.billing.change_payment_mode',
 				params: {
-					mode: this.paymentMode
+					mode: this.paymentMode,
 				},
 				onSuccess() {
 					this.$emit('update:modelValue', false);
@@ -109,16 +109,16 @@ export default {
 					) {
 						return 'Please add a partner first from Partner section';
 					}
-				}
+				},
 			};
-		}
+		},
 	},
 	computed: {
 		paymentModeDescription() {
 			return {
 				Card: `Your card will be charged for monthly subscription`,
 				'Prepaid Credits': `You will be charged from your account balance for monthly subscription`,
-				'Paid By Partner': `Your partner will be charged for monthly subscription`
+				'Paid By Partner': `Your partner will be charged for monthly subscription`,
 			}[this.paymentMode];
 		},
 		paymentModeOptions() {
@@ -129,7 +129,7 @@ export default {
 				return ['Card', 'Prepaid Credits'];
 			}
 			return ['Card', 'Prepaid Credits', 'Paid By Partner'];
-		}
-	}
+		},
+	},
 };
 </script>

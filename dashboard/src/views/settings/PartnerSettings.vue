@@ -17,14 +17,14 @@ export default {
 	name: 'PartnerSettings',
 	pageMeta() {
 		return {
-			title: 'Settings - Partner'
+			title: 'Settings - Partner',
 		};
 	},
 	components: {
 		AccountPartner,
 		PartnerCustomers,
 		PartnerReferral,
-		PartnerRequestStatus
-	}
+		PartnerRequestStatus,
+	},
 };
 </script>

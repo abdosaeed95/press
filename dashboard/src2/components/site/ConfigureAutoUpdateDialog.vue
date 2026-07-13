@@ -19,13 +19,13 @@ export default {
 	props: {
 		site: {
 			type: String,
-			required: true
-		}
+			required: true,
+		},
 	},
 	components: { Switch },
 	data() {
 		return {
-			show: true
+			show: true,
 		};
 	},
 	computed: {
@@ -38,8 +38,8 @@ export default {
 			},
 			set(value) {
 				this.$site.setValue.submit({ skip_auto_updates: !value });
-			}
-		}
-	}
+			},
+		},
+	},
 };
 </script>

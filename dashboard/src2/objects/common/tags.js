@@ -11,28 +11,28 @@ export function tagTab() {
 		type: 'list',
 		list: {
 			doctype: 'Resource Tag',
-			filters: documentResource => {
+			filters: (documentResource) => {
 				return {
 					parent: documentResource.name,
-					parenttype: documentResource.doctype
+					parenttype: documentResource.doctype,
 				};
 			},
 			orderBy: 'creation desc',
 			columns: [
 				{
 					label: 'Tag',
-					fieldname: 'tag_name'
-				}
+					fieldname: 'tag_name',
+				},
 			],
 			primaryAction({ listResource: tags, documentResource }) {
 				return {
 					label: 'Add Tag',
 					slots: {
-						prefix: icon('plus')
+						prefix: icon('plus'),
 					},
 					onClick() {
-						let AddTagDialog = defineAsyncComponent(() =>
-							import('../../components/AddTagDialog.vue')
+						let AddTagDialog = defineAsyncComponent(
+							() => import('../../components/AddTagDialog.vue'),
 						);
 						renderDialog(
 							h(AddTagDialog, {
@@ -40,10 +40,10 @@ export function tagTab() {
 								docname: documentResource.name,
 								onAdded() {
 									tags.reload();
-								}
-							})
+								},
+							}),
 						);
-					}
+					},
 				};
 			},
 			rowActions({ row, listResource: tags, documentResource }) {
@@ -58,26 +58,27 @@ export function tagTab() {
 								onSuccess({ hide }) {
 									documentResource.removeTag.submit(
 										{
-											tag: row.tag_name
+											tag: row.tag_name,
 										},
 										{
 											onSuccess() {
 												tags.reload();
 												hide();
-											}
-										}
+											},
+										},
 									);
 									toast.promise(documentResource.removeTag.promise, {
 										loading: 'Removing tag...',
 										success: () => `Tag ${row.tag_name} removed`,
-										error: e => getToastErrorMessage(e, 'Failed to remove tag')
+										error: (e) =>
+											getToastErrorMessage(e, 'Failed to remove tag'),
 									});
-								}
+								},
 							});
-						}
-					}
+						},
+					},
 				];
-			}
-		}
+			},
+		},
 	};
 }

@@ -21,8 +21,8 @@ export default {
 	components: { Dialog, GenericDialogField },
 	data() {
 		return {
-			show: true
+			show: true,
 		};
-	}
+	},
 };
 </script>

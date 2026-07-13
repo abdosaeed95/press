@@ -41,20 +41,20 @@ export default {
 	props: {
 		filters: {
 			type: Array,
-			default: () => []
+			default: () => [],
 		},
 		columns: {
 			type: Array,
-			required: true
+			required: true,
 		},
 		data: {
 			type: Array,
-			default: () => []
+			default: () => [],
 		},
 		title: {
 			type: String,
-			required: true
-		}
-	}
+			required: true,
+		},
+	},
 };
 </script>

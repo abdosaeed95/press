@@ -15,13 +15,13 @@ export default {
 	name: 'AccountSettings',
 	pageMeta() {
 		return {
-			title: 'Settings - Profile'
+			title: 'Settings - Profile',
 		};
 	},
 	components: {
 		AccountProfile,
 		AccountReferral,
-		AccountEmails
-	}
+		AccountEmails,
+	},
 };
 </script>

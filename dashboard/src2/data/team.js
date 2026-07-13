@@ -11,8 +11,8 @@ export function getTeam() {
 			whitelistedMethods: {
 				getTeamMembers: 'get_team_members',
 				inviteTeamMember: 'invite_team_member',
-				removeTeamMember: 'remove_team_member'
-			}
+				removeTeamMember: 'remove_team_member',
+			},
 		});
 	}
 	return team;
@@ -29,7 +29,7 @@ function getCurrentTeam() {
 	if (
 		!currentTeam ||
 		(currentTeam !== window.default_team &&
-			!window.valid_teams.map(t => t.name).includes(currentTeam) &&
+			!window.valid_teams.map((t) => t.name).includes(currentTeam) &&
 			!window.is_system_user)
 	) {
 		currentTeam = window.default_team;
@@ -43,7 +43,7 @@ export async function switchToTeam(team) {
 	try {
 		canSwitch = await frappeRequest({
 			url: '/api/method/press.api.account.can_switch_to_team',
-			params: { team }
+			params: { team },
 		});
 	} catch (error) {
 		console.log(error);
@@ -63,7 +63,7 @@ export async function isLastSite(team) {
 	let count = 0;
 	count = await frappeRequest({
 		url: '/api/method/press.api.account.get_site_count',
-		params: { team }
+		params: { team },
 	});
 	return Boolean(count === 1);
 }

@@ -55,7 +55,7 @@ export default {
 			if (this.percentage >= 80) {
 				return 'text-red-500';
 			}
-		}
-	}
+		},
+	},
 };
 </script>

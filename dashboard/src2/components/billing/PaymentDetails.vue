@@ -340,7 +340,10 @@ function updatePaymentMode(mode) {
 	} else if (mode === 'Card' && !team.doc.payment_method) {
 		showMessage.value = true;
 		showAddCardDialog.value = true;
-	} else if (mode === 'Paid By Partner' && Boolean(unpaidInvoices.data.length > 0)) {
+	} else if (
+		mode === 'Paid By Partner' &&
+		Boolean(unpaidInvoices.data.length > 0)
+	) {
 		if (unpaidInvoices.data) {
 			payUnpaidInvoices();
 			return;

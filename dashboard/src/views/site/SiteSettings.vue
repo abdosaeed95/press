@@ -17,7 +17,7 @@ export default {
 	name: 'SiteSetting',
 	props: ['site'],
 	components: {
-		Tags
-	}
+		Tags,
+	},
 };
 </script>

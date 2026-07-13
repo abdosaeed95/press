@@ -24,9 +24,9 @@
 					{
 						label: 'Save Changes',
 						variant: 'solid',
-						onClick: () => $resources.changeEmail.submit()
-					}
-				]
+						onClick: () => $resources.changeEmail.submit(),
+					},
+				],
 			}"
 			v-model="showEmailsEditDialog"
 		>
@@ -50,7 +50,7 @@ export default {
 	data() {
 		return {
 			showEmailsEditDialog: false,
-			emailData: []
+			emailData: [],
 		};
 	},
 	resources: {
@@ -59,33 +59,33 @@ export default {
 				url: 'press.api.account.get_emails',
 				auto: true,
 				transform(data) {
-					this.emailData = data.map(d => ({
+					this.emailData = data.map((d) => ({
 						type: d.type,
-						value: d.value
+						value: d.value,
 					}));
-				}
+				},
 			};
 		},
 		changeEmail() {
 			return {
 				url: 'press.api.account.update_emails',
 				params: {
-					data: JSON.stringify(this.emailData)
+					data: JSON.stringify(this.emailData),
 				},
 				onSuccess(res) {
 					this.showEmailsEditDialog = false;
 					toast.success('Emails updated successfully');
-				}
+				},
 			};
-		}
+		},
 	},
 	computed: {
 		fieldLabelMap() {
 			return {
 				billing_email: 'Get billing emails at',
-				notify_email: 'Get operational emails at'
+				notify_email: 'Get operational emails at',
 			};
-		}
-	}
+		},
+	},
 };
 </script>

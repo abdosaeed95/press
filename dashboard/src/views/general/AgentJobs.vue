@@ -52,13 +52,13 @@ export default {
 	components: { JobsDetail, CardWithDetails },
 	data() {
 		return {
-			runningJob: null
+			runningJob: null,
 		};
 	},
 	resources: {
 		jobs() {
 			return this.resource();
-		}
+		},
 	},
 	mounted() {
 		this.$socket.on('agent_job_update', this.onAgentJobUpdate);
@@ -79,7 +79,7 @@ export default {
 					}, 1000);
 				}
 			}
-		}
-	}
+		},
+	},
 };
 </script>

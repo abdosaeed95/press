@@ -70,6 +70,6 @@ export default {
 	name: 'AppSubscriptionSummary',
 	data() {
 		return {};
-	}
+	},
 };
 </script>

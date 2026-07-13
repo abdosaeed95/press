@@ -15,7 +15,7 @@
 					{ label: 'Time', name: 'time', class: 'w-1/12' },
 					{ label: 'Command', name: 'command', class: 'w-1/12' },
 					{ label: 'State', name: 'state', class: 'w-2/12' },
-					{ label: 'Query', name: 'query', class: 'w-5/12' }
+					{ label: 'Query', name: 'query', class: 'w-5/12' },
 				]"
 				:data="processData"
 			>
@@ -59,11 +59,11 @@ export default {
 	name: 'SiteMariaDBProcessList',
 	props: ['site'],
 	components: {
-		Report
+		Report,
 	},
 	data() {
 		return {
-			max_lines: 20
+			max_lines: 20,
 		};
 	},
 	resources: {
@@ -71,40 +71,40 @@ export default {
 			return {
 				url: 'press.api.analytics.mariadb_processlist',
 				params: {
-					site: this.site?.name
+					site: this.site?.name,
 				},
 				auto: true,
 				pageLength: this.max_lines,
 				keepData: true,
-				initialData: []
+				initialData: [],
 			};
 		},
 		getPlan() {
 			return {
 				url: 'press.api.site.current_plan',
 				params: {
-					name: this.site?.name
+					name: this.site?.name,
 				},
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	computed: {
 		processData() {
 			let data = [];
-			this.$resources.processList.data.forEach(row => {
+			this.$resources.processList.data.forEach((row) => {
 				let out = [
 					{ name: 'ID', value: row.Id, class: 'w-1/12' },
 					{ name: 'User', value: row.User, class: 'w-2/12' },
 					{ name: 'Time', value: row.Time, class: 'w-1/12' },
 					{ name: 'Command', value: row.Command, class: 'w-1/12' },
 					{ name: 'State', value: row.State, class: 'w-2/12' },
-					{ name: 'Query', value: row.Info, class: 'w-5/12' }
+					{ name: 'Query', value: row.Info, class: 'w-5/12' },
 				];
 				data.push(out);
 			});
 			return data;
-		}
-	}
+		},
+	},
 };
 </script>

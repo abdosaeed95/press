@@ -12,9 +12,9 @@
 								label: server?.title,
 								route: {
 									name: 'ServerOverview',
-									params: { serverName: server?.name }
-								}
-							}
+									params: { serverName: server?.name },
+								},
+							},
 						]"
 					>
 						<template #actions>
@@ -26,7 +26,7 @@
 									@click="
 										$router.push({
 											name: 'NewServerBench',
-											params: { server: server?.name }
+											params: { server: server?.name },
 										})
 									"
 								/>
@@ -106,20 +106,20 @@ export default {
 	name: 'Server',
 	pageMeta() {
 		return {
-			title: `Server - ${this.serverName} - Frappe Cloud`
+			title: `Server - ${this.serverName} - Frappe Cloud`,
 		};
 	},
 	props: ['serverName'],
 	components: {
 		EditServerTitleDialog,
-		Tabs
+		Tabs,
 	},
 	data() {
 		return {
 			runningJob: false,
 			runningPlay: false,
 			showEditTitleDialog: false,
-			errorMessage: ''
+			errorMessage: '',
 		};
 	},
 	resources: {
@@ -127,26 +127,26 @@ export default {
 			return {
 				url: 'press.api.server.get',
 				params: {
-					name: this.serverName
+					name: this.serverName,
 				},
 				auto: true,
 				onSuccess() {
 					this.routeToGeneral();
 				},
-				onError: this.$routeTo404PageIfNotFound
+				onError: this.$routeTo404PageIfNotFound,
 			};
 		},
 		reboot() {
 			return {
 				url: 'press.api.server.reboot',
 				params: {
-					name: this.serverName
+					name: this.serverName,
 				},
 				onSuccess(data) {
 					notify({
 						title: 'Server Reboot Scheduled Successfully',
 						color: 'green',
-						icon: 'check'
+						icon: 'check',
 					});
 					this.$resources.server.reload();
 				},
@@ -154,11 +154,11 @@ export default {
 					notify({
 						title: 'An error occurred',
 						color: 'red',
-						icon: 'x'
+						icon: 'x',
 					});
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		routeToGeneral() {
@@ -166,7 +166,7 @@ export default {
 				let path = this.$route.fullPath;
 				this.$router.replace(`${path}/overview`);
 			}
-		}
+		},
 	},
 	computed: {
 		server() {
@@ -185,7 +185,7 @@ export default {
 				{
 					label: 'Edit Title',
 					icon: 'edit',
-					onClick: () => (this.showEditTitleDialog = true)
+					onClick: () => (this.showEditTitleDialog = true),
 				},
 				{
 					label: 'Visit Server',
@@ -195,7 +195,7 @@ export default {
 						this.$account.user.user_type === 'System User',
 					onClick: () => {
 						window.open(`https://${this.server.name}`, '_blank');
-					}
+					},
 				},
 				{
 					label: 'View in Desk',
@@ -204,9 +204,9 @@ export default {
 					onClick: () => {
 						window.open(
 							`${window.location.protocol}//${window.location.host}/app/${this.server.type}/${this.server.name}`,
-							'_blank'
+							'_blank',
 						);
-					}
+					},
 				},
 				{
 					label: 'Reboot',
@@ -215,12 +215,12 @@ export default {
 						this.server.status === 'Active' &&
 						this.$account.hasPermission(
 							this.server.name,
-							'press.api.server.reboot'
+							'press.api.server.reboot',
 						),
 					loading: this.$resources.reboot.loading,
 					onClick: () => {
 						return this.$resources.reboot.submit();
-					}
+					},
 				},
 				{
 					label: 'Impersonate Team',
@@ -232,15 +232,15 @@ export default {
 							title: 'Switched Team',
 							message: `Switched to ${this.server.team}`,
 							icon: 'check',
-							color: 'green'
+							color: 'green',
 						});
-					}
-				}
+					},
+				},
 			];
 		},
 
 		tabs() {
-			let tabRoute = subRoute => `/servers/${this.serverName}/${subRoute}`;
+			let tabRoute = (subRoute) => `/servers/${this.serverName}/${subRoute}`;
 			let tabs = [
 				{ label: 'Installing', route: 'install' },
 				{ label: 'Overview', route: 'overview' },
@@ -248,7 +248,7 @@ export default {
 				{ label: 'Benches', route: 'benches' },
 				{ label: 'Jobs', route: 'jobs', showRedDot: this.runningJob },
 				{ label: 'Plays', route: 'plays', showRedDot: this.runningPlay },
-				{ label: 'Settings', route: 'settings' }
+				{ label: 'Settings', route: 'settings' },
 			];
 
 			let tabsByStatus = {
@@ -258,25 +258,25 @@ export default {
 					'Benches',
 					'Jobs',
 					'Plays',
-					'Settings'
+					'Settings',
 				],
 				Pending: ['Installing'],
-				Installing: ['Installing', 'Plays']
+				Installing: ['Installing', 'Plays'],
 			};
 			if (this.server) {
 				let tabsToShow = tabsByStatus[this.server.status];
 				if (tabsToShow?.length) {
-					tabs = tabs.filter(tab => tabsToShow.includes(tab.label));
+					tabs = tabs.filter((tab) => tabsToShow.includes(tab.label));
 				}
-				return tabs.map(tab => {
+				return tabs.map((tab) => {
 					return {
 						...tab,
-						route: tabRoute(tab.route)
+						route: tabRoute(tab.route),
 					};
 				});
 			}
 			return [];
-		}
-	}
+		},
+	},
 };
 </script>

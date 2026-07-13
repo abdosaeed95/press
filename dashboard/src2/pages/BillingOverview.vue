@@ -22,21 +22,21 @@ const team = inject('team');
 const upcomingInvoice = createResource({
 	url: 'press.api.billing.upcoming_invoice',
 	cache: 'upcomingInvoice',
-	auto: true
+	auto: true,
 });
 
 const unpaidInvoices = createResource({
 	url: 'press.api.billing.get_unpaid_invoices',
 	cache: ['unpaidInvoices', team.name],
-	auto: true
+	auto: true,
 });
 
 provide('billing', {
 	upcomingInvoice,
 	availableCredits: computed(() => upcomingInvoice.data?.available_credits),
 	currentBillingAmount: computed(
-		() => upcomingInvoice.data?.upcoming_invoice?.total
+		() => upcomingInvoice.data?.upcoming_invoice?.total,
 	),
-	unpaidInvoices
+	unpaidInvoices,
 });
 </script>

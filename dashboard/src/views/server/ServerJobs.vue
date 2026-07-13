@@ -13,7 +13,7 @@ export default {
 	name: 'ServerJobs',
 	props: ['serverName', 'jobName'],
 	components: {
-		AgentJobs
+		AgentJobs,
 	},
 	methods: {
 		jobResource() {
@@ -25,12 +25,12 @@ export default {
 				orderBy: 'creation desc',
 				start: 0,
 				pageLength: 10,
-				auto: true
+				auto: true,
 			};
 		},
 		jobRoute(job) {
 			return `/servers/${this.serverName}/jobs/${job.name}`;
-		}
-	}
+		},
+	},
 };
 </script>

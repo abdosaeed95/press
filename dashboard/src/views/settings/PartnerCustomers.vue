@@ -33,24 +33,24 @@ export default {
 	name: 'PartnerCustomers',
 	data() {
 		return {
-			partnerCustomers: []
+			partnerCustomers: [],
 		};
 	},
 	resources: {
 		getPartnerCustomers: {
 			url: 'press.api.partner.get_partner_customers',
 			onSuccess(data) {
-				this.partnerCustomers = data.map(d => {
+				this.partnerCustomers = data.map((d) => {
 					return {
 						email: d.user,
 						billing_name: d.billing_name || '',
 						payment_mode: d.payment_mode || '',
-						currency: d.currency
+						currency: d.currency,
 					};
 				});
 			},
-			auto: true
-		}
-	}
+			auto: true,
+		},
+	},
 };
 </script>

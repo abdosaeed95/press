@@ -77,7 +77,7 @@ const state = ref('Pending'); // Pending, Wait for Site, Site Created
 const saasProduct = createResource({
 	url: 'press.api.saas.get_saas_product_info',
 	params: {
-		product: props.product
+		product: props.product,
 	},
 	auto: true,
 	onSuccess(data) {
@@ -87,7 +87,7 @@ const saasProduct = createResource({
 				siteProgress.reload();
 			}
 		}
-	}
+	},
 });
 
 const subdomain = ref(null);
@@ -97,7 +97,7 @@ const createSite = createResource({
 		return {
 			product: props.product,
 			subdomain: subdomain.value,
-			site_request: saasProduct.data.site_request
+			site_request: saasProduct.data.site_request,
 		};
 	},
 	validate() {
@@ -106,14 +106,14 @@ const createSite = createResource({
 	onSuccess() {
 		state.value = 'Wait for Site';
 		siteProgress.reload();
-	}
+	},
 });
 
 const siteProgress = createResource({
 	url: 'press.api.saas.get_site_progress',
 	makeParams() {
 		return {
-			site_request: saasProduct.data.site_request.name
+			site_request: saasProduct.data.site_request.name,
 		};
 	},
 	onSuccess(data) {
@@ -125,21 +125,21 @@ const siteProgress = createResource({
 				siteProgress.reload();
 			}, 2000);
 		}
-	}
+	},
 });
 
 const loginToSite = createResource({
 	url: 'press.api.saas.login_to_site',
 	makeParams() {
 		return {
-			site_request: saasProduct.data.site_request.name
+			site_request: saasProduct.data.site_request.name,
 		};
 	},
 	onSuccess(data) {
 		if (data?.sid && data?.site) {
 			window.location.href = `https://${data.site}/desk?sid=${data.sid}`;
 		}
-	}
+	},
 });
 
 const domainSuffix = ref(null);

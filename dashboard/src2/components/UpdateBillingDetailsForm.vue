@@ -30,7 +30,7 @@ export default {
 	name: 'UpdateBillingDetailsForm',
 	emits: ['updated'],
 	components: {
-		AddressForm
+		AddressForm,
 	},
 	data() {
 		return {
@@ -41,8 +41,8 @@ export default {
 				state: '',
 				postal_code: '',
 				country: '',
-				gstin: ''
-			}
+				gstin: '',
+			},
 		};
 	},
 	resources: {
@@ -61,11 +61,11 @@ export default {
 							gstin:
 								billingInformation.gstin == 'Not Applicable'
 									? ''
-									: billingInformation.gstin
+									: billingInformation.gstin,
 						});
 						this.billing_name = billingInformation.billing_name;
 					}
-				}
+				},
 			};
 		},
 		updateBillingInformation() {
@@ -75,13 +75,13 @@ export default {
 					return {
 						billing_details: {
 							...this.billingInformation,
-							billing_name: this.billingInformation.billing_name
-						}
+							billing_name: this.billingInformation.billing_name,
+						},
 					};
 				},
 				onSuccess() {
 					notify({
-						title: 'Address updated successfully!'
+						title: 'Address updated successfully!',
 					});
 					this.$emit('updated');
 				},
@@ -91,14 +91,14 @@ export default {
 					var billingNameValid = billingNameRegex.test(billing_name);
 					if (!billingNameValid) {
 						throw new DashboardError(
-							'Billing Name contains invalid characters'
+							'Billing Name contains invalid characters',
 						);
 					}
 					this.billing_name = billing_name;
 					return this.$refs['address-form'].validateValues();
-				}
+				},
 			};
-		}
-	}
+		},
+	},
 };
 </script>

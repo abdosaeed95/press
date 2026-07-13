@@ -15,5 +15,5 @@ export const FCIcons = {
 	BillingIcon,
 	SettingsIcon,
 	SpacesIcon,
-	SecurityIcon
+	SecurityIcon,
 };

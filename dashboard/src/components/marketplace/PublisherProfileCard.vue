@@ -35,9 +35,9 @@
 						variant: 'solid',
 						label: 'Save Changes',
 						loading: $resources.updatePublisherProfile.loading,
-						onClick: () => $resources.updatePublisherProfile.submit()
-					}
-				]
+						onClick: () => $resources.updatePublisherProfile.submit(),
+					},
+				],
 			}"
 			v-model="showEditProfileDialog"
 		>
@@ -70,7 +70,7 @@ export default {
 			showEditProfileDialog: false,
 			displayName: '',
 			contactEmail: '',
-			website: ''
+			website: '',
 		};
 	},
 	resources: {
@@ -81,8 +81,8 @@ export default {
 					profile_data: {
 						display_name: this.displayName,
 						contact_email: this.contactEmail,
-						website: this.website
-					}
+						website: this.website,
+					},
 				},
 				validate() {
 					if (!this.displayName) {
@@ -92,9 +92,9 @@ export default {
 				onSuccess() {
 					this.showEditProfileDialog = false;
 					this.$emit('profileUpdated');
-				}
+				},
 			};
-		}
+		},
 	},
 	watch: {
 		profileData(data) {
@@ -108,7 +108,7 @@ export default {
 			if (value) {
 				this.showEditProfileDialog = true;
 			}
-		}
-	}
+		},
+	},
 };
 </script>

@@ -10,9 +10,9 @@
 						label: serverName,
 						route: {
 							name: 'CodeServerOverview',
-							params: { serverName: serverName }
-						}
-					}
+							params: { serverName: serverName },
+						},
+					},
 				]"
 			>
 				<template #actions>
@@ -63,12 +63,12 @@ import Tabs from '@/components/Tabs.vue';
 export default {
 	name: 'CodeServer',
 	components: {
-		Tabs
+		Tabs,
 	},
 	props: ['serverName'],
 	data() {
 		return {
-			runningJob: false
+			runningJob: false,
 		};
 	},
 	methods: {
@@ -84,7 +84,7 @@ export default {
 			if (this._agentJobUpdateSet) return;
 			this._agentJobUpdateSet = true;
 
-			this.$socket.on('agent_job_update', data => {
+			this.$socket.on('agent_job_update', (data) => {
 				if (data.name === 'Setup Code Server') {
 					if (
 						data.status === 'Success' &&
@@ -108,20 +108,20 @@ export default {
 					: 'overview';
 				this.$router.replace(`/codeservers/${this.serverName}/${tab}`);
 			}
-		}
+		},
 	},
 	resources: {
 		codeServer() {
 			return {
 				url: 'press.api.spaces.code_server',
 				params: {
-					name: this.serverName
+					name: this.serverName,
 				},
 				auto: true,
 				onSuccess: this.routeToGeneral,
-				onError: this.$routeTo404PageIfNotFound
+				onError: this.$routeTo404PageIfNotFound,
 			};
-		}
+		},
 	},
 	activated() {
 		this.setupAgentJobUpdate();
@@ -138,25 +138,26 @@ export default {
 			return this.$resources.codeServer.data;
 		},
 		tabs() {
-			let tabRoute = subRoute => `/codeservers/${this.serverName}/${subRoute}`;
+			let tabRoute = (subRoute) =>
+				`/codeservers/${this.serverName}/${subRoute}`;
 			let tabs = [
 				{ label: 'Overview', route: 'overview' },
-				{ label: 'Jobs', route: 'jobs', showRedDot: this.runningJob }
+				{ label: 'Jobs', route: 'jobs', showRedDot: this.runningJob },
 			];
 
 			let tabsByStatus = {
 				Active: ['Overview', 'Jobs'],
-				Pending: ['Jobs']
+				Pending: ['Jobs'],
 			};
 			if (this.codeServer) {
 				let tabsToShow = tabsByStatus[this.codeServer.status];
 				if (tabsToShow?.length) {
-					tabs = tabs.filter(tab => tabsToShow.includes(tab.label));
+					tabs = tabs.filter((tab) => tabsToShow.includes(tab.label));
 				}
-				return tabs.map(tab => {
+				return tabs.map((tab) => {
 					return {
 						...tab,
-						route: tabRoute(tab.route)
+						route: tabRoute(tab.route),
 					};
 				});
 			}
@@ -169,10 +170,10 @@ export default {
 					icon: 'external-link',
 					onClick: () => {
 						window.open(`https://${this.serverName}`, '_blank');
-					}
-				}
+					},
+				},
 			];
-		}
-	}
+		},
+	},
 };
 </script>

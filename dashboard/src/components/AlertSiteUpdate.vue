@@ -28,9 +28,9 @@
 					{
 						label: 'Update Now',
 						variant: 'solid',
-						onClick: () => $resources.scheduleUpdate.fetch()
-					}
-				]
+						onClick: () => $resources.scheduleUpdate.fetch(),
+					},
+				],
 			}"
 			v-model="showUpdatesDialog"
 		>
@@ -76,13 +76,13 @@ export default {
 	name: 'AlertSiteUpdate',
 	props: ['site'],
 	components: {
-		SiteAppUpdates
+		SiteAppUpdates,
 	},
 	data() {
 		return {
 			showUpdatesDialog: false,
 			wantToSkipFailingPatches: false,
-			wantToSkipBackups: false
+			wantToSkipBackups: false,
 		};
 	},
 	resources: {
@@ -90,18 +90,18 @@ export default {
 			return {
 				url: 'press.api.site.check_for_updates',
 				params: {
-					name: this.site?.name
+					name: this.site?.name,
 				},
-				auto: true
+				auto: true,
 			};
 		},
 		lastMigrateFailed() {
 			return {
 				url: 'press.api.site.last_migrate_failed',
 				params: {
-					name: this.site?.name
+					name: this.site?.name,
 				},
-				auto: true
+				auto: true,
 			};
 		},
 		scheduleUpdate() {
@@ -110,26 +110,26 @@ export default {
 				params: {
 					name: this.site?.name,
 					skip_failing_patches: this.wantToSkipFailingPatches,
-					skip_backups: this.wantToSkipBackups
+					skip_backups: this.wantToSkipBackups,
 				},
 				onSuccess() {
 					this.showUpdatesDialog = false;
 					notify({
 						title: 'Site update scheduled successfully',
 						icon: 'check',
-						color: 'green'
+						color: 'green',
 					});
-				}
+				},
 			};
-		}
+		},
 	},
 	computed: {
 		permissions() {
 			return {
 				update: this.$account.hasPermission(
 					this.site.name,
-					'press.api.site.update'
-				)
+					'press.api.site.update',
+				),
 			};
 		},
 		show() {
@@ -138,7 +138,7 @@ export default {
 					this.site.setup_wizard_complete &&
 					this.updateInformation.update_available &&
 					['Active', 'Inactive', 'Suspended', 'Broken'].includes(
-						this.site.status
+						this.site.status,
 					)
 				);
 			}
@@ -150,8 +150,8 @@ export default {
 			const installedApps = this.updateInformation.installed_apps;
 			const updateAvailableApps = this.updateInformation.apps;
 
-			return updateAvailableApps.filter(app =>
-				installedApps.find(installedApp => installedApp.app === app.app)
+			return updateAvailableApps.filter((app) =>
+				installedApps.find((installedApp) => installedApp.app === app.app),
 			);
 		},
 		lastMigrateFailed() {
@@ -159,7 +159,7 @@ export default {
 		},
 		skip_backups() {
 			return this.$account.team?.skip_backups;
-		}
-	}
+		},
+	},
 };
 </script>

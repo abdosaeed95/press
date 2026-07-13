@@ -3,7 +3,7 @@
 		class="flex w-full flex-row items-center justify-between rounded-lg border border-gray-100 px-4 py-2 shadow focus:outline-none"
 		:class="[
 			selected ? 'ring-2 ring-inset ring-gray-600' : '',
-			selectable ? 'hover:border-gray-300' : 'cursor-default'
+			selectable ? 'hover:border-gray-300' : 'cursor-default',
 		]"
 		ref="card"
 	>
@@ -48,13 +48,13 @@ export default {
 	props: ['site', 'selectable', 'selected', 'selectedSites'],
 	methods: {
 		toggleProperty(value, prop, site) {
-			this.selectedSites.map(selectedSite => {
+			this.selectedSites.map((selectedSite) => {
 				if (site == selectedSite.name) {
 					selectedSite[prop] = value.target.checked;
 				}
 			});
 			this.$emit('update:selectedSites', this.selectedSites);
-		}
-	}
+		},
+	},
 };
 </script>

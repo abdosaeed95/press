@@ -13,7 +13,7 @@
 				label="Duration"
 				type="select"
 				:options="
-					durationOptions.map(option => ({ label: option, value: option }))
+					durationOptions.map((option) => ({ label: option, value: option }))
 				"
 				v-model="duration"
 			/>
@@ -33,7 +33,7 @@
 					$theme.colors.purple[500], // softirq
 					$theme.colors.blue[500], // steal
 					$theme.colors.teal[500], // system
-					$theme.colors.cyan[500] // user
+					$theme.colors.cyan[500], // user
 				]"
 				:loading="$resources.cpu.loading"
 				:error="$resources.cpu.error"
@@ -47,7 +47,7 @@
 				:chartTheme="[
 					$theme.colors.green[500],
 					$theme.colors.yellow[400],
-					$theme.colors.red[500]
+					$theme.colors.red[500],
 				]"
 				:loading="$resources.loadavg.loading"
 				:error="$resources.loadavg.error"
@@ -108,23 +108,23 @@ export default {
 	name: 'ServerAnalytics',
 	props: ['serverName'],
 	components: {
-		LineChart
+		LineChart,
 	},
 	data() {
 		return {
 			duration: '1 Hour',
 			chosenServer: this.$route.query.server ?? this.serverName,
-			durationOptions: ['1 Hour', '6 Hour', '24 Hour', '7 Days', '15 Days']
+			durationOptions: ['1 Hour', '6 Hour', '24 Hour', '7 Days', '15 Days'],
 		};
 	},
 	watch: {
 		chosenServer() {
 			this.$router.push({
 				query: {
-					server: this.chosenServer
-				}
+					server: this.chosenServer,
+				},
 			});
-		}
+		},
 	},
 	resources: {
 		loadavg() {
@@ -135,9 +135,9 @@ export default {
 					name: this.chosenServer,
 					timezone: localTimezone,
 					query: 'loadavg',
-					duration: this.duration
+					duration: this.duration,
 				},
-				auto: true
+				auto: true,
 			};
 		},
 		cpu() {
@@ -148,9 +148,9 @@ export default {
 					name: this.chosenServer,
 					timezone: localTimezone,
 					query: 'cpu',
-					duration: this.duration
+					duration: this.duration,
 				},
-				auto: true
+				auto: true,
 			};
 		},
 		memory() {
@@ -161,9 +161,9 @@ export default {
 					name: this.chosenServer,
 					timezone: localTimezone,
 					query: 'memory',
-					duration: this.duration
+					duration: this.duration,
 				},
-				auto: true
+				auto: true,
 			};
 		},
 		network() {
@@ -174,9 +174,9 @@ export default {
 					name: this.chosenServer,
 					timezone: localTimezone,
 					query: 'network',
-					duration: this.duration
+					duration: this.duration,
 				},
-				auto: true
+				auto: true,
 			};
 		},
 		iops() {
@@ -187,9 +187,9 @@ export default {
 					name: this.chosenServer,
 					timezone: localTimezone,
 					query: 'iops',
-					duration: this.duration
+					duration: this.duration,
 				},
-				auto: true
+				auto: true,
 			};
 		},
 		space() {
@@ -200,11 +200,11 @@ export default {
 					name: this.chosenServer,
 					timezone: localTimezone,
 					query: 'space',
-					duration: this.duration
+					duration: this.duration,
 				},
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	computed: {
 		$server() {
@@ -214,24 +214,24 @@ export default {
 			return [
 				{
 					label: 'Application Server',
-					value: this.$server.doc.name
+					value: this.$server.doc.name,
 				},
 				{
 					label: 'Database Server',
-					value: this.$server.doc.database_server
+					value: this.$server.doc.database_server,
 				},
 				{
 					label: 'Replication Server',
-					value: this.$server.doc.replication_server
-				}
-			].filter(v => v.value);
+					value: this.$server.doc.replication_server,
+				},
+			].filter((v) => v.value);
 		},
 		loadAverageData() {
 			let loadavg = this.$resources.loadavg.data;
 			if (!loadavg) return;
 
 			loadavg.datasets.sort(
-				(a, b) => Number(a.name.split(' ')[2]) - Number(b.name.split(' ')[2])
+				(a, b) => Number(a.name.split(' ')[2]) - Number(b.name.split(' ')[2]),
 			);
 
 			return this.transformMultiLineChartData(loadavg);
@@ -265,7 +265,7 @@ export default {
 			if (!network) return;
 
 			return this.transformSingleLineChartData(network);
-		}
+		},
 	},
 	methods: {
 		transformSingleLineChartData(data, percentage = false) {
@@ -276,13 +276,13 @@ export default {
 			for (let index = 0; index < data.datasets[0].values.length; index++) {
 				dataset.push([
 					+new Date(data.labels[index]),
-					data.datasets[0].values[index]
+					data.datasets[0].values[index],
 				]);
 			}
 
 			return {
 				datasets: [{ dataset: dataset, name }],
-				yMax: percentage ? 100 : null
+				yMax: percentage ? 100 : null,
 			};
 		},
 		transformMultiLineChartData(data, stack = null, percentage = false) {
@@ -304,14 +304,14 @@ export default {
 				for (let i = 0; i < values.length; i++) {
 					dataset.push([
 						+new Date(data.labels[i]),
-						percentage ? (values[i] / total[i]) * 100 : values[i]
+						percentage ? (values[i] / total[i]) * 100 : values[i],
 					]);
 				}
 				return { name, dataset, stack };
 			});
 
 			return { datasets, yMax: percentage ? 100 : null };
-		}
-	}
+		},
+	},
 };
 </script>

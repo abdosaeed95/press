@@ -26,7 +26,7 @@ export default {
 	resources: {
 		loginAsAdmin() {
 			return loginAsAdmin(this.site?.name);
-		}
-	}
+		},
+	},
 };
 </script>

@@ -20,9 +20,9 @@
 					{
 						label: 'Save Changes',
 						variant: 'solid',
-						onClick: () => $resources.changeEmail.submit()
-					}
-				]
+						onClick: () => $resources.changeEmail.submit(),
+					},
+				],
 			}"
 			v-model="showEmailsEditDialog"
 		>
@@ -48,34 +48,34 @@ export default {
 				auto: true,
 				onSuccess(res) {
 					this.emailData = res;
-				}
+				},
 			};
 		},
 		changeEmail() {
 			return {
 				url: 'press.api.account.update_emails',
 				params: {
-					data: JSON.stringify(this.emailData)
+					data: JSON.stringify(this.emailData),
 				},
 				onSuccess(res) {
 					this.showEmailsEditDialog = false;
-				}
+				},
 			};
-		}
+		},
 	},
 	data() {
 		return {
 			showEmailsEditDialog: false,
-			emailData: []
+			emailData: [],
 		};
 	},
 	computed: {
 		fieldLabelMap() {
 			return {
 				invoices: 'Send invoices to',
-				marketplace_notifications: 'Send marketplace emails to'
+				marketplace_notifications: 'Send marketplace emails to',
 			};
-		}
-	}
+		},
+	},
 };
 </script>

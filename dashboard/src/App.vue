@@ -5,7 +5,7 @@
 				class="flex flex-1 overflow-y-auto"
 				:class="{
 					'sm:bg-gray-50':
-						$route.meta.isLoginPage && $route.fullPath.indexOf('/checkout') < 0
+						$route.meta.isLoginPage && $route.fullPath.indexOf('/checkout') < 0,
 				}"
 			>
 				<div class="flex-1">
@@ -26,7 +26,7 @@
 									'Server',
 									'Marketplace',
 									'Account',
-									'MarketplaceApp'
+									'MarketplaceApp',
 								]"
 							>
 								<component :is="Component" />
@@ -56,19 +56,19 @@ export default {
 		Navbar,
 		UserPrompts,
 		ConfirmDialogs,
-		NotificationToasts
+		NotificationToasts,
 	},
 	data() {
 		return {
-			viewportWidth: 0
+			viewportWidth: 0,
 		};
 	},
 	provide: {
 		viewportWidth: Math.max(
 			document.documentElement.clientWidth || 0,
-			window.innerWidth || 0
-		)
-	}
+			window.innerWidth || 0,
+		),
+	},
 };
 </script>
 <style src="./assets/style.css"></style>

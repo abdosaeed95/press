@@ -77,7 +77,7 @@ export default {
 			referralCode: null,
 			partnerExists: false,
 			errorMessage: null,
-			partner: null
+			partner: null,
 		};
 	},
 	resources: {
@@ -85,18 +85,18 @@ export default {
 			return {
 				url: 'press.api.partner.add_partner',
 				params: {
-					referral_code: this.referralCode
+					referral_code: this.referralCode,
 				},
 				onSuccess(res) {
 					this.showPartnerReferralDialog = false;
 					notify({
 						title: 'Email sent to Partner',
 						icon: 'check',
-						color: 'green'
+						color: 'green',
 					});
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		async referralCodeChange(e) {
@@ -104,7 +104,7 @@ export default {
 			this.partnerExists = false;
 
 			let result = await this.$call('press.api.partner.validate_partner_code', {
-				code: code
+				code: code,
 			});
 
 			let [isValidCode, partnerName] = result;
@@ -117,7 +117,7 @@ export default {
 			} else {
 				this.errorMessage = `${code} is Invalid Referral Code`;
 			}
-		}
-	}
+		},
+	},
 };
 </script>

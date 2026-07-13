@@ -47,13 +47,13 @@ export default {
 	components: { PlaysDetail, CardWithDetails },
 	data() {
 		return {
-			runningPlay: null
+			runningPlay: null,
 		};
 	},
 	resources: {
 		plays() {
 			return this.resource();
-		}
+		},
 	},
 	mounted() {
 		this.$socket.emit('doctype_subscribe', 'Ansible Play');
@@ -76,7 +76,7 @@ export default {
 					}, 1000);
 				}
 			}
-		}
-	}
+		},
+	},
 };
 </script>

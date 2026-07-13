@@ -51,16 +51,16 @@ export default {
 				url: 'press.api.security.fetch_ssh_session_activity',
 				params: {
 					server: this.server?.name,
-					filename: this.logId
+					filename: this.logId,
 				},
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	computed: {
 		SSHActivity() {
 			return this.$resources.SSHActivity.data;
-		}
+		},
 	},
 	methods: {
 		getLabel(user) {
@@ -68,7 +68,7 @@ export default {
 		},
 		getColor(user) {
 			return user === 'root' ? 'red' : 'green';
-		}
-	}
+		},
+	},
 };
 </script>

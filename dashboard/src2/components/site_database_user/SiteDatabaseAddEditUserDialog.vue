@@ -2,7 +2,7 @@
 	<Dialog
 		:options="{
 			title: isEditMode ? 'Edit Database User' : 'Add Database User',
-			size: '2xl'
+			size: '2xl',
 		}"
 		v-model="showDialog"
 	>
@@ -31,16 +31,16 @@
 					:options="[
 						{
 							label: 'Read only access to all the tables',
-							value: 'read_only'
+							value: 'read_only',
 						},
 						{
 							label: 'Read/Write access to all the tables',
-							value: 'read_write'
+							value: 'read_write',
 						},
 						{
 							label: 'Granular access',
-							value: 'granular'
-						}
+							value: 'granular',
+						},
 					]"
 					size="sm"
 					variant="subtle"
@@ -144,7 +144,7 @@ export default {
 		ObjectList,
 		icon,
 		AlertBanner,
-		SiteDatabaseColumnsSelector
+		SiteDatabaseColumnsSelector,
 	},
 	data() {
 		return {
@@ -152,7 +152,7 @@ export default {
 			mode: 'read_only',
 			database_connections: 1,
 			permissions: [],
-			lastGeneratedRowId: 0
+			lastGeneratedRowId: 0,
 		};
 	},
 	mounted() {
@@ -169,11 +169,11 @@ export default {
 				url: 'press.api.client.run_doc_method',
 				initialData: {},
 				auto: false,
-				onSuccess: data => {
+				onSuccess: (data) => {
 					if (data?.message?.loading) {
 						setTimeout(this.fetchTableSchemas, 5000);
 					}
-				}
+				},
 			};
 		},
 		databaseUser() {
@@ -182,18 +182,18 @@ export default {
 				doctype: 'Site Database User',
 				name: this.db_user_name,
 				auto: false,
-				onSuccess: data => {
+				onSuccess: (data) => {
 					this.label = data?.label;
 					this.mode = data?.mode;
-					let fetched_permissions = (data?.permissions ?? []).map(x => {
+					let fetched_permissions = (data?.permissions ?? []).map((x) => {
 						return {
 							...x,
-							columns: x.selected_columns.split('\n').filter(x => x)
+							columns: x.selected_columns.split('\n').filter((x) => x),
 						};
 					});
 					this.permissions = fetched_permissions;
 					this.database_connections = data?.max_connections ?? 1;
-				}
+				},
 			};
 		},
 		createDatabaseUser() {
@@ -201,13 +201,13 @@ export default {
 				url: 'press.api.client.insert',
 				makeParams() {
 					let permissions = [];
-					this.permissions.forEach(permission => {
+					this.permissions.forEach((permission) => {
 						if (permission.table) {
 							permissions.push({
 								table: permission.table,
 								mode: permission.mode,
 								allow_all_columns: permission.columns.length == 0,
-								selected_columns: permission.columns.join('\n')
+								selected_columns: permission.columns.join('\n'),
 							});
 						}
 					});
@@ -219,8 +219,8 @@ export default {
 							site: this.site,
 							mode: this.mode,
 							permissions: permissions,
-							max_connections: parseInt(this.database_connections || 1)
-						}
+							max_connections: parseInt(this.database_connections || 1),
+						},
 					};
 				},
 				validate() {
@@ -230,7 +230,7 @@ export default {
 				onSuccess() {
 					toast.success('User created successfully');
 					this.$emit('success');
-				}
+				},
 			};
 		},
 		updateDatabaseUser() {
@@ -238,13 +238,13 @@ export default {
 				url: 'press.api.client.run_doc_method',
 				makeParams() {
 					let permissions = [];
-					this.permissions.forEach(permission => {
+					this.permissions.forEach((permission) => {
 						if (permission.table) {
 							permissions.push({
 								table: permission.table,
 								mode: permission.mode,
 								allow_all_columns: permission.columns.length == 0,
-								selected_columns: permission.columns.join('\n')
+								selected_columns: permission.columns.join('\n'),
 							});
 						}
 					});
@@ -255,8 +255,8 @@ export default {
 						args: {
 							label: this.label,
 							mode: this.mode,
-							permissions: permissions
-						}
+							permissions: permissions,
+						},
 					};
 				},
 				validate() {
@@ -266,9 +266,9 @@ export default {
 				onSuccess() {
 					toast.success('User updated successfully');
 					this.$emit('success');
-				}
+				},
 			};
-		}
+		},
 	},
 	computed: {
 		listOptions() {
@@ -285,12 +285,12 @@ export default {
 								class: 'w-full -mx-1.5',
 								type: 'autocomplete',
 								modelValue: row.table,
-								'onUpdate:modelValue': newValue => {
+								'onUpdate:modelValue': (newValue) => {
 									row.table = newValue?.value || '';
 								},
-								options: this.autocompleteTableOptions
+								options: this.autocompleteTableOptions,
 							});
-						}
+						},
 					},
 					{
 						label: 'Mode',
@@ -305,19 +305,19 @@ export default {
 								options: [
 									{
 										label: 'Read Only',
-										value: 'read_only'
+										value: 'read_only',
 									},
 									{
 										label: 'Read Write',
-										value: 'read_write'
-									}
+										value: 'read_write',
+									},
 								],
 								modelValue: row.mode,
-								'onUpdate:modelValue': newValue => {
+								'onUpdate:modelValue': (newValue) => {
 									row.mode = newValue;
-								}
+								},
 							});
-						}
+						},
 					},
 					{
 						label: 'Columns',
@@ -329,11 +329,11 @@ export default {
 							return h(SiteDatabaseColumnsSelector, {
 								modelValue: row.columns,
 								availableColumns: this.getColumns(row.table),
-								'onUpdate:modelValue': newValues => {
+								'onUpdate:modelValue': (newValues) => {
 									row.columns = [...newValues];
-								}
+								},
 							});
-						}
+						},
 					},
 					{
 						label: '',
@@ -344,17 +344,17 @@ export default {
 							return {
 								label: true ? 'check' : 'plus',
 								slots: {
-									icon: icon('x')
+									icon: icon('x'),
 								},
 								variant: 'subtle',
-								onClick: event => {
+								onClick: (event) => {
 									this.removePermissionEntry(row.name);
 									event.stopPropagation();
-								}
+								},
 							};
-						}
-					}
-				]
+						},
+					},
+				],
 			};
 		},
 		showDialog: {
@@ -363,7 +363,7 @@ export default {
 			},
 			set(value) {
 				this.$emit('update:modelValue', value);
-			}
+			},
 		},
 		isEditMode() {
 			return !!this.db_user_name;
@@ -382,12 +382,12 @@ export default {
 			if (this.isLoadingTableSchemas) return [];
 			if (!this.$resources?.tableSchemas?.data?.message?.data) return [];
 			return Object.keys(
-				this.$resources?.tableSchemas?.data?.message?.data
-			).map(x => ({
+				this.$resources?.tableSchemas?.data?.message?.data,
+			).map((x) => ({
 				label: x,
-				value: x
+				value: x,
 			}));
-		}
+		},
 	},
 	methods: {
 		fetchTableSchemas(reload = false) {
@@ -397,8 +397,8 @@ export default {
 				dn: this.site,
 				method: 'fetch_database_table_schema',
 				args: {
-					reload
-				}
+					reload,
+				},
 			});
 		},
 		getColumns(table) {
@@ -409,7 +409,7 @@ export default {
 				this.$resources?.tableSchemas?.data?.message?.data[table]?.columns ??
 				[];
 			let columns = [];
-			columnSchemas.forEach(x => {
+			columnSchemas.forEach((x) => {
 				columns.push(x.column);
 			});
 			return columns;
@@ -422,13 +422,13 @@ export default {
 					name: String(this.lastGeneratedRowId),
 					table: '',
 					mode: 'read_only',
-					columns: []
-				}
+					columns: [],
+				},
 			];
 		},
 		removePermissionEntry(name) {
-			this.permissions = this.permissions.filter(x => x.name !== name);
-		}
-	}
+			this.permissions = this.permissions.filter((x) => x.name !== name);
+		},
+	},
 };
 </script>

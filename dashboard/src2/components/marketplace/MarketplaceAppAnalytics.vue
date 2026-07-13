@@ -79,7 +79,7 @@
 				key="Page Views"
 				:data="
 					mapChartAnalytics(
-						this.$resources.plausible_analytics.data?.pageviews || []
+						this.$resources.plausible_analytics.data?.pageviews || [],
 					)
 				"
 				unit="views"
@@ -93,7 +93,7 @@
 				key="Unique Visitors"
 				:data="
 					mapChartAnalytics(
-						this.$resources.plausible_analytics.data?.visitors || []
+						this.$resources.plausible_analytics.data?.visitors || [],
 					)
 				"
 				unit="visitors"
@@ -110,7 +110,7 @@
 			key="Weekly Installs"
 			:data="
 				mapChartAnalytics(
-					this.$resources.plausible_analytics.data?.weekly_installs || []
+					this.$resources.plausible_analytics.data?.weekly_installs || [],
 				)
 			"
 			unit="installs"
@@ -128,39 +128,39 @@ import LineChart from '@/components/charts/LineChart.vue';
 export default {
 	name: 'MarketplaceAppAnalytics',
 	props: {
-		app: String
+		app: String,
 	},
 	components: {
-		LineChart
+		LineChart,
 	},
 	methods: {
 		formatDate(data) {
-			return data.map(d => d.date);
+			return data.map((d) => d.date);
 		},
 		getChartOptions(yFormatter) {
 			return {
 				axisOptions: {
 					xIsSeries: true,
-					shortenYAxisNumbers: 1
+					shortenYAxisNumbers: 1,
 				},
 				lineOptions: {
 					hideDots: true,
-					regionFill: true
+					regionFill: true,
 				},
 				tooltipOptions: {
-					formatTooltipX: d => {
+					formatTooltipX: (d) => {
 						return DateTime.fromISO(d).toLocaleString(DateTime.DATE_MED);
 					},
-					formatTooltipY: yFormatter
-				}
+					formatTooltipY: yFormatter,
+				},
 			};
 		},
 		mapChartAnalytics(data) {
 			if (!data) return;
 			return {
-				datasets: [data.map(d => [+new Date(d.date), d.value])]
+				datasets: [data.map((d) => [+new Date(d.date), d.value])],
 			};
-		}
+		},
 	},
 	resources: {
 		analytics() {
@@ -168,8 +168,8 @@ export default {
 				url: 'press.api.marketplace.analytics',
 				auto: true,
 				params: {
-					name: this.app
-				}
+					name: this.app,
+				},
 			};
 		},
 		plausible_analytics() {
@@ -177,10 +177,10 @@ export default {
 				url: 'press.api.analytics.plausible_analytics',
 				auto: true,
 				params: {
-					name: this.app
-				}
+					name: this.app,
+				},
 			};
-		}
+		},
 	},
 	computed: {
 		installAnalytics() {
@@ -206,7 +206,7 @@ export default {
 					this.installAnalytics.total_payout.usd_amount
 				);
 			}
-		}
-	}
+		},
+	},
 };
 </script>

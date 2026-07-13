@@ -18,6 +18,6 @@ import { Button, FeatherIcon } from 'frappe-ui';
 const props = defineProps({
 	label: String,
 	active: Boolean,
-	onClick: Array
+	onClick: Array,
 });
 </script>

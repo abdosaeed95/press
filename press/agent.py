@@ -924,7 +924,9 @@ class Agent:
 			)
 
 	def raise_if_past_requests_have_failed(self):
-		failures = None#frappe.db.get_value("Agent Request Failure", {"server": self.server}, "failure_count")
+		failures = (
+			None  # frappe.db.get_value("Agent Request Failure", {"server": self.server}, "failure_count")
+		)
 		if failures:
 			raise AgentRequestSkippedException(f"Previous {failures} requests have failed. Try again later.")
 

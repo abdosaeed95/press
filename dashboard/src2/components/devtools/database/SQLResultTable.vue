@@ -169,8 +169,7 @@ const downloadCSV = async () => {
 		<template #body-content>
 			<pre
 				class="mt-2 whitespace-pre-wrap rounded-lg border-2 border-gray-200 bg-gray-100 p-3 text-sm text-gray-700"
-				>{{ fullViewDialogBody }}</pre
-			>
+				>{{ fullViewDialogBody }}</pre>
 		</template>
 	</Dialog>
 	<!-- Table -->

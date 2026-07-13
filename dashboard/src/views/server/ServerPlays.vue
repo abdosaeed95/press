@@ -13,7 +13,7 @@ export default {
 	name: 'ServerPlays',
 	props: ['serverName', 'playName'],
 	components: {
-		AnsiblePlays
+		AnsiblePlays,
 	},
 	methods: {
 		plaResource() {
@@ -24,12 +24,12 @@ export default {
 				filters: { server: this.serverName },
 				pageLength: 10,
 				start: 0,
-				auto: true
+				auto: true,
 			};
 		},
 		playRoute(play) {
 			return `/servers/${this.serverName}/plays/${play.name}`;
-		}
-	}
+		},
+	},
 };
 </script>

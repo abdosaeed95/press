@@ -96,7 +96,7 @@ export default {
 		Hostname,
 		AppServerPlans,
 		DBServerPlans,
-		VerifyServer
+		VerifyServer,
 	},
 	data() {
 		return {
@@ -111,34 +111,34 @@ export default {
 					name: 'Hostname',
 					validate: () => {
 						return this.title && this.selectedRegion;
-					}
+					},
 				},
 				{
 					name: 'AppServerPlan',
 					validate: () => {
 						return this.selectedAppPlan;
-					}
+					},
 				},
 				{
 					name: 'DBServerPlan',
 					validate: () => {
 						return this.selectedDBPlan;
-					}
+					},
 				},
 				{
-					name: 'VerifyServer'
-				}
+					name: 'VerifyServer',
+				},
 			],
-			agreedToRegionConsent: false
+			agreedToRegionConsent: false,
 		};
 	},
 	async mounted() {
 		this.options = await this.$call('press.api.server.options');
-		this.options.app_plans = this.options.app_plans.map(plan => {
+		this.options.app_plans = this.options.app_plans.map((plan) => {
 			plan.disabled = !this.$account.hasBillingInfo;
 			return plan;
 		});
-		this.options.db_plans = this.options.db_plans.map(plan => {
+		this.options.db_plans = this.options.db_plans.map((plan) => {
 			plan.disabled = !this.$account.hasBillingInfo;
 			return plan;
 		});
@@ -152,8 +152,8 @@ export default {
 						title: this.title,
 						cluster: this.selectedRegion,
 						app_plan: this.selectedAppPlan?.name,
-						db_plan: this.selectedDBPlan?.name
-					}
+						db_plan: this.selectedDBPlan?.name,
+					},
 				},
 				onSuccess(data) {
 					let { server } = data;
@@ -187,15 +187,15 @@ export default {
 					if (!canCreate) {
 						return 'Cannot create server';
 					}
-				}
+				},
 			};
-		}
+		},
 	},
 	computed: {},
 	methods: {
 		async nextStep(activeStep, next) {
 			next();
-		}
-	}
+		},
+	},
 };
 </script>

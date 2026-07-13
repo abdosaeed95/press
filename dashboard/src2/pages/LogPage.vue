@@ -6,7 +6,7 @@
 					name:
 						object.doctype === 'Site'
 							? 'Site Logs'
-							: `${object.doctype} Detail Logs`
+							: `${object.doctype} Detail Logs`,
 				}"
 			>
 				<template #icon>
@@ -21,8 +21,8 @@
 						params: {
 							mode: object.doctype === 'Site' ? 'site' : 'bench',
 							docName: name,
-							logId: logName
-						}
+							logId: logName,
+						},
 					}"
 				>
 					<template #prefix>
@@ -82,9 +82,9 @@ export default {
 				},
 				onSuccess() {
 					this.lastLoaded = Date.now();
-				}
+				},
 			};
-		}
+		},
 	},
 	computed: {
 		forSite() {
@@ -97,7 +97,7 @@ export default {
 		},
 		log() {
 			return this.$resources.log.data;
-		}
-	}
+		},
+	},
 };
 </script>

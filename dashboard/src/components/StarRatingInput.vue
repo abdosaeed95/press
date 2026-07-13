@@ -5,8 +5,8 @@ import { ref } from 'vue';
 const props = defineProps({
 	modelValue: {
 		type: Number,
-		default: 5
-	}
+		default: 5,
+	},
 });
 const emit = defineEmits(['update:modelValue']);
 
@@ -14,7 +14,7 @@ const tempValue = ref(null);
 const value = ref(props.modelValue);
 const ratings = [1, 2, 3, 4, 5];
 
-const starOver = index => {
+const starOver = (index) => {
 	tempValue.value = value.value;
 	return (value.value = index);
 };
@@ -23,7 +23,7 @@ const starOut = () => {
 	return (value.value = tempValue.value);
 };
 
-const set = newValue => {
+const set = (newValue) => {
 	tempValue.value = value.value;
 	emit('update:modelValue', value.value);
 	return (value.value = newValue);

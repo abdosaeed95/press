@@ -4,7 +4,7 @@
 			class="block"
 			:class="{
 				'pointer-events-none h-0.5 opacity-0': step != 'Add Card Details',
-				'mt-4': step == 'Add Card Details'
+				'mt-4': step == 'Add Card Details',
 			}"
 		>
 			<span class="text-sm leading-4 text-gray-700">
@@ -54,15 +54,15 @@ import { DashboardError } from '../utils/error';
 export default {
 	name: 'BuyPrepaidCreditsStripe',
 	components: {
-		StripeLogo
+		StripeLogo,
 	},
 	props: {
 		amount: {
-			default: 0
+			default: 0,
 		},
 		minimumAmount: {
-			default: 0
-		}
+			default: 0,
+		},
 	},
 	data() {
 		return {
@@ -70,7 +70,7 @@ export default {
 			clientSecret: null,
 			cardErrorMessage: null,
 			errorMessage: null,
-			paymentInProgress: false
+			paymentInProgress: false,
 		};
 	},
 	resources: {
@@ -78,7 +78,7 @@ export default {
 			return {
 				url: 'press.api.billing.create_payment_intent_for_buying_credits',
 				params: {
-					amount: this.amount
+					amount: this.amount,
 				},
 				validate() {
 					if (
@@ -86,7 +86,7 @@ export default {
 						!this.$team.doc.erpnext_partner
 					) {
 						throw new DashboardError(
-							`Amount must be greater than or equal to ${this.minimumAmount}`
+							`Amount must be greater than or equal to ${this.minimumAmount}`,
 						);
 					}
 				},
@@ -104,21 +104,21 @@ export default {
 							fontSmoothing: 'antialiased',
 							fontSize: '13px',
 							'::placeholder': {
-								color: theme.colors.gray['400']
-							}
+								color: theme.colors.gray['400'],
+							},
 						},
 						invalid: {
 							color: theme.colors.red['600'],
-							iconColor: theme.colors.red['600']
-						}
+							iconColor: theme.colors.red['600'],
+						},
 					};
 					this.card = this.elements.create('card', {
 						hidePostalCode: true,
 						style: style,
 						classes: {
 							complete: '',
-							focus: 'bg-gray-100'
-						}
+							focus: 'bg-gray-100',
+						},
 					});
 
 					this.step = 'Add Card Details';
@@ -126,15 +126,15 @@ export default {
 						this.card.mount(this.$refs['card-element']);
 					});
 
-					this.card.addEventListener('change', event => {
+					this.card.addEventListener('change', (event) => {
 						this.cardErrorMessage = event.error?.message || null;
 					});
 					this.card.addEventListener('ready', () => {
 						this.ready = true;
 					});
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		setupStripe() {
@@ -144,8 +144,8 @@ export default {
 			this.paymentInProgress = true;
 			let payload = await this.stripe.confirmCardPayment(this.clientSecret, {
 				payment_method: {
-					card: this.card
-				}
+					card: this.card,
+				},
 			});
 
 			if (payload.error) {
@@ -153,13 +153,13 @@ export default {
 				this.paymentInProgress = false;
 			} else {
 				toast.success(
-					'Payment processed successfully, we will update your account shortly on confirmation from Stripe'
+					'Payment processed successfully, we will update your account shortly on confirmation from Stripe',
 				);
 				this.paymentInProgress = false;
 				this.$emit('success');
 				this.errorMessage = null;
 			}
-		}
+		},
 	},
 	computed: {
 		totalAmount() {
@@ -171,12 +171,12 @@ export default {
 					(
 						this.amount +
 						this.amount * (billing_info.gst_percentage || 0)
-					).toFixed(2)
+					).toFixed(2),
 				);
 			} else {
 				return this.amount;
 			}
-		}
-	}
+		},
+	},
 };
 </script>

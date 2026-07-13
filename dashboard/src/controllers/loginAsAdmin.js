@@ -15,7 +15,7 @@ export function loginAsAdmin(siteName) {
 				title: 'Attempting to login as Administrator',
 				message: `Please wait...`,
 				icon: 'alert-circle',
-				color: 'yellow'
+				color: 'yellow',
 			});
 		},
 		onError(err) {
@@ -23,8 +23,8 @@ export function loginAsAdmin(siteName) {
 				title: 'Could not login as Administrator',
 				message: err.messages.join('\n'),
 				color: 'red',
-				icon: 'x'
+				icon: 'x',
 			});
-		}
+		},
 	};
 }

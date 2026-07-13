@@ -91,14 +91,14 @@ import NewAppRepositories from './NewAppRepositories.vue';
 export default {
 	name: 'SelectAppFromGithub',
 	components: {
-		NewAppRepositories
+		NewAppRepositories,
 	},
 	data() {
 		return {
 			selectedRepo: null,
 			selectedInstallation: null,
 			selectedBranch: null,
-			requiresReAuth: false
+			requiresReAuth: false,
 		};
 	},
 	resources: {
@@ -110,7 +110,7 @@ export default {
 					if (error.messages.includes('Bad credentials')) {
 						this.requiresReAuth = true;
 					}
-				}
+				},
 			};
 		},
 		repository() {
@@ -118,7 +118,7 @@ export default {
 			let params = {
 				installation: this.selectedInstallation?.id,
 				owner: this.selectedInstallation?.login,
-				name: this.selectedRepo?.name
+				name: this.selectedRepo?.name,
 			};
 
 			return {
@@ -127,7 +127,7 @@ export default {
 				auto,
 				onSuccess(repository) {
 					this.selectedBranch = repository.default_branch;
-				}
+				},
 			};
 		},
 		validateApp() {
@@ -135,7 +135,7 @@ export default {
 				installation: this.selectedInstallation?.id,
 				owner: this.selectedInstallation?.login,
 				repository: this.selectedRepo?.name,
-				branch: this.selectedBranch
+				branch: this.selectedBranch,
 			};
 			return {
 				url: 'press.api.github.app',
@@ -147,7 +147,7 @@ export default {
 							title: data.title,
 							repository_url: this.selectedRepo?.url,
 							branch: this.selectedBranch,
-							github_installation_id: this.selectedInstallation?.id
+							github_installation_id: this.selectedInstallation?.id,
 						};
 						this.$emit('onSelect', app);
 					}
@@ -155,7 +155,7 @@ export default {
 				onError() {
 					// Invalid Frappe App
 					if (this.$emit) this.$emit('onSelect', null);
-				}
+				},
 			};
 		},
 		clearAccessToken() {
@@ -163,9 +163,9 @@ export default {
 				url: 'press.api.github.clear_token_and_get_installation_url',
 				onSuccess(installation_url) {
 					window.location.href = installation_url + '?state=' + this.state;
-				}
+				},
 			};
-		}
+		},
 	},
 	computed: {
 		options() {
@@ -201,7 +201,7 @@ export default {
 
 			this.$emit('onSelect', null);
 			return null;
-		}
-	}
+		},
+	},
 };
 </script>

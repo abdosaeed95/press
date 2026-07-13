@@ -31,23 +31,23 @@ import { defineAsyncComponent } from 'vue';
 export default {
 	name: 'AlertBillingInformation',
 	components: {
-		BillingInformationDialog: defineAsyncComponent(() =>
-			import('./BillingInformationDialog.vue')
+		BillingInformationDialog: defineAsyncComponent(
+			() => import('./BillingInformationDialog.vue'),
 		),
-		PrepaidCreditsDialog: defineAsyncComponent(() =>
-			import('./PrepaidCreditsDialog.vue')
-		)
+		PrepaidCreditsDialog: defineAsyncComponent(
+			() => import('./PrepaidCreditsDialog.vue'),
+		),
 	},
 	data() {
 		return {
 			showCardDialog: false,
-			showPrepaidCreditsDialog: false
+			showPrepaidCreditsDialog: false,
 		};
 	},
 	methods: {
 		handleAddPrepaidCreditsSuccess() {
 			this.showPrepaidCreditsDialog = false;
-		}
+		},
 	},
 	computed: {
 		isDefaultPaymentModeCard() {
@@ -59,7 +59,7 @@ export default {
 			} else {
 				return "You haven't added your billing information yet. Add it to start creating sites.";
 			}
-		}
-	}
+		},
+	},
 };
 </script>

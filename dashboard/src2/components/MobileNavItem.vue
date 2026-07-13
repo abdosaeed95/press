@@ -7,7 +7,7 @@
 			:class="[
 				item.isActive ? 'bg-white shadow-sm' : 'hover:bg-gray-100',
 				item.disabled ? 'pointer-events-none opacity-50' : '',
-				$attrs.class
+				$attrs.class,
 			]"
 		>
 			<div class="flex w-full items-center space-x-2">
@@ -23,7 +23,7 @@
 let props = defineProps({
 	item: {
 		type: Object,
-		required: true
-	}
+		required: true,
+	},
 });
 </script>

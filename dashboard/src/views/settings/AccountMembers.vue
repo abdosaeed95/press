@@ -42,9 +42,9 @@
 						label: 'Send Invitation',
 						variant: 'solid',
 						loading: $resources.addMember.loading,
-						onClick: () => $resources.addMember.submit({ email: memberEmail })
-					}
-				]
+						onClick: () => $resources.addMember.submit({ email: memberEmail }),
+					},
+				],
 			}"
 			v-model="showManageMemberDialog"
 		>
@@ -73,7 +73,7 @@ import { notify } from '@/utils/toast';
 export default {
 	name: 'AccountMembers',
 	components: {
-		EditPermissions
+		EditPermissions,
 	},
 	data() {
 		return {
@@ -81,7 +81,7 @@ export default {
 			showEditMemberDialog: false,
 			memberName: '',
 			showAddMemberForm: false,
-			memberEmail: null
+			memberEmail: null,
 		};
 	},
 	resources: {
@@ -94,9 +94,9 @@ export default {
 					title: 'Invite Sent!',
 					message: 'They will receive an email shortly to join your team.',
 					color: 'green',
-					icon: 'check'
+					icon: 'check',
 				});
-			}
+			},
 		},
 		removeMember: {
 			url: 'press.api.account.remove_team_member',
@@ -106,10 +106,10 @@ export default {
 				notify({
 					title: 'Team member removed.',
 					icon: 'check',
-					color: 'green'
+					color: 'green',
 				});
-			}
-		}
+			},
+		},
 	},
 	methods: {
 		getRoleBadgeProps(member) {
@@ -122,8 +122,8 @@ export default {
 				status: role,
 				color: {
 					Owner: 'blue',
-					Member: 'gray'
-				}[role]
+					Member: 'gray',
+				}[role],
 			};
 		},
 		removeMember(member) {
@@ -132,10 +132,10 @@ export default {
 				message: `Are you sure you want to remove ${member.first_name} ?`,
 				actionLabel: 'Remove',
 				actionColor: 'red',
-				action: closeDialog => {
+				action: (closeDialog) => {
 					this.$resources.removeMember.submit({ user_email: member.name });
 					closeDialog();
-				}
+				},
 			});
 		},
 		dropdownItems(member) {
@@ -146,15 +146,15 @@ export default {
 					onClick: () => {
 						this.memberName = member.name;
 						this.showEditMemberDialog = true;
-					}
+					},
 				},
 				{
 					label: 'Remove',
 					icon: 'trash-2',
-					onClick: () => this.removeMember(member)
-				}
+					onClick: () => this.removeMember(member),
+				},
 			];
-		}
+		},
 	},
 	computed: {
 		showManageTeamButton() {
@@ -168,7 +168,7 @@ export default {
 					team.erpnext_partner ||
 					team.parent_team)
 			);
-		}
-	}
+		},
+	},
 };
 </script>

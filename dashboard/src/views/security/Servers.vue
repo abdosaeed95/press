@@ -28,7 +28,7 @@
 					:columns="[
 						{ label: 'Server Name', name: 'name' },
 						{ label: 'Security Updates', name: 'security_updates_status' },
-						{ label: '', name: 'actions', width: 0.5 }
+						{ label: '', name: 'actions', width: 0.5 },
 					]"
 					:rows="servers"
 					v-slot="{ rows, columns }"
@@ -91,17 +91,17 @@ export default {
 		Table,
 		TableHeader,
 		TableRow,
-		TableCell
+		TableCell,
 	},
 	pageMeta() {
 		return {
-			title: 'Security - Frappe Cloud'
+			title: 'Security - Frappe Cloud',
 		};
 	},
 	data() {
 		return {
 			searchTerm: '',
-			server_type: 'All Servers'
+			server_type: 'All Servers',
 		};
 	},
 	resources: {
@@ -109,12 +109,16 @@ export default {
 			return {
 				url: 'press.api.security.get_servers',
 				params: {
-					server_filter: { server_type: this.server_type, tag: '' }
+					server_filter: { server_type: this.server_type, tag: '' },
 				},
 				auto: true,
-				cache: ['SecurityServerList', this.server_type, this.$account.team.name]
+				cache: [
+					'SecurityServerList',
+					this.server_type,
+					this.$account.team.name,
+				],
 			};
-		}
+		},
 	},
 	computed: {
 		servers() {
@@ -122,21 +126,24 @@ export default {
 				return [];
 			}
 
-			let servers = this.$resources.allServers.data.filter(server =>
-				this.$account.hasPermission(server.name, '', true)
+			let servers = this.$resources.allServers.data.filter((server) =>
+				this.$account.hasPermission(server.name, '', true),
 			);
 
 			if (this.searchTerm)
-				servers = servers.filter(server =>
-					server.name.toLowerCase().includes(this.searchTerm.toLowerCase())
+				servers = servers.filter((server) =>
+					server.name.toLowerCase().includes(this.searchTerm.toLowerCase()),
 				);
 
-			return servers.map(server => ({
+			return servers.map((server) => ({
 				...server,
 				name: server.title || server.name,
-				route: { name: 'SecurityOverview', params: { serverName: server.name } }
+				route: {
+					name: 'SecurityOverview',
+					params: { serverName: server.name },
+				},
 			}));
-		}
+		},
 	},
 	methods: {
 		getServerFilterHeading() {
@@ -149,18 +156,18 @@ export default {
 					items: [
 						{
 							label: 'All Servers',
-							onClick: () => (this.serverFilter = 'All Servers')
+							onClick: () => (this.serverFilter = 'All Servers'),
 						},
 						{
 							label: 'App Servers',
-							onClick: () => (this.serverFilter = 'App Servers')
+							onClick: () => (this.serverFilter = 'App Servers'),
 						},
 						{
 							label: 'Database Servers',
-							onClick: () => (this.serverFilter = 'Database Servers')
-						}
-					]
-				}
+							onClick: () => (this.serverFilter = 'Database Servers'),
+						},
+					],
+				},
 			];
 
 			return options;
@@ -169,16 +176,16 @@ export default {
 			return [
 				{
 					label: 'All Servers',
-					value: 'All Servers'
+					value: 'All Servers',
 				},
 				{
 					label: 'App Servers',
-					value: 'App Servers'
+					value: 'App Servers',
 				},
 				{
 					label: 'Database Servers',
-					value: 'Database Servers'
-				}
+					value: 'Database Servers',
+				},
 			];
 		},
 		dropdownItems(server) {
@@ -187,24 +194,24 @@ export default {
 					label: 'View Security Updates',
 					onClick: () => {
 						this.$router.push(
-							`/security/${server.route.params.serverName}/security_update`
+							`/security/${server.route.params.serverName}/security_update`,
 						);
-					}
+					},
 				},
 				{
 					label: 'Manage Firewall',
 					onClick: () => {
 						this.$router.push(`/security/${server.app_server}/firewall`);
-					}
+					},
 				},
 				{
 					label: 'SSH Sessions',
 					onClick: () => {
 						this.$router.push(`/security/${server.app_server}/ssh_session_log`);
-					}
-				}
+					},
+				},
 			];
-		}
-	}
+		},
+	},
 };
 </script>

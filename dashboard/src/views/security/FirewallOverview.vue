@@ -7,6 +7,6 @@
 <script>
 export default {
 	name: 'FirewallOverview',
-	props: ['server']
+	props: ['server'],
 };
 </script>

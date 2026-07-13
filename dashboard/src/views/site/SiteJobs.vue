@@ -13,7 +13,7 @@ export default {
 	name: 'SiteJobs',
 	props: ['siteName', 'jobName'],
 	components: {
-		AgentJobs
+		AgentJobs,
 	},
 	methods: {
 		jobResource() {
@@ -25,12 +25,12 @@ export default {
 				orderBy: 'creation desc',
 				start: 0,
 				pageLength: 10,
-				auto: true
+				auto: true,
 			};
 		},
 		jobRoute(job) {
 			return `/sites/${this.siteName}/jobs/${job.name}`;
-		}
-	}
+		},
+	},
 };
 </script>

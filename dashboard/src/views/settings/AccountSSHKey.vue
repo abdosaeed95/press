@@ -14,7 +14,7 @@
 					$date($account.ssh_key.creation).toLocaleString({
 						month: 'short',
 						day: 'numeric',
-						year: 'numeric'
+						year: 'numeric',
 					})
 				}}
 			</div>
@@ -34,9 +34,9 @@
 					{
 						label: 'Add Key',
 						variant: 'solid',
-						onClick: () => $resources.saveKey.submit()
-					}
-				]
+						onClick: () => $resources.saveKey.submit(),
+					},
+				],
 			}"
 			v-model="showAddNewKeyDialog"
 		>
@@ -63,7 +63,7 @@ export default {
 	data() {
 		return {
 			showAddNewKeyDialog: false,
-			newKey: null
+			newKey: null,
 		};
 	},
 
@@ -72,7 +72,7 @@ export default {
 			return {
 				url: 'press.api.account.add_key',
 				params: {
-					key: this.newKey
+					key: this.newKey,
 				},
 				onSuccess() {
 					this.$account.fetchAccount();
@@ -80,11 +80,11 @@ export default {
 					notify({
 						title: 'New SSH Key Added',
 						icon: 'check',
-						color: 'green'
+						color: 'green',
 					});
-				}
+				},
 			};
-		}
-	}
+		},
+	},
 };
 </script>

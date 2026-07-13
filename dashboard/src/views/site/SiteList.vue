@@ -48,13 +48,13 @@ export default {
 	props: {
 		site: {
 			type: Object,
-			required: true
+			required: true,
 		},
 		dropdownItems: {
 			type: Function,
-			required: true
-		}
+			required: true,
+		},
 	},
-	methods: {}
+	methods: {},
 };
 </script>

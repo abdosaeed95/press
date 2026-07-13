@@ -9,7 +9,7 @@
 					:class="[
 						i == linkItems.length - 1
 							? 'text-gray-900'
-							: 'text-gray-600 hover:text-gray-700'
+							: 'text-gray-600 hover:text-gray-700',
 					]"
 					:to="item.route"
 				>
@@ -35,8 +35,8 @@ import { computed } from 'vue';
 const props = defineProps({
 	items: {
 		type: Array,
-		required: true
-	}
+		required: true,
+	},
 });
 
 const items = computed(() => {

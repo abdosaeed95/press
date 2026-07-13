@@ -12,7 +12,7 @@ import {
 	Dropdown,
 	FormControl,
 	ErrorMessage,
-	Autocomplete
+	Autocomplete,
 } from 'frappe-ui';
 import outsideClickDirective from './outsideClickDirective';
 
@@ -32,7 +32,7 @@ let globalFrappeUIComponents = {
 	Dropdown,
 	FormControl,
 	ErrorMessage,
-	Autocomplete
+	Autocomplete,
 };
 
 export default function registerGlobalComponents(app) {

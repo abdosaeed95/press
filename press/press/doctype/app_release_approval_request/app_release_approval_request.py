@@ -23,6 +23,7 @@ class AppReleaseApprovalRequest(Document):
 
 	if TYPE_CHECKING:
 		from frappe.types import DF
+
 		from press.marketplace.doctype.app_release_approval_code_comments.app_release_approval_code_comments import (
 			AppReleaseApprovalCodeComments,
 		)
@@ -56,9 +57,7 @@ class AppReleaseApprovalRequest(Document):
 
 	def before_save(self):
 		apps = frappe.get_all("Featured App", {"parent": "Marketplace Settings"}, pluck="app")
-		teams = frappe.get_all(
-			"Auto Release Team", {"parent": "Marketplace Settings"}, pluck="team"
-		)
+		teams = frappe.get_all("Auto Release Team", {"parent": "Marketplace Settings"}, pluck="team")
 		if self.team in teams or self.marketplace_app in apps:
 			self.status = "Approved"
 
@@ -262,7 +261,7 @@ def get_context(lines, index, size=2):
 	length = len(lines)
 	start = max(0, index - size)
 	end = min(index + size, length)
-	lines = lines[start : end + 1]  # noqa
+	lines = lines[start : end + 1]
 	return {
 		"line_number": index + 1,
 		"line_range": list(range(start + 1, end + 2)),
