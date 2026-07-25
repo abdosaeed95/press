@@ -332,10 +332,19 @@ FROM builder AS runtime-files
 
 USER root
 
+COPY slim-excluded-apps.txt /tmp/slim-excluded-apps.txt
+
 RUN install -m 0755 /home/frappe/.nvm/versions/node/v${NODE_VERSION}/bin/node /usr/local/bin/node \
   && mv /home/frappe/frappe-bench/sites/assets /home/frappe/runtime/sites-assets \
   && mkdir -p /home/frappe/frappe-bench/sites/assets \
   && chown -R frappe:frappe /home/frappe/runtime /home/frappe/frappe-bench/sites/assets \
+  && while IFS= read -r app; do \
+    [ -n "$app" ] || continue; \
+    /home/frappe/frappe-bench/env/bin/python -m pip uninstall --yes "$app"; \
+    rm -rf "/home/frappe/frappe-bench/apps/$app" "/home/frappe/runtime/sites-assets/$app"; \
+    sed -i "\\|^${app}$|d" /home/frappe/frappe-bench/sites/apps.txt; \
+  done < /tmp/slim-excluded-apps.txt \
+  && rm /tmp/slim-excluded-apps.txt \
   && find /home/frappe/frappe-bench/apps -type d \( -name node_modules -o -name .next -o -name .turbo -o -name .git \) -prune -exec rm -rf {} + \
   && find /home/frappe/frappe-bench/apps /home/frappe/runtime/sites-assets -type f -name '*.map' -delete \
   && rm -rf /home/frappe/.nvm /home/frappe/.cache /home/frappe/context /root/.cache /tmp/* \
