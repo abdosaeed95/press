@@ -160,10 +160,10 @@ class DockerBuildOutputParser:
 
 	def _add_step_to_steps_dict(self, split: "IndexSplit"):
 		line = split["line"]
-		if not line.startswith("[stage-"):
+		if not line.startswith("["):
 			return
 
-		name = line.split("]", maxsplit=1)[1].strip()
+		name = line.partition("]")[2].strip()
 		if not name.startswith("RUN"):
 			return
 
