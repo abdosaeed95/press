@@ -354,6 +354,7 @@ class DeployCandidateBuild(Document):
 					"remove_distutils": not is_distutils_supported,
 					"requires_version_based_get_pip": requires_version_based_get_pip,
 					"is_arm_build": self.platform == "arm64",
+					"slim_excluded_apps": self._get_slim_excluded_apps(),
 				},
 				is_path=True,
 			)

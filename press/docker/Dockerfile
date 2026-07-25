@@ -326,8 +326,7 @@ ENV HISTTIMEFORMAT "%Y-%m-%d %T "
 EXPOSE 8000 9000 2200 8088
 CMD ["supervisord"]
 
-# Flatten the built filesystem into a separate production runtime image. This
-# keeps the full image editable while excluding build-layer history from pulls.
+# Prepare independent runtime layers without retaining the builder history.
 FROM builder AS runtime-files
 
 USER root
@@ -352,9 +351,51 @@ RUN install -m 0755 /home/frappe/.nvm/versions/node/v${NODE_VERSION}/bin/node /u
   && fc-cache -f \
   && ldconfig
 
+FROM runtime-files AS runtime-layers
+
+RUN mkdir -p \
+    /runtime-layers/apps/home/frappe/frappe-bench \
+    /runtime-layers/assets/home/frappe \
+    /runtime-layers/bench/home/frappe \
+    /runtime-layers/python/home/frappe/frappe-bench \
+    /runtime-layers/system \
+    /runtime-layers/tooling/home/frappe \
+  && mv /home/frappe/frappe-bench/apps /runtime-layers/apps/home/frappe/frappe-bench/apps \
+  && mv /home/frappe/frappe-bench/env /runtime-layers/python/home/frappe/frappe-bench/env \
+  && mv /home/frappe/runtime /runtime-layers/assets/home/frappe/runtime \
+  && mv /home/frappe/frappe-bench /runtime-layers/bench/home/frappe/frappe-bench \
+  && mv /home/frappe/.local /runtime-layers/tooling/home/frappe/.local \
+  && chown -R frappe:frappe /runtime-layers/*/home/frappe \
+  && for path in /*; do \
+    case "$path" in \
+      /dev|/home|/proc|/runtime-layers|/sys) continue ;; \
+      /etc|/run) cp -a "$path" /runtime-layers/system/ ;; \
+      *) cp -al "$path" /runtime-layers/system/ ;; \
+    esac; \
+  done
+
 FROM scratch AS runtime
 
-COPY --from=runtime-files / /
+# Stable operating-system files.
+COPY --from=runtime-layers /runtime-layers/system/ /
+
+# Small user and bench metadata.
+COPY --from=runtime-layers /home /home
+COPY --from=runtime-layers /runtime-layers/tooling/ /
+COPY --from=runtime-layers /runtime-layers/bench/ /
+
+# Python dependencies remain reusable when only app source changes.
+COPY --from=runtime-layers /runtime-layers/python/ /
+
+# Keep each included app in its own reusable layer.
+{% for app in doc.apps %}
+{% if app.app_name not in slim_excluded_apps %}
+COPY --from=runtime-layers /runtime-layers/apps/home/frappe/frappe-bench/apps/{{ app.app }} /home/frappe/frappe-bench/apps/{{ app.app }}
+{% endif %}
+{% endfor %}
+
+# Runtime assets and Socket.IO dependencies.
+COPY --from=runtime-layers /runtime-layers/assets/ /
 
 ENV LANG=C.UTF-8 \
   HOME=/home/frappe \
