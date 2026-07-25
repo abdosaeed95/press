@@ -104,6 +104,10 @@ class DeployCandidate(Document):
 		"retry_count",
 	)
 
+	@property
+	def is_code_server_enabled(self):
+		return frappe.db.get_value("Release Group", self.group, "is_code_server_enabled")
+
 	@staticmethod
 	def get_list_query(query):
 		results = query.run(as_dict=True)

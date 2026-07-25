@@ -250,19 +250,27 @@ RUN git config --global --add safe.directory /home/frappe/context/apps/{{ app.ap
       {% endif %} \
       `#stage-apps-{{ app.app }}`
 
-  # Copy .git after get-app to retain history
+  {% if doc.is_code_server_enabled %}
+  # Code-server images retain the prepared Git metadata for interactive development.
   COPY --chown=frappe:frappe apps/{{ app.app }}/.git /home/frappe/frappe-bench/apps/{{ app.app }}/.git
 
-  # Use the submodule source prepared by App Release without embedding Git credentials.
+  # Code-server images also retain the prepared dashboard source.
   COPY --chown=frappe:frappe apps/{{ app.app }}/dashboard /home/frappe/frappe-bench/apps/{{ app.app }}/dashboard
+  {% endif %}
 
   # Build the prepared submodule source with caching
   RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 \
-      --mount=type=cache,target=/home/frappe/frappe-bench/apps/{{ app.app }}/node_modules,uid=1000,gid=1000 \
+      {% if not doc.is_code_server_enabled %}
+      --mount=type=bind,source=apps/{{ app.app }}/dashboard,target=/home/frappe/frappe-bench/apps/{{ app.app }}/dashboard \
+      --mount=type=cache,sharing=locked,target=/home/frappe/frappe-bench/apps/{{ app.app }}/dashboard/node_modules,uid=1000,gid=1000 \
+      {% endif %}
       cd /home/frappe/frappe-bench/apps/{{ app.app }}/dashboard \
-      && yarn install \
+      && yarn install --frozen-lockfile --non-interactive \
       && NODE_ENV=production yarn run build \
       && bench build --app {{ app.app }} \
+      {% if not doc.is_code_server_enabled %}
+      && find /home/frappe/frappe-bench/apps/{{ app.app }}/{{ app.app }}/public/dashboard -type f -name '*.map' -delete \
+      {% endif %}
       `#stage-apps-Build-{{ app.app }}`
   {% else %}
 
