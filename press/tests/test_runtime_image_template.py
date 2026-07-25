@@ -30,6 +30,16 @@ class TestRuntimeImageTemplate(unittest.TestCase):
 		self.assertGreater(len(copies), 6)
 		self.assertTrue(all(line.startswith("COPY --link --from=runtime-layers") for line in copies))
 
+	def test_each_runtime_app_is_an_independent_linked_layer(self):
+		template = DOCKERFILE.read_text(encoding="utf-8")
+
+		self.assertIn(
+			"COPY --link --from=runtime-layers "
+			"/runtime-layers/apps/home/frappe/frappe-bench/apps/{{ app.app }} "
+			"/home/frappe/frappe-bench/apps/{{ app.app }}",
+			template,
+		)
+
 	def test_runtime_keeps_prebuilt_assets_and_only_realtime_node_modules(self):
 		template = DOCKERFILE.read_text(encoding="utf-8")
 
