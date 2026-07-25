@@ -1,4 +1,4 @@
-# syntax = docker/dockerfile:experimental
+# syntax=docker/dockerfile:1.10
 FROM ubuntu:22.04{% if doc.apply_new_build %} AS builder{% endif %}
 
 ENV FRAPPE_DOCKER_BUILD True
@@ -401,25 +401,25 @@ RUN mkdir -p \
 FROM scratch AS runtime
 
 # Stable operating-system files.
-COPY --from=runtime-layers /runtime-layers/system/ /
+COPY --link --from=runtime-layers /runtime-layers/system/ /
 
 # Small user and bench metadata.
-COPY --from=runtime-layers /home /home
-COPY --from=runtime-layers /runtime-layers/tooling/ /
-COPY --from=runtime-layers /runtime-layers/bench/ /
+COPY --link --from=runtime-layers /home /home
+COPY --link --from=runtime-layers /runtime-layers/tooling/ /
+COPY --link --from=runtime-layers /runtime-layers/bench/ /
 
 # Python dependencies remain reusable when only app source changes.
-COPY --from=runtime-layers /runtime-layers/python/ /
+COPY --link --from=runtime-layers /runtime-layers/python/ /
 
 # Keep each included app in its own reusable layer.
 {% for app in doc.apps %}
 {% if app.app_name not in slim_excluded_apps %}
-COPY --from=runtime-layers /runtime-layers/apps/home/frappe/frappe-bench/apps/{{ app.app }} /home/frappe/frappe-bench/apps/{{ app.app }}
+COPY --link --from=runtime-layers /runtime-layers/apps/home/frappe/frappe-bench/apps/{{ app.app }} /home/frappe/frappe-bench/apps/{{ app.app }}
 {% endif %}
 {% endfor %}
 
 # Runtime assets and Socket.IO dependencies.
-COPY --from=runtime-layers /runtime-layers/assets/ /
+COPY --link --from=runtime-layers /runtime-layers/assets/ /
 
 ENV LANG=C.UTF-8 \
   HOME=/home/frappe \
