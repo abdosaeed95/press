@@ -60,7 +60,7 @@ repos:
 
       - id: cspell-modified-files
         name: check spelling of files
-        entry: sh -c "npx cspell --no-must-find-files --config .cspell.json `git diff --cached -p --name-status | cut -c3- | tr '\n' ' '`"
+        entry: npx cspell --no-must-find-files --config .cspell.json
         language: system
         stages: [pre-commit]
 
