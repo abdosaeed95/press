@@ -80,6 +80,7 @@ class ReleaseGroup(Document, TagHelpers):
 		from press.press.doctype.resource_tag.resource_tag import ResourceTag
 
 		apps: DF.Table[ReleaseGroupApp]
+		apply_new_build: DF.Check
 		bench_config: DF.Code | None
 		build_runtime_image: DF.Check
 		build_server: DF.Link | None

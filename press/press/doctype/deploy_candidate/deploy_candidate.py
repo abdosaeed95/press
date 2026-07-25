@@ -110,6 +110,10 @@ class DeployCandidate(Document):
 		return frappe.db.get_value("Release Group", self.group, "is_code_server_enabled")
 
 	@cached_property
+	def apply_new_build(self):
+		return frappe.db.get_value("Release Group", self.group, "apply_new_build")
+
+	@cached_property
 	def build_runtime_image(self):
 		return frappe.db.get_value("Release Group", self.group, "build_runtime_image")
 

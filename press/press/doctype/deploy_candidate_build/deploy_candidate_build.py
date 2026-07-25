@@ -324,7 +324,7 @@ class DeployCandidateBuild(Document):
 		return python_version in GET_PIP_VERSION_MODIFIED_URL
 
 	def _get_slim_excluded_apps(self) -> list[str]:
-		if not self.candidate.build_runtime_image:
+		if not self.candidate.apply_new_build or not self.candidate.build_runtime_image:
 			return []
 
 		excluded_apps = set(frappe.get_all("App", {"exclude_from_slim_images": True}, pluck="name"))
@@ -940,7 +940,8 @@ class DeployCandidateBuild(Document):
 			return tarinfo
 
 		tmp_file_path = tempfile.mkstemp(suffix=".tar.gz")[1]
-		with tarfile.open(tmp_file_path, "w:gz", compresslevel=9) as tar:
+		compresslevel = 9 if self.candidate.apply_new_build else 5
+		with tarfile.open(tmp_file_path, "w:gz", compresslevel=compresslevel) as tar:
 			if frappe.conf.developer_mode:
 				tar.add(self.build_directory, arcname=".", filter=fix_content_permission)
 			else:
@@ -964,6 +965,7 @@ class DeployCandidateBuild(Document):
 	def _run_agent_jobs(self):
 		context_filename = self._package_and_upload_context()
 		settings = self._fetch_registry_settings()
+		apply_new_build = bool(self.candidate.apply_new_build)
 
 		build_parameters = {
 			"filename": context_filename,
@@ -976,16 +978,22 @@ class DeployCandidateBuild(Document):
 			},
 			"no_cache": self.no_cache,
 			"no_push": self.no_push,
-			"image_compression": "zstd",
-			"image_compression_level": 22,
-			"force_compression": True,
-			"oci_mediatypes": True,
-			"build_runtime_image": bool(self.candidate.build_runtime_image),
+			"apply_new_build": apply_new_build,
+			"build_runtime_image": apply_new_build and bool(self.candidate.build_runtime_image),
 			# Next few values are not used by agent but are
 			# read in `process_run_build`
 			"deploy_candidate_build": self.name,
 			"deploy_after_build": self.deploy_after_build,
 		}
+		if apply_new_build:
+			build_parameters.update(
+				{
+					"image_compression": "zstd",
+					"image_compression_level": 22,
+					"force_compression": True,
+					"oci_mediatypes": True,
+				}
+			)
 		if self.platform == "arm64":
 			build_parameters.update({"platform": self.platform})
 
