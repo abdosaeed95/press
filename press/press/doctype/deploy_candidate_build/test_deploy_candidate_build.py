@@ -2,6 +2,7 @@
 # See license.txt
 
 
+import json
 import typing
 import unittest
 from unittest.mock import Mock, patch
@@ -49,13 +50,77 @@ class TestDeployCandidateBuild(unittest.TestCase):
 		self.x86_build_server = create_test_server(platform="x86_64", use_for_build=True)
 		self.arm_build_server = create_test_server(platform="arm64", use_for_build=True)
 
+	@patch("press.press.doctype.deploy_candidate_build.deploy_candidate_build.Agent")
+	def test_agent_build_publishes_runtime_image(self, agent):
+		build = self.deploy_candidate_build
+		frappe.db.set_value("Release Group", build.candidate.group, "build_runtime_image", 1)
+		build.build_server = self.x86_build_server.name
+		build.docker_image_repository = "registry.example.test/fodista/bench"
+		build.docker_image_tag = "build-001"
+		build._package_and_upload_context = Mock(return_value="context.tar.gz")
+		build._fetch_registry_settings = Mock(
+			return_value=frappe._dict(
+				{
+					"docker_registry_url": "registry.example.test",
+					"docker_registry_username": "user",
+					"docker_registry_password": "password",
+				}
+			)
+		)
+
+		build._run_agent_jobs()
+
+		parameters = agent.return_value.run_build.call_args.args[0]
+		self.assertTrue(parameters["build_runtime_image"])
+
+	@patch("press.press.doctype.deploy_candidate_build.deploy_candidate_build.Agent")
+	def test_agent_build_skips_runtime_image_without_opt_in(self, agent):
+		build = self.deploy_candidate_build
+		build.build_server = self.x86_build_server.name
+		build.docker_image_repository = "registry.example.test/fodista/bench"
+		build.docker_image_tag = "build-001"
+		build._package_and_upload_context = Mock(return_value="context.tar.gz")
+		build._fetch_registry_settings = Mock(
+			return_value=frappe._dict(
+				{
+					"docker_registry_url": "registry.example.test",
+					"docker_registry_username": "user",
+					"docker_registry_password": "password",
+				}
+			)
+		)
+
+		build._run_agent_jobs()
+
+		parameters = agent.return_value.run_build.call_args.args[0]
+		self.assertFalse(parameters["build_runtime_image"])
+
+	def test_runtime_image_digest_is_saved_from_agent(self):
+		build = self.deploy_candidate_build
+		build._set_output_parsers = Mock()
+		build.has_remote_build_failed = Mock(return_value=False)
+		build._update_status_from_remote_build_job = Mock()
+		build.correct_upload_step_status = Mock()
+		job = frappe._dict(
+			{
+				"data": json.dumps(
+					{
+						"output": "{}",
+						"runtime_image_digest": "sha256:runtime",
+					}
+				)
+			}
+		)
+
+		build._process_run_build(job, {}, None)
+
+		self.assertEqual(build.runtime_image_digest, "sha256:runtime")
+
 	@patch("press.press.doctype.deploy_candidate.deploy_candidate.frappe.enqueue_doc", new=Mock())
 	@patch("press.press.doctype.deploy_candidate.deploy_candidate.frappe.db.commit", new=Mock())
 	@patch.object(DeployCandidateBuild, "_process_run_build", new=Mock())
 	@patch.object(Bench, "after_insert", new=Mock())
 	def test_correct_build_flow(self, mock_enqueue):
-		import json
-
 		app = create_test_app()
 
 		group = create_test_release_group(
@@ -110,8 +175,6 @@ class TestDeployCandidateBuild(unittest.TestCase):
 	@patch.object(Bench, "after_insert", new=Mock())
 	@patch.object(DeployCandidateBuild, "_process_run_build", new=Mock())
 	def test_multi_server_deploy(self, mock_enqueue):
-		import json
-
 		app = create_test_app()
 
 		group = create_test_release_group(

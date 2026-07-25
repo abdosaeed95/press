@@ -81,6 +81,7 @@ class ReleaseGroup(Document, TagHelpers):
 
 		apps: DF.Table[ReleaseGroupApp]
 		bench_config: DF.Code | None
+		build_runtime_image: DF.Check
 		build_server: DF.Link | None
 		central_bench: DF.Check
 		check_dependent_apps: DF.Check
