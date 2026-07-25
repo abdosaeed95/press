@@ -42,6 +42,9 @@ from press.press.doctype.deploy_candidate.utils import (
 	load_pyproject,
 )
 from press.press.doctype.deploy_candidate.validations import PreBuildValidations
+from press.press.doctype.slim_excluded_apps.slim_excluded_apps import (
+	get_slim_excluded_apps,
+)
 from press.utils import get_current_team, log_error
 from press.utils.jobs import get_background_jobs, stop_background_job
 
@@ -323,6 +326,15 @@ class DeployCandidateBuild(Document):
 		python_version = self._parse_python_version(version)
 		return python_version in GET_PIP_VERSION_MODIFIED_URL
 
+	def _get_slim_excluded_apps(self) -> list[str]:
+		if not self.candidate.build_runtime_image:
+			return []
+
+		excluded_apps = set(get_slim_excluded_apps())
+		return [
+			app.app_name for app in self.candidate.apps if app.app != "frappe" and app.app in excluded_apps
+		]
+
 	def _generate_dockerfile(self):
 		dockerfile = os.path.join(self.build_directory, "Dockerfile")
 		with open(dockerfile, "w") as f:
@@ -366,6 +378,11 @@ class DeployCandidateBuild(Document):
 		with open(apps_txt, "w") as f:
 			content = "\n".join([app.app_name for app in self.candidate.apps])
 			f.write(content)
+
+	def _generate_slim_excluded_apps_txt(self):
+		excluded_apps_txt = os.path.join(self.build_directory, "slim-excluded-apps.txt")
+		with open(excluded_apps_txt, "w") as f:
+			f.writelines(f"{app}\n" for app in self._get_slim_excluded_apps())
 
 	def _copy_config_files(self):
 		for target in ["common_site_config.json", "supervisord.conf", ".vimrc"]:
@@ -874,6 +891,7 @@ class DeployCandidateBuild(Document):
 			self._generate_config_from_template(config_template)
 
 		self._generate_apps_txt()
+		self._generate_slim_excluded_apps_txt()
 		self.candidate.generate_ssh_keys(self.build_directory)
 
 	def _prepare_build(self):
