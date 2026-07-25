@@ -1,13 +1,14 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2019, Frappe and contributors
 # For license information, please see license.txt
 
 
 import typing
 
-import rq
 import frappe
+import rq
+from frappe import _
 from frappe.model.document import Document
+
 from press.utils.jobs import has_job_timeout_exceeded
 
 if typing.TYPE_CHECKING:
@@ -26,6 +27,7 @@ class App(Document):
 		branch: DF.Data | None
 		enable_auto_deploy: DF.Check
 		enabled: DF.Check
+		exclude_from_slim_images: DF.Check
 		frappe: DF.Check
 		installation: DF.Data | None
 		public: DF.Check
@@ -38,7 +40,11 @@ class App(Document):
 		url: DF.Data | None
 	# end: auto-generated types
 
-	dashboard_fields = ["title"]
+	dashboard_fields: typing.ClassVar = ["title"]
+
+	def validate(self):
+		if self.name == "frappe" and self.exclude_from_slim_images:
+			frappe.throw(_("Frappe cannot be excluded from slim images."))
 
 	def add_source(
 		self,

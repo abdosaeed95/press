@@ -12,6 +12,7 @@
   "column_break_5",
   "frappe",
   "public",
+  "exclude_from_slim_images",
   "section_break_9",
   "url",
   "scrubbed",
@@ -76,6 +77,14 @@
   },
   {
    "default": "0",
+   "description": "Remove this app from slim runtime images. Full images still include it.",
+   "fieldname": "exclude_from_slim_images",
+   "fieldtype": "Check",
+   "in_standard_filter": 1,
+   "label": "Exclude From Slim Images"
+  },
+  {
+   "default": "0",
    "fieldname": "public",
    "fieldtype": "Check",
    "hidden": 1,
@@ -126,7 +135,7 @@
   }
  ],
  "links": [],
- "modified": "2021-02-15 10:11:04.324983",
+ "modified": "2026-07-25 17:17:42.533656",
  "modified_by": "Administrator",
  "module": "Press",
  "name": "App",

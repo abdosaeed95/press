@@ -42,9 +42,6 @@ from press.press.doctype.deploy_candidate.utils import (
 	load_pyproject,
 )
 from press.press.doctype.deploy_candidate.validations import PreBuildValidations
-from press.press.doctype.slim_excluded_apps.slim_excluded_apps import (
-	get_slim_excluded_apps,
-)
 from press.utils import get_current_team, log_error
 from press.utils.jobs import get_background_jobs, stop_background_job
 
@@ -330,7 +327,7 @@ class DeployCandidateBuild(Document):
 		if not self.candidate.build_runtime_image:
 			return []
 
-		excluded_apps = set(get_slim_excluded_apps())
+		excluded_apps = set(frappe.get_all("App", {"exclude_from_slim_images": True}, pluck="name"))
 		return [
 			app.app_name for app in self.candidate.apps if app.app != "frappe" and app.app in excluded_apps
 		]
