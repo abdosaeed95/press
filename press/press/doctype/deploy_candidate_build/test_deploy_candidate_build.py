@@ -53,7 +53,11 @@ class TestDeployCandidateBuild(unittest.TestCase):
 	@patch("press.press.doctype.deploy_candidate_build.deploy_candidate_build.Agent")
 	def test_agent_build_publishes_runtime_image(self, agent):
 		build = self.deploy_candidate_build
-		frappe.db.set_value("Release Group", build.candidate.group, "build_runtime_image", 1)
+		frappe.db.set_value(
+			"Release Group",
+			build.candidate.group,
+			{"apply_new_build": 1, "build_runtime_image": 1},
+		)
 		build.build_server = self.x86_build_server.name
 		build.docker_image_repository = "registry.example.test/fodista/bench"
 		build.docker_image_tag = "build-001"
@@ -71,7 +75,9 @@ class TestDeployCandidateBuild(unittest.TestCase):
 		build._run_agent_jobs()
 
 		parameters = agent.return_value.run_build.call_args.args[0]
+		self.assertTrue(parameters["apply_new_build"])
 		self.assertTrue(parameters["build_runtime_image"])
+		self.assertEqual(parameters["image_compression"], "zstd")
 
 	@patch("press.press.doctype.deploy_candidate_build.deploy_candidate_build.Agent")
 	def test_agent_build_skips_runtime_image_without_opt_in(self, agent):
@@ -93,7 +99,9 @@ class TestDeployCandidateBuild(unittest.TestCase):
 		build._run_agent_jobs()
 
 		parameters = agent.return_value.run_build.call_args.args[0]
+		self.assertFalse(parameters["apply_new_build"])
 		self.assertFalse(parameters["build_runtime_image"])
+		self.assertNotIn("image_compression", parameters)
 
 	def test_runtime_image_digest_is_saved_from_agent(self):
 		build = self.deploy_candidate_build

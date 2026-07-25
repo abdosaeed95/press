@@ -1,5 +1,5 @@
 # syntax = docker/dockerfile:experimental
-FROM ubuntu:22.04 AS builder
+FROM ubuntu:22.04{% if doc.apply_new_build %} AS builder{% endif %}
 
 ENV FRAPPE_DOCKER_BUILD True
 ENV LANG C.UTF-8
@@ -250,6 +250,7 @@ RUN git config --global --add safe.directory /home/frappe/context/apps/{{ app.ap
       {% endif %} \
       `#stage-apps-{{ app.app }}`
 
+  {% if doc.apply_new_build %}
   {% if doc.is_code_server_enabled %}
   # Code-server images retain the prepared Git metadata for interactive development.
   COPY --chown=frappe:frappe apps/{{ app.app }}/.git /home/frappe/frappe-bench/apps/{{ app.app }}/.git
@@ -261,8 +262,14 @@ RUN git config --global --add safe.directory /home/frappe/context/apps/{{ app.ap
   # Build the prepared submodule source with caching
   RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 \
       {% if not doc.is_code_server_enabled %}
-      --mount=type=bind,source=apps/{{ app.app }}/dashboard,target=/home/frappe/frappe-bench/apps/{{ app.app }}/dashboard \
+      --mount=type=bind,source=apps/{{ app.app }}/dashboard,target=/tmp/{{ app.app }}-dashboard-source \
       --mount=type=cache,sharing=locked,target=/home/frappe/frappe-bench/apps/{{ app.app }}/dashboard/node_modules,uid=1000,gid=1000 \
+      {% endif %}
+      {% if not doc.is_code_server_enabled %}
+      find /home/frappe/frappe-bench/apps/{{ app.app }}/dashboard -mindepth 1 -maxdepth 1 ! -name node_modules -exec rm -rf {} + \
+      && tar --exclude='./node_modules' -C /tmp/{{ app.app }}-dashboard-source -cf - . \
+        | tar -C /home/frappe/frappe-bench/apps/{{ app.app }}/dashboard -xf - \
+      && \
       {% endif %}
       cd /home/frappe/frappe-bench/apps/{{ app.app }}/dashboard \
       && yarn install --frozen-lockfile --non-interactive \
@@ -270,8 +277,22 @@ RUN git config --global --add safe.directory /home/frappe/context/apps/{{ app.ap
       && bench build --app {{ app.app }} \
       {% if not doc.is_code_server_enabled %}
       && find /home/frappe/frappe-bench/apps/{{ app.app }}/{{ app.app }}/public/dashboard -type f -name '*.map' -delete \
+      && find /home/frappe/frappe-bench/apps/{{ app.app }}/dashboard -mindepth 1 -maxdepth 1 ! -name node_modules -exec rm -rf {} + \
       {% endif %}
       `#stage-apps-Build-{{ app.app }}`
+  {% else %}
+  # Preserve the original full image source and build flow.
+  COPY --chown=frappe:frappe apps/{{ app.app }}/.git /home/frappe/frappe-bench/apps/{{ app.app }}/.git
+  COPY --chown=frappe:frappe apps/{{ app.app }}/dashboard /home/frappe/frappe-bench/apps/{{ app.app }}/dashboard
+
+  RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 \
+      --mount=type=cache,target=/home/frappe/frappe-bench/apps/{{ app.app }}/node_modules,uid=1000,gid=1000 \
+      cd /home/frappe/frappe-bench/apps/{{ app.app }}/dashboard \
+      && yarn install \
+      && NODE_ENV=production yarn run build \
+      && bench build --app {{ app.app }} \
+      `#stage-apps-Build-{{ app.app }}`
+  {% endif %}
   {% else %}
 
   RUN --mount=type=cache,sharing=locked,target=/home/frappe/.cache,uid=1000,gid=1000 \
@@ -304,6 +325,7 @@ RUN --mount=type=bind,source=app_updates/{{ app.app }},target=/home/frappe/conte
 COPY --chown=frappe:frappe config /home/frappe/frappe-bench/config
 COPY --chown=frappe:frappe apps.txt /home/frappe/frappe-bench/sites/apps.txt
 
+{% if doc.apply_new_build %}
 # Keep only the Node.js dependency closure needed by Frappe realtime.
 RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 \
   mkdir -p /home/frappe/runtime/socketio \
@@ -311,6 +333,7 @@ RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 \
   && cp apps/frappe/yarn.lock /home/frappe/runtime/socketio/yarn.lock \
   && cd /home/frappe/runtime/socketio \
   && yarn install --frozen-lockfile --production --ignore-scripts --non-interactive
+{% endif %}
 
 # Create custom mounts
 {% for m in doc.container_mounts %}
@@ -326,6 +349,7 @@ ENV HISTTIMEFORMAT "%Y-%m-%d %T "
 EXPOSE 8000 9000 2200 8088
 CMD ["supervisord"]
 
+{% if doc.apply_new_build %}
 # Prepare independent runtime layers without retaining the builder history.
 FROM builder AS runtime-files
 
@@ -425,3 +449,4 @@ FROM builder AS full
 COPY --chown=frappe:frappe apps/{{ app.app }}/dashboard /home/frappe/frappe-bench/apps/{{ app.app }}/dashboard
 {% endif %}
 {% endfor %}
+{% endif %}
