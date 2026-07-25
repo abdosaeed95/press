@@ -78,6 +78,8 @@ class TestDeployCandidateBuild(unittest.TestCase):
 		self.assertTrue(parameters["apply_new_build"])
 		self.assertTrue(parameters["build_runtime_image"])
 		self.assertEqual(parameters["image_compression"], "zstd")
+		self.assertEqual(parameters["image_compression_level"], 22)
+		self.assertTrue(parameters["force_compression"])
 
 	@patch("press.press.doctype.deploy_candidate_build.deploy_candidate_build.Agent")
 	def test_agent_build_skips_runtime_image_without_opt_in(self, agent):
