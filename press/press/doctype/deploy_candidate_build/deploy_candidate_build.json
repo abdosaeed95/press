@@ -26,6 +26,7 @@
   "column_break_gi6p",
   "docker_image_tag",
   "docker_image",
+  "runtime_image_digest",
   "times_section",
   "build_start",
   "build_duration",
@@ -259,6 +260,13 @@
    "fieldname": "docker_image",
    "fieldtype": "Data",
    "label": "Docker image",
+   "read_only": 1
+  },
+  {
+   "fieldname": "runtime_image_digest",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Runtime Image Digest",
    "read_only": 1
   },
   {

@@ -210,6 +210,7 @@ class DeployCandidateBuild(Document):
 		platform: DF.Data | None
 		retry_count: DF.Int
 		run_build: DF.Check
+		runtime_image_digest: DF.Data | None
 		scheduled_time: DF.Datetime | None
 		status: DF.Literal["Draft", "Scheduled", "Pending", "Preparing", "Running", "Success", "Failure"]
 		team: DF.Link
@@ -795,6 +796,7 @@ class DeployCandidateBuild(Document):
 	):
 		job_data = json.loads(job.data or "{}")
 		output_data = json.loads(job_data.get("output", "{}"))
+		self.runtime_image_digest = job_data.get("runtime_image_digest")
 
 		"""
 		Due to how agent - press communication takes place, every time an
@@ -962,6 +964,7 @@ class DeployCandidateBuild(Document):
 			"image_compression_level": 22,
 			"force_compression": True,
 			"oci_mediatypes": True,
+			"build_runtime_image": bool(self.candidate.build_runtime_image),
 			# Next few values are not used by agent but are
 			# read in `process_run_build`
 			"deploy_candidate_build": self.name,

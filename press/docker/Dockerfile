@@ -1,5 +1,5 @@
 # syntax = docker/dockerfile:experimental
-FROM ubuntu:22.04
+FROM ubuntu:22.04 AS builder
 
 ENV FRAPPE_DOCKER_BUILD True
 ENV LANG C.UTF-8
@@ -304,6 +304,14 @@ RUN --mount=type=bind,source=app_updates/{{ app.app }},target=/home/frappe/conte
 COPY --chown=frappe:frappe config /home/frappe/frappe-bench/config
 COPY --chown=frappe:frappe apps.txt /home/frappe/frappe-bench/sites/apps.txt
 
+# Keep only the Node.js dependency closure needed by Frappe realtime.
+RUN --mount=type=cache,target=/home/frappe/.cache,uid=1000,gid=1000 \
+  mkdir -p /home/frappe/runtime/socketio \
+  && node -e 'const fs = require("fs"); const source = require("./apps/frappe/package.json"); const names = ["socket.io", "@redis/client", "superagent", "cookie"]; const dependencies = Object.fromEntries(names.map((name) => [name, source.dependencies[name]])); fs.writeFileSync("/home/frappe/runtime/socketio/package.json", JSON.stringify({ private: true, dependencies }, null, 2))' \
+  && cp apps/frappe/yarn.lock /home/frappe/runtime/socketio/yarn.lock \
+  && cd /home/frappe/runtime/socketio \
+  && yarn install --frozen-lockfile --production --ignore-scripts --non-interactive
+
 # Create custom mounts
 {% for m in doc.container_mounts %}
 RUN mkdir -p {{ m.destination }} && \
@@ -317,3 +325,53 @@ ENV HISTTIMEFORMAT "%Y-%m-%d %T "
 
 EXPOSE 8000 9000 2200 8088
 CMD ["supervisord"]
+
+# Flatten the built filesystem into a separate production runtime image. This
+# keeps the full image editable while excluding build-layer history from pulls.
+FROM builder AS runtime-files
+
+USER root
+
+RUN install -m 0755 /home/frappe/.nvm/versions/node/v${NODE_VERSION}/bin/node /usr/local/bin/node \
+  && mv /home/frappe/frappe-bench/sites/assets /home/frappe/runtime/sites-assets \
+  && mkdir -p /home/frappe/frappe-bench/sites/assets \
+  && chown -R frappe:frappe /home/frappe/runtime /home/frappe/frappe-bench/sites/assets \
+  && find /home/frappe/frappe-bench/apps -type d \( -name node_modules -o -name .next -o -name .turbo -o -name .git \) -prune -exec rm -rf {} + \
+  && find /home/frappe/frappe-bench/apps /home/frappe/runtime/sites-assets -type f -name '*.map' -delete \
+  && rm -rf /home/frappe/.nvm /home/frappe/.cache /home/frappe/context /root/.cache /tmp/* \
+  && rm -rf /var/lib/apt/lists/* /var/cache/apt/* /usr/share/doc/* /usr/share/man/* /usr/share/info/* /tmp/* \
+  && fc-cache -f \
+  && ldconfig
+
+FROM scratch AS runtime
+
+COPY --from=runtime-files / /
+
+ENV LANG=C.UTF-8 \
+  HOME=/home/frappe \
+  PATH="/home/frappe/.local/bin:/home/frappe/frappe-bench/env/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+  NODE_PATH=/home/frappe/runtime/socketio/node_modules \
+  PYTHONUNBUFFERED=1 \
+  OPENBLAS_NUM_THREADS=1 \
+  MKL_NUM_THREADS=1 \
+  FRAPPE_HARD_LINK_ASSETS=True
+{% for v in doc.environment_variables %}
+ENV {{v.key}} {{ v.value }}
+{% endfor %}
+
+USER frappe
+WORKDIR /home/frappe/frappe-bench
+
+EXPOSE 8000 9000
+CMD ["/home/frappe/frappe-bench/env/bin/gunicorn", "--chdir", "/home/frappe/frappe-bench/sites", "--bind", "0.0.0.0:8000", "--workers", "6", "--timeout", "120", "--graceful-timeout", "30", "--worker-tmp-dir", "/dev/shm", "frappe.app:application", "--preload", "--max-requests", "5000", "--max-requests-jitter", "1000"]
+
+# Preserve the current image as the default target for Agent-managed benches,
+# SSH, code-server, and in-place source updates.
+FROM builder AS full
+
+{% for app in doc.apps %}
+{% if app.app == "fodista" and not doc.is_code_server_enabled %}
+# Keep Fodista dashboard source available for one-off maintenance builds.
+COPY --chown=frappe:frappe apps/{{ app.app }}/dashboard /home/frappe/frappe-bench/apps/{{ app.app }}/dashboard
+{% endif %}
+{% endfor %}

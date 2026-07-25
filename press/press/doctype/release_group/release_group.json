@@ -49,6 +49,7 @@
   "use_app_cache",
   "compress_app_cache",
   "use_delta_builds",
+  "build_runtime_image",
   "column_break_9efq",
   "merge_all_rq_queues",
   "merge_default_and_short_rq_queues",
@@ -363,6 +364,13 @@
    "fieldname": "use_delta_builds",
    "fieldtype": "Check",
    "label": "Use Delta Builds"
+  },
+  {
+   "default": "0",
+   "description": "Build an immutable image for Console self-hosted services. Enable only when apps do not require app-owned Node.js processes at runtime.",
+   "fieldname": "build_runtime_image",
+   "fieldtype": "Check",
+   "label": "Build Slim Runtime Image"
   },
   {
    "fieldname": "build_server",

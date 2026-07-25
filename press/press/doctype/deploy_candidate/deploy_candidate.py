@@ -11,6 +11,7 @@ import shlex
 import subprocess
 import typing
 from datetime import datetime, timedelta
+from functools import cached_property
 from subprocess import Popen
 from typing import Literal
 
@@ -104,9 +105,13 @@ class DeployCandidate(Document):
 		"retry_count",
 	)
 
-	@property
+	@cached_property
 	def is_code_server_enabled(self):
 		return frappe.db.get_value("Release Group", self.group, "is_code_server_enabled")
+
+	@cached_property
+	def build_runtime_image(self):
+		return frappe.db.get_value("Release Group", self.group, "build_runtime_image")
 
 	@staticmethod
 	def get_list_query(query):
