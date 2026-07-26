@@ -29,6 +29,7 @@ class App(Document):
 		enabled: DF.Check
 		exclude_from_slim_images: DF.Check
 		frappe: DF.Check
+		hide_from_updates: DF.Check
 		installation: DF.Data | None
 		public: DF.Check
 		repo: DF.Data | None

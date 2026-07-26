@@ -11,6 +11,7 @@
 					onClick: () =>
 						$resources.changeGroup.submit({
 							skip_failing_patches: skipFailingPatches,
+							install_all_apps: installAllApps,
 							group: targetGroup.value,
 							name: site
 						})
@@ -52,6 +53,11 @@
 					label="Skip failing patches if any"
 					type="checkbox"
 					v-model="skipFailingPatches"
+				/>
+				<FormControl
+					label="Install all apps from the destination Bench Group"
+					type="checkbox"
+					v-model="installAllApps"
 				/>
 			</div>
 			<p v-else-if="!errorMessage" class="text-md text-base text-gray-800">
@@ -109,6 +115,7 @@ export default {
 			},
 			newGroupTitle: '',
 			skipFailingPatches: false,
+			installAllApps: false,
 			showCloneBenchDialog: false,
 			selectedServer: null
 		};

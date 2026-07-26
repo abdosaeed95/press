@@ -26,6 +26,7 @@
   "site_backup",
   "skipped_backups",
   "skipped_failing_patches",
+  "install_all_apps",
   "section_break_luvm",
   "deactivate_site_job",
   "update_job",
@@ -219,6 +220,14 @@
    "fieldname": "skipped_backups",
    "fieldtype": "Check",
    "label": "Skipped Backups",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "install_all_apps",
+   "fieldtype": "Check",
+   "label": "Install All Apps",
    "no_copy": 1,
    "read_only": 1
   },

@@ -729,7 +729,7 @@ erpnext 0.8.3	    HEAD
 			"Success",
 			steps=[{"name": "Move Site", "status": "Success"}],
 		):
-			change_group(site.name, group2.name)
+			change_group(site.name, group2.name, install_all_apps=True)
 
 			responses.get(
 				f"https://{site.host_name}/",
@@ -738,6 +738,7 @@ erpnext 0.8.3	    HEAD
 			poll_pending_jobs()
 
 			site_update = frappe.get_last_doc("Site Update")
+			self.assertTrue(site_update.install_all_apps)
 			job = frappe.get_doc("Agent Job", site_update.update_job)
 
 			process_update_site_job_update(job)

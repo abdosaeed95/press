@@ -1189,7 +1189,13 @@ class Site(Document, TagHelpers):
 		frappe.delete_doc("Site Update", site_update)
 
 	@frappe.whitelist()
-	def move_to_group(self, group, skip_failing_patches=False, skip_backups=False):
+	def move_to_group(
+		self,
+		group,
+		skip_failing_patches=False,
+		skip_backups=False,
+		install_all_apps=False,
+	):
 		log_site_activity(self.name, "Update")
 
 		return frappe.get_doc(
@@ -1199,6 +1205,7 @@ class Site(Document, TagHelpers):
 				"destination_group": group,
 				"skipped_failing_patches": skip_failing_patches,
 				"skipped_backups": skip_backups,
+				"install_all_apps": install_all_apps,
 				"ignore_past_failures": True,
 			}
 		).insert()

@@ -13,6 +13,7 @@
   "frappe",
   "public",
   "exclude_from_slim_images",
+  "hide_from_updates",
   "section_break_9",
   "url",
   "scrubbed",
@@ -82,6 +83,14 @@
    "fieldtype": "Check",
    "in_standard_filter": 1,
    "label": "Exclude From Slim Images"
+  },
+  {
+   "default": "0",
+   "description": "Keep this app on its currently deployed release and hide it from Bench Group update candidates.",
+   "fieldname": "hide_from_updates",
+   "fieldtype": "Check",
+   "in_standard_filter": 1,
+   "label": "Hide From Updates"
   },
   {
    "default": "0",
