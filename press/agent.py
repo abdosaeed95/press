@@ -365,6 +365,7 @@ class Agent:
 		skip_backups=False,
 		before_migrate_scripts=None,
 		skip_search_index=True,
+		install_all_apps=False,
 	):
 		activate = site.status_before_update in ("Active", "Broken")
 		data = {
@@ -374,6 +375,7 @@ class Agent:
 			"skip_backups": skip_backups,
 			"before_migrate_scripts": before_migrate_scripts,
 			"skip_search_index": skip_search_index,
+			"install_all_apps": install_all_apps,
 		}
 		return self.create_agent_job(
 			f"Update Site {deploy_type}",
@@ -924,7 +926,9 @@ class Agent:
 			)
 
 	def raise_if_past_requests_have_failed(self):
-		failures = None#frappe.db.get_value("Agent Request Failure", {"server": self.server}, "failure_count")
+		failures = (
+			None  # frappe.db.get_value("Agent Request Failure", {"server": self.server}, "failure_count")
+		)
 		if failures:
 			raise AgentRequestSkippedException(f"Previous {failures} requests have failed. Try again later.")
 

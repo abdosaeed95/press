@@ -169,3 +169,8 @@ docs/superpowers/
 .agents/skills/superpowers/
 .codex/superpowers/
 superpowers/
+output/
+playwright-report/
+test-results/
+blob-report/
+.playwright/

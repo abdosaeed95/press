@@ -985,6 +985,7 @@ class ReleaseGroup(Document, TagHelpers):
 
 	def get_app_updates(self, current_apps):
 		next_apps = self.get_next_apps(current_apps)
+		hidden_apps = set(frappe.get_all("App", {"hide_from_updates": True}, pluck="name"))
 
 		apps = []
 		for app in next_apps:
@@ -1010,7 +1011,9 @@ class ReleaseGroup(Document, TagHelpers):
 
 			next_hash = app.hash
 
-			update_available = not current_hash or current_hash != next_hash or will_branch_change
+			update_available = app.app not in hidden_apps and (
+				not current_hash or current_hash != next_hash or will_branch_change
+			)
 			if not app.releases:
 				update_available = False
 

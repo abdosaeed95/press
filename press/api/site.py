@@ -282,7 +282,6 @@ def validate_plan(server, plan):
 		frappe.db.get_value("Site Plan", plan, "price_usd") > 0
 		or frappe.db.get_value("Site Plan", plan, "dedicated_server_plan") == 1
 	):
-
 		return
 	if (
 		frappe.session.data.user_type == "System User"
@@ -1743,9 +1742,8 @@ def check_domain_proxied(domain) -> str | None:
 	except requests.exceptions.RequestException as e:
 		frappe.throw("Unable to connect to the domain. Is the DNS correct?\n\n" + str(e))
 	else:
-		if server := res.headers.get("server"):
-			if server.casefold() not in FIRST_PARTY_SERVER_HEADERS:  # eg: cloudflare
-				return server
+		if (server := res.headers.get("server")) and server.casefold() not in FIRST_PARTY_SERVER_HEADERS:
+			return server
 
 
 def check_dns_cname_a(name, domain, ignore_proxying=False):
@@ -2214,13 +2212,17 @@ def clone_group(name: str, new_group_title: str, server: str | None = None):
 
 @frappe.whitelist()
 @protected("Site")
-def change_group(name, group, skip_failing_patches=False):
+def change_group(name, group, skip_failing_patches=False, install_all_apps=False):
 	team = frappe.db.get_value("Release Group", group, "team")
 	if team != get_current_team():
 		frappe.throw(f"Bench {group} does not belong to your team")
 
 	site = frappe.get_doc("Site", name)
-	site.move_to_group(group, skip_failing_patches=skip_failing_patches)
+	site.move_to_group(
+		group,
+		skip_failing_patches=skip_failing_patches,
+		install_all_apps=install_all_apps,
+	)
 
 
 @frappe.whitelist()

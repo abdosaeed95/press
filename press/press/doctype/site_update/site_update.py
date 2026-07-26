@@ -52,6 +52,7 @@ class SiteUpdate(Document):
 		difference: DF.Link | None
 		difference_deploy_type: DF.Literal["", "Pull", "Migrate"]
 		group: DF.Link | None
+		install_all_apps: DF.Check
 		physical_backup_restoration: DF.Link | None
 		recover_job: DF.Link | None
 		scheduled_time: DF.Datetime | None
@@ -311,6 +312,7 @@ class SiteUpdate(Document):
 			skip_backups=self.skipped_backups or self.backup_type == "Physical",
 			before_migrate_scripts=self.get_before_migrate_scripts(),
 			skip_search_index=self.is_destination_above_v12,
+			install_all_apps=self.install_all_apps,
 		)
 		self.set_update_job_value(job)
 

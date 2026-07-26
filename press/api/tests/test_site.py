@@ -673,17 +673,20 @@ insights 0.8.3	    HEAD
 		database = create_test_remote_file().name
 		public = create_test_remote_file().name
 		private = create_test_remote_file().name
-		with fake_agent_job(
-			"New Site from Backup",
-			"Success",
-			data=frappe._dict(
-				output="""frappe	15.0.0-dev HEAD
+		with (
+			fake_agent_job(
+				"New Site from Backup",
+				"Success",
+				data=frappe._dict(
+					output="""frappe	15.0.0-dev HEAD
 erpnext 0.8.3	    HEAD
 """
+				),
 			),
-		), fake_agent_job(
-			"Add Site to Upstream",
-			"Success",
+			fake_agent_job(
+				"Add Site to Upstream",
+				"Success",
+			),
 		):
 			new(
 				{
@@ -729,7 +732,7 @@ erpnext 0.8.3	    HEAD
 			"Success",
 			steps=[{"name": "Move Site", "status": "Success"}],
 		):
-			change_group(site.name, group2.name)
+			change_group(site.name, group2.name, install_all_apps=True)
 
 			responses.get(
 				f"https://{site.host_name}/",
@@ -738,6 +741,7 @@ erpnext 0.8.3	    HEAD
 			poll_pending_jobs()
 
 			site_update = frappe.get_last_doc("Site Update")
+			self.assertTrue(site_update.install_all_apps)
 			job = frappe.get_doc("Agent Job", site_update.update_job)
 
 			process_update_site_job_update(job)

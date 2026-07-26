@@ -435,6 +435,16 @@ class TestAPIBenchConfig(FrappeTestCase):
 		self.rg.reload()
 		self.assertTrue(deploy_information(self.rg.name)["update_available"])
 
+	def test_deploy_information_hides_apps_disabled_for_updates(self):
+		create_test_bench(group=self.rg)
+		app = self.rg.apps[0]
+		create_test_app_release(frappe.get_doc("App Source", app.source))
+		frappe.db.set_value("App", app.app, "hide_from_updates", True)
+
+		update = find(deploy_information(self.rg.name)["apps"], lambda update: update.app == app.app)
+
+		self.assertFalse(update.update_available)
+
 	def test_dependencies_lists_all_dependencies(self):
 		deps = [
 			{"key": "NODE_VERSION", "value": "16.11"},
