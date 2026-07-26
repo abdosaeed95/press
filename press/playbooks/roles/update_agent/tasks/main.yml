@@ -1,4 +1,12 @@
 ---
+- name: Ensure Agent Repository Ownership
+  become: yes
+  file:
+    path: /home/frappe/agent/repo
+    owner: frappe
+    group: frappe
+    recurse: yes
+
 - name: Update Agent Repository Remote
   become: yes
   become_user: frappe
@@ -31,6 +39,8 @@
     chdir: /home/frappe/agent
 
 - name: Install Agent
+  become: yes
+  become_user: frappe
   command: './env/bin/pip install -e /home/frappe/agent/repo'
   args:
     chdir: /home/frappe/agent
