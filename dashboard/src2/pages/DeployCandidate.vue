@@ -47,7 +47,7 @@
 				</div>
 			</div>
 			<div>
-				<div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+				<div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
 					<div>
 						<div class="text-sm font-medium text-gray-500">Creation</div>
 						<div class="mt-2 text-sm text-gray-900">
@@ -79,6 +79,16 @@
 						<div class="mt-2 text-sm text-gray-900">
 							{{
 								deploy.build_end ? $format.date(deploy.build_end, 'lll') : '-'
+							}}
+						</div>
+					</div>
+					<div>
+						<div class="text-sm font-medium text-gray-500">Scheduled</div>
+						<div class="mt-2 text-sm text-gray-900">
+							{{
+								deploy.scheduled_time
+									? $format.date(deploy.scheduled_time, 'lll')
+									: '-'
 							}}
 						</div>
 					</div>
@@ -157,7 +167,7 @@ export default {
 		this.$socket.on(`bench_deploy:${this.id}:finished`, () => {
 			const rgDoc = getCachedDocumentResource(
 				'Release Group',
-				this.$resources.deploy.doc?.group,
+				this.$resources.deploy.doc?.group
 			);
 			if (rgDoc) rgDoc.reload();
 			this.$resources.deploy.reload();
@@ -197,7 +207,7 @@ export default {
 					onClick: () => {
 						window.open(
 							`${window.location.protocol}//${window.location.host}/app/deploy-candidate-build/${this.id}`,
-							'_blank',
+							'_blank'
 						);
 					},
 				},
@@ -227,7 +237,7 @@ export default {
 					step.isOpen = true;
 				} else {
 					step.isOpen = this.$resources.deploy?.doc?.build_steps?.find(
-						(s) => s.name === step.name,
+						(s) => s.name === step.name
 					)?.isOpen;
 				}
 				step.title = `${step.stage} - ${step.step}`;

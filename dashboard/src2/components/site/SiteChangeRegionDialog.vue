@@ -8,9 +8,9 @@
 					loading: $resources.changeRegion.loading,
 					variant: 'solid',
 					disabled: !selectedRegion,
-					onClick: changeRegion
-				}
-			]
+					onClick: changeRegion,
+				},
+			],
 		}"
 		v-model="show"
 		@close="resetValues"
@@ -27,10 +27,10 @@
 					label="Choose Region"
 					v-model="selectedRegion"
 					:options="
-						$resources.changeRegionOptions.data.regions.map(r => ({
+						$resources.changeRegionOptions.data.regions.map((r) => ({
 							label: r.title || r.name,
 							value: r.name,
-							image: r.image
+							image: r.image,
 						}))
 					"
 				>
@@ -88,6 +88,7 @@
 import { getCachedDocumentResource } from 'frappe-ui';
 import { toast } from 'vue-sonner';
 import DateTimeControl from '../DateTimeControl.vue';
+import { cairoTimeToServer } from '../../utils/dayjs';
 
 export default {
 	props: ['site'],
@@ -96,24 +97,20 @@ export default {
 			show: true,
 			targetDateTime: null,
 			selectedRegion: null,
-			skipFailingPatches: false
+			skipFailingPatches: false,
 		};
 	},
 	components: {
-		DateTimeControl
+		DateTimeControl,
 	},
 	computed: {
-		datetimeInIST() {
+		datetimeInServerTimezone() {
 			if (!this.targetDateTime) return null;
-			const datetimeInIST = this.$dayjs(this.targetDateTime)
-				.tz('Asia/Kolkata')
-				.format('YYYY-MM-DDTHH:mm');
-
-			return datetimeInIST;
+			return cairoTimeToServer(this.targetDateTime).format('YYYY-MM-DDTHH:mm');
 		},
 		$site() {
 			return getCachedDocumentResource('Site', this.site);
-		}
+		},
 	},
 	resources: {
 		ARecords() {
@@ -123,26 +120,26 @@ export default {
 				filters: {
 					site: this.site,
 					dns_type: 'A',
-					domain: ['!=', this.site]
+					domain: ['!=', this.site],
 				},
 				limit: 1,
-				auto: true
+				auto: true,
 			};
 		},
 		changeRegionOptions() {
 			return {
 				url: 'press.api.site.change_region_options',
 				params: {
-					name: this.site
+					name: this.site,
 				},
-				auto: true
+				auto: true,
 			};
 		},
 		changeRegion() {
 			return {
-				url: 'press.api.site.change_region'
+				url: 'press.api.site.change_region',
 			};
-		}
+		},
 	},
 	methods: {
 		changeRegion() {
@@ -150,8 +147,8 @@ export default {
 				this.$resources.changeRegion.submit({
 					name: this.site,
 					cluster: this.selectedRegion?.value,
-					scheduled_datetime: this.datetimeInIST,
-					skip_failing_patches: this.skipFailingPatches
+					scheduled_datetime: this.datetimeInServerTimezone,
+					skip_failing_patches: this.skipFailingPatches,
 				}),
 				{
 					success: () => {
@@ -159,17 +156,17 @@ export default {
 						return `Site scheduled to be migrated to ${this.selectedRegion?.label}`;
 					},
 					loading: `Scheduling site to be migrated to ${this.selectedRegion?.label}...`,
-					error: error =>
+					error: (error) =>
 						error.messages?.length
 							? error.messages.join('\n')
-							: error.message || 'Failed to schedule site migration'
+							: error.message || 'Failed to schedule site migration',
 				}
 			);
 		},
 		resetValues() {
 			this.selectedRegion = null;
 			this.targetDateTime = null;
-		}
-	}
+		},
+	},
 };
 </script>

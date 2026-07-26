@@ -30,7 +30,7 @@
 </template>
 
 <script>
-import dayjs from '../utils/dayjs';
+import { dayjsCairo } from '../utils/dayjs';
 
 export default {
 	props: ['modelValue', 'label'],
@@ -43,7 +43,7 @@ export default {
 			set(value) {
 				this.$emit(
 					'update:modelValue',
-					`${value}T${this.scheduledHour}:${this.scheduledMinute}`,
+					`${value}T${this.scheduledHour}:${this.scheduledMinute}`
 				);
 			},
 		},
@@ -56,9 +56,9 @@ export default {
 			set(value) {
 				this.$emit(
 					'update:modelValue',
-					`${this.scheduledDate}T${value.padStart(2, '0')}:${
+					`${this.scheduledDate}T${String(value).padStart(2, '0')}:${String(
 						this.scheduledMinute
-					}`,
+					).padStart(2, '0')}`
 				);
 			},
 		},
@@ -71,10 +71,10 @@ export default {
 			set(value) {
 				this.$emit(
 					'update:modelValue',
-					`${this.scheduledDate}T${this.scheduledHour}:${value.padStart(
+					`${this.scheduledDate}T${String(this.scheduledHour).padStart(
 						2,
-						'0',
-					)}`,
+						'0'
+					)}:${String(value).padStart(2, '0')}`
 				);
 			},
 		},
@@ -82,8 +82,8 @@ export default {
 			let days = [];
 			for (let i = 0; i < 7; i++) {
 				days.push({
-					label: dayjs().add(i, 'day').format('dddd, MMMM D'),
-					value: dayjs().add(i, 'day').format('YYYY-MM-DD'),
+					label: dayjsCairo().add(i, 'day').format('dddd, MMMM D'),
+					value: dayjsCairo().add(i, 'day').format('YYYY-MM-DD'),
 				});
 			}
 			return days;
@@ -97,27 +97,28 @@ export default {
 				value: n,
 			}));
 
-			if (this.scheduledDate === dayjs().format('YYYY-MM-DD')) {
+			const now = dayjsCairo();
+			if (this.scheduledDate === now.format('YYYY-MM-DD')) {
 				options = options.filter(
 					(option) =>
-						option.value >=
-						(dayjs().minute() < 45 ? dayjs().hour() : dayjs().hour() + 1),
+						option.value >= (now.minute() < 45 ? now.hour() : now.hour() + 1)
 				);
 			}
 
 			return options;
 		},
 		minuteOptions() {
+			const now = dayjsCairo();
 			let options = [0, 15, 30, 45].map((i) => ({
 				label: i.toString().padStart(2, '0'),
 				value: i,
 			}));
 
 			if (
-				this.scheduledDate === dayjs().format('YYYY-MM-DD') &&
-				this.scheduledHour === String(dayjs().hour())
+				this.scheduledDate === now.format('YYYY-MM-DD') &&
+				Number(this.scheduledHour) === now.hour()
 			) {
-				options = options.filter((option) => option.value >= dayjs().minute());
+				options = options.filter((option) => option.value >= now.minute());
 			}
 
 			return options;

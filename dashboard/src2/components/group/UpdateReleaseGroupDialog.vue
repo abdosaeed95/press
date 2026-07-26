@@ -80,6 +80,19 @@
 					</div>
 				</div>
 
+				<div
+					v-if="['select-sites', 'restrict-build'].includes(step)"
+					class="space-y-1"
+				>
+					<DateTimeControl
+						v-model="scheduledTime"
+						label="Update time (Cairo)"
+					/>
+					<p class="text-sm text-gray-600">
+						The deploy and selected site updates will start at this Cairo time.
+					</p>
+				</div>
+
 				<div v-if="canUpdateInPlace" class="flex gap-2">
 					<FormControl
 						label="Use in place update"
@@ -112,6 +125,7 @@
 						$resources.deployAndUpdate.loading ||
 						$resources.updateInPlace.loading
 					"
+					:disabled="!scheduledTimeIsFuture"
 					@click="updateBench"
 				/>
 			</div>
@@ -127,7 +141,9 @@ import CommitTag from '@/components/utils/CommitTag.vue';
 import GenericList from '../../components/GenericList.vue';
 import { getTeam } from '../../data/team';
 import { DashboardError } from '../../utils/error';
+import { dayjsCairo } from '../../utils/dayjs';
 import AlertBanner from '../AlertBanner.vue';
+import DateTimeControl from '../DateTimeControl.vue';
 
 export default {
 	name: 'UpdateReleaseGroupDialog',
@@ -137,8 +153,10 @@ export default {
 		CommitChooser,
 		CommitTag,
 		AlertBanner,
+		DateTimeControl,
 	},
 	data() {
+		const now = dayjsCairo();
 		return {
 			show: true,
 			step: '',
@@ -148,6 +166,10 @@ export default {
 			restrictMessage: '',
 			selectedApps: [],
 			selectedSites: [],
+			scheduledTime: now
+				.add(15 - (now.minute() % 15), 'minute')
+				.second(0)
+				.format('YYYY-MM-DDTHH:mm'),
 		};
 	},
 	mounted() {
@@ -163,7 +185,7 @@ export default {
 		updatableAppOptions() {
 			let deployInformation = this.benchDocResource.doc.deploy_information;
 			let appData = deployInformation.apps.filter(
-				(app) => app.update_available === true,
+				(app) => app.update_available === true
 			);
 
 			return {
@@ -223,7 +245,7 @@ export default {
 
 							function initialDeployTo(app) {
 								const next_release = app.releases.filter(
-									(release) => release.name === app.next_release,
+									(release) => release.name === app.next_release
 								)[0];
 								if (app.will_branch_change) {
 									return app.branch;
@@ -256,7 +278,7 @@ export default {
 						format(value, row) {
 							if (
 								deployInformation.removed_apps.find(
-									(app) => app.name === row.name,
+									(app) => app.name === row.name
 								)
 							) {
 								return 'Will be Uninstalled';
@@ -275,7 +297,7 @@ export default {
 							let url;
 							if (row.current_hash && row.next_release) {
 								let hash = row.releases.find(
-									(release) => release.name === row.next_release,
+									(release) => release.name === row.next_release
 								)?.hash;
 
 								if (hash)
@@ -283,7 +305,7 @@ export default {
 							} else if (row.next_release) {
 								url = `${row.repository_url}/commit/${
 									row.releases.find(
-										(release) => release.name === row.next_release,
+										(release) => release.name === row.next_release
 									).hash
 								}`;
 							}
@@ -378,7 +400,7 @@ export default {
 		},
 		hasUpdateAvailable() {
 			return this.benchDocResource.doc.deploy_information.apps.some(
-				(app) => app.update_available === true,
+				(app) => app.update_available === true
 			);
 		},
 		hasRemovedApps() {
@@ -408,9 +430,26 @@ export default {
 		canShowDeploy() {
 			return !this.canShowNext;
 		},
+		scheduledTimeIsFuture() {
+			return (
+				this.scheduledTime &&
+				dayjsCairo(this.scheduledTime).isAfter(dayjsCairo())
+			);
+		},
+		scheduledTimeInCairo() {
+			if (!this.scheduledTime) {
+				return '';
+			}
+
+			return dayjsCairo(this.scheduledTime).format('lll');
+		},
 		deployLabel() {
+			if (!this.scheduledTime) {
+				return 'Select update time';
+			}
+
 			if (this.selectedSites.length === 0) {
-				return 'Skip and Deploy';
+				return `Skip and Deploy at ${this.scheduledTimeInCairo}`;
 			}
 
 			let site = 'site';
@@ -422,9 +461,13 @@ export default {
 				return `Update ${site} in place`;
 			}
 
-			return `Deploy and update ${site}`;
+			return `Deploy and update ${site} at ${this.scheduledTimeInCairo}`;
 		},
 		canUpdateInPlace() {
+			if (this.scheduledTime) {
+				return false;
+			}
+
 			if (!this.benchDocResource?.doc?.enable_inplace_updates) {
 				return false;
 			}
@@ -447,8 +490,7 @@ export default {
 			const allSites = this.siteOptions.data
 				.filter(
 					(s) =>
-						benches.has(s.bench) ||
-						inPlaceUpdateFailedBenches.includes(s.bench),
+						benches.has(s.bench) || inPlaceUpdateFailedBenches.includes(s.bench)
 				)
 				.map((s) => s.name);
 
@@ -469,6 +511,7 @@ export default {
 					apps: this.selectedApps,
 					sites: this.selectedSites,
 					run_will_fail_check: !this.ignoreWillFailCheck,
+					scheduled_time: this.scheduledTime,
 				},
 				validate() {
 					if (
@@ -564,7 +607,7 @@ export default {
 						source: app.source,
 						release: app.next_release,
 						hash: app.releases.find(
-							(release) => release.name === app.next_release,
+							(release) => release.name === app.next_release
 						).hash,
 					};
 				});
@@ -585,10 +628,15 @@ export default {
 		},
 		initialDeployTo(app) {
 			return this.benchDocResource.doc.deploy_information.apps.find(
-				(a) => a.app === app.app,
+				(a) => a.app === app.app
 			).next_release;
 		},
 		updateBench() {
+			if (!this.scheduledTimeIsFuture) {
+				this.errorMessage = 'Please select a future update time in Cairo';
+				return;
+			}
+
 			if (this.restrictMessage && !this.ignoreWillFailCheck) {
 				this.errorMessage =
 					'Please check the <b>I understand</b> box to proceed';

@@ -19,10 +19,10 @@
 					:options="privateReleaseGroups"
 					v-model="privateReleaseGroup"
 					@change="
-						value =>
+						(value) =>
 							$resources.validateGroupforUpgrade.submit({
 								name: site.name,
-								group_name: value.target.value
+								group_name: value.target.value,
 							})
 					"
 				/>
@@ -77,6 +77,7 @@
 <script>
 import { notify } from '@/utils/toast';
 import DateTimeControl from '../../../src2/components/DateTimeControl.vue';
+import { cairoTimeToServer } from '../../../src2/utils/dayjs';
 
 export default {
 	name: 'SiteVersionUpgradeDialog',
@@ -88,7 +89,7 @@ export default {
 			targetDateTime: null,
 			privateReleaseGroup: '',
 			skipFailingPatches: false,
-			benchHasCommonServer: false
+			benchHasCommonServer: false,
 		};
 	},
 	computed: {
@@ -98,7 +99,7 @@ export default {
 			},
 			set(value) {
 				this.$emit('update:modelValue', value);
-			}
+			},
 		},
 		nextVersion() {
 			const nextNumber = Number(this.site?.frappe_version.split(' ')[1]);
@@ -131,13 +132,9 @@ export default {
 				return `The selected bench and your site have a common server. You can proceed with the upgrade to ${this.nextVersion}.`;
 			else return '';
 		},
-		datetimeInIST() {
+		datetimeInServerTimezone() {
 			if (!this.targetDateTime) return null;
-			const datetimeInIST = this.$dayjs(this.targetDateTime)
-				.tz('Asia/Kolkata')
-				.format('YYYY-MM-DDTHH:mm');
-
-			return datetimeInIST;
+			return cairoTimeToServer(this.targetDateTime).format('YYYY-MM-DDTHH:mm');
 		},
 		errorMessage() {
 			return (
@@ -146,7 +143,7 @@ export default {
 				this.$resources.addServerToReleaseGroup.error ||
 				this.$resources.getPrivateGroups.error
 			);
-		}
+		},
 	},
 	resources: {
 		versionUpgrade() {
@@ -156,17 +153,17 @@ export default {
 					name: this.site?.name,
 					destination_group: this.privateReleaseGroup,
 					skip_failing_patches: this.skipFailingPatches,
-					scheduled_datetime: this.datetimeInIST
+					scheduled_datetime: this.datetimeInServerTimezone,
 				},
 				onSuccess() {
 					notify({
 						title: 'Site Version Upgrade',
 						message: `Scheduled site upgrade for <b>${this.site?.host_name}</b> to <b>${this.nextVersion}</b>`,
 						icon: 'check',
-						color: 'green'
+						color: 'green',
 					});
 					this.$emit('update:modelValue', false);
-				}
+				},
 			};
 		},
 		getPrivateGroups() {
@@ -174,7 +171,7 @@ export default {
 				url: 'press.api.site.get_private_groups_for_upgrade',
 				params: {
 					name: this.site?.name,
-					version: this.site?.frappe_version
+					version: this.site?.frappe_version,
 				},
 				auto:
 					this.site?.frappe_version &&
@@ -182,12 +179,12 @@ export default {
 					!this.site?.group_public &&
 					this.site?.frappe_version !== 'Nightly',
 				transform(data) {
-					return data.map(group => ({
+					return data.map((group) => ({
 						label: group.title || group.name,
-						value: group.name
+						value: group.name,
 					}));
 				},
-				initialData: []
+				initialData: [],
 			};
 		},
 		addServerToReleaseGroup() {
@@ -195,25 +192,25 @@ export default {
 				url: 'press.api.site.add_server_to_release_group',
 				params: {
 					name: this.site?.name,
-					group_name: this.privateReleaseGroup
+					group_name: this.privateReleaseGroup,
 				},
 				onSuccess(data) {
 					notify({
 						title: 'Server Added to the Bench',
 						message: `Added a server to <b>${this.privateReleaseGroup}</b> bench. Please wait for the bench to complete the deploy.`,
 						icon: 'check',
-						color: 'green'
+						color: 'green',
 					});
 					this.$router.push({
 						name: 'BenchJobs',
 						params: {
 							benchName: this.privateReleaseGroup,
-							jobName: data
-						}
+							jobName: data,
+						},
 					});
 					this.resetValues();
 					this.$emit('update:modelValue', false);
-				}
+				},
 			};
 		},
 		validateGroupforUpgrade() {
@@ -221,9 +218,9 @@ export default {
 				url: 'press.api.site.validate_group_for_upgrade',
 				onSuccess(data) {
 					this.benchHasCommonServer = data;
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		resetValues() {
@@ -231,7 +228,7 @@ export default {
 			this.privateReleaseGroup = '';
 			this.benchHasCommonServer = false;
 			this.$resources.getPrivateGroups.reset();
-		}
-	}
+		},
+	},
 };
 </script>

@@ -11,6 +11,8 @@ from frappe.model.document import Document
 from press.utils import get_current_team
 
 if TYPE_CHECKING:
+	from datetime import datetime
+
 	from press.press.doctype.bench.bench import Bench
 	from press.press.doctype.release_group.release_group import ReleaseGroup
 
@@ -85,10 +87,17 @@ class BenchUpdate(Document):
 				frappe.ValidationError,
 			)
 
-	def deploy(self, run_will_fail_check=False) -> str:
+	def deploy(
+		self,
+		run_will_fail_check=False,
+		scheduled_time: datetime | None = None,
+	) -> str:
 		rg: ReleaseGroup = frappe.get_doc("Release Group", self.group)
 		candidate = rg.create_deploy_candidate(self.apps, run_will_fail_check)
-		deploy = candidate.schedule_build_and_deploy()
+		deploy = candidate.schedule_build_and_deploy(
+			run_now=not scheduled_time,
+			scheduled_time=scheduled_time,
+		)
 
 		self.candidate = candidate.name
 		self.save()

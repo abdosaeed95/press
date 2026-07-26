@@ -12,11 +12,11 @@
 						$resources.changeRegion.submit({
 							name: site?.name,
 							cluster: selectedRegion?.value,
-							scheduled_datetime: datetimeInIST,
-							skip_failing_patches: skipFailingPatches
-						})
-				}
-			]
+							scheduled_datetime: datetimeInServerTimezone,
+							skip_failing_patches: skipFailingPatches,
+						}),
+				},
+			],
 		}"
 		v-model="show"
 		@close="resetValues"
@@ -33,10 +33,10 @@
 					label="Choose Region"
 					v-model="selectedRegion"
 					:options="
-						$resources.changeRegionOptions.data.regions.map(r => ({
+						$resources.changeRegionOptions.data.regions.map((r) => ({
 							label: r.title || r.name,
 							value: r.name,
-							image: r.image
+							image: r.image,
 						}))
 					"
 				>
@@ -74,19 +74,20 @@
 <script>
 import { notify } from '@/utils/toast';
 import DateTimeControl from '../../../src2/components/DateTimeControl.vue';
+import { cairoTimeToServer } from '../../../src2/utils/dayjs';
 
 export default {
 	name: 'SiteChangeRegionDialog',
 	props: ['site', 'modelValue'],
 	emits: ['update:modelValue'],
 	components: {
-		DateTimeControl
+		DateTimeControl,
 	},
 	data() {
 		return {
 			targetDateTime: null,
 			selectedRegion: null,
-			skipFailingPatches: false
+			skipFailingPatches: false,
 		};
 	},
 	computed: {
@@ -96,25 +97,21 @@ export default {
 			},
 			set(value) {
 				this.$emit('update:modelValue', value);
-			}
+			},
 		},
-		datetimeInIST() {
+		datetimeInServerTimezone() {
 			if (!this.targetDateTime) return null;
-			const datetimeInIST = this.$dayjs(this.targetDateTime)
-				.tz('Asia/Kolkata')
-				.format('YYYY-MM-DDTHH:mm');
-
-			return datetimeInIST;
-		}
+			return cairoTimeToServer(this.targetDateTime).format('YYYY-MM-DDTHH:mm');
+		},
 	},
 	resources: {
 		changeRegionOptions() {
 			return {
 				url: 'press.api.site.change_region_options',
 				params: {
-					name: this.site?.name
+					name: this.site?.name,
 				},
-				auto: true
+				auto: true,
 			};
 		},
 		changeRegion() {
@@ -130,25 +127,25 @@ export default {
 				onSuccess() {
 					const regionName =
 						this.$resources.changeRegionOptions.data.regions.find(
-							region => region.name === this.selectedRegion
+							(region) => region.name === this.selectedRegion
 						)?.title || this.selectedRegion;
 
 					notify({
 						title: 'Scheduled Region Change',
 						message: `Site <b>${this.site?.host_name}</b> scheduled to be moved to <b>${regionName}</b>`,
 						color: 'green',
-						icon: 'check'
+						icon: 'check',
 					});
 					this.$emit('update:modelValue', false);
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		resetValues() {
 			this.selectedRegion = null;
 			this.targetDateTime = null;
-		}
-	}
+		},
+	},
 };
 </script>
