@@ -17,14 +17,24 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.extend(advancedFormat);
 
+const CAIRO_TIMEZONE = 'Africa/Cairo';
+const SERVER_TIMEZONE = 'Asia/Calcutta';
+
 export function dayjsLocal(dateTimeString) {
-	let localTimezone = dayjs.tz.guess();
-	// dates are stored in Asia/Calcutta timezone on the server
-	return dayjs.tz(dateTimeString, 'Asia/Calcutta').tz(localTimezone);
+	const dateTime = dateTimeString
+		? dayjs.tz(dateTimeString, SERVER_TIMEZONE)
+		: dayjs();
+	return dateTime.tz(CAIRO_TIMEZONE);
 }
 
-export function dayjsIST(dateTimeString) {
-	return dayjs(dateTimeString).tz('Asia/Calcutta');
+export function dayjsCairo(dateTimeString) {
+	return dateTimeString
+		? dayjs.tz(dateTimeString, CAIRO_TIMEZONE)
+		: dayjs().tz(CAIRO_TIMEZONE);
+}
+
+export function cairoTimeToServer(dateTimeString) {
+	return dayjsCairo(dateTimeString).tz(SERVER_TIMEZONE);
 }
 
 export default dayjs;

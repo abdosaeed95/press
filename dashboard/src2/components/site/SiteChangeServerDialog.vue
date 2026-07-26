@@ -9,7 +9,7 @@
 					label: 'Add Server to Bench Group',
 					loading: $resources.addServerToReleaseGroup.loading,
 					disabled: $resources.isServerAddedInGroup.data || !targetServer.value,
-					onClick: () => $resources.addServerToReleaseGroup.submit()
+					onClick: () => $resources.addServerToReleaseGroup.submit(),
 				},
 				{
 					label: 'Change Server',
@@ -23,12 +23,12 @@
 						$resources.changeServer.submit({
 							name: site,
 							server: targetServer.value,
-							scheduled_datetime: datetimeInIST,
-							skip_failing_patches: skipFailingPatches
+							scheduled_datetime: datetimeInServerTimezone,
+							skip_failing_patches: skipFailingPatches,
 						});
-					}
-				}
-			]
+					},
+				},
+			],
 		}"
 	>
 		<template #body-content>
@@ -64,6 +64,7 @@
 import { getCachedDocumentResource } from 'frappe-ui';
 import DateTimeControl from '../DateTimeControl.vue';
 import { toast } from 'vue-sonner';
+import { cairoTimeToServer } from '../../utils/dayjs';
 
 export default {
 	props: ['site'],
@@ -73,19 +74,19 @@ export default {
 			show: true,
 			targetServer: {
 				label: '',
-				value: ''
+				value: '',
 			},
 			targetDateTime: null,
-			skipFailingPatches: false
+			skipFailingPatches: false,
 		};
 	},
 	watch: {
 		targetServer(targetServer) {
 			this.$resources.isServerAddedInGroup.fetch({
 				name: this.site,
-				server: targetServer.value
+				server: targetServer.value,
 			});
-		}
+		},
 	},
 	computed: {
 		$site() {
@@ -114,37 +115,33 @@ export default {
 				this.$resources.changeServer.error
 			);
 		},
-		datetimeInIST() {
+		datetimeInServerTimezone() {
 			if (!this.targetDateTime) return null;
-			const datetimeInIST = this.$dayjs(this.targetDateTime).format(
-				'YYYY-MM-DDTHH:mm'
-			);
-
-			return datetimeInIST;
-		}
+			return cairoTimeToServer(this.targetDateTime).format('YYYY-MM-DDTHH:mm');
+		},
 	},
 	resources: {
 		changeServerOptions() {
 			return {
 				url: 'press.api.site.change_server_options',
 				params: {
-					name: this.site
+					name: this.site,
 				},
 				initialData: [],
 				auto: true,
 				transform(d) {
-					return d.map(s => ({
+					return d.map((s) => ({
 						label: s.title || s.name,
 						description: s.name,
-						value: s.name
+						value: s.name,
 					}));
-				}
+				},
 			};
 		},
 		isServerAddedInGroup() {
 			return {
 				url: 'press.api.site.is_server_added_in_group',
-				initialData: false
+				initialData: false,
 			};
 		},
 		changeServer() {
@@ -153,7 +150,7 @@ export default {
 				onSuccess() {
 					toast.success('Site has been scheduled to move to another server.');
 					this.show = false;
-				}
+				},
 			};
 		},
 		addServerToReleaseGroup() {
@@ -162,7 +159,7 @@ export default {
 				params: {
 					name: this.site,
 					group_name: this.$site.doc?.group,
-					server: this.targetServer.value
+					server: this.targetServer.value,
 				},
 				onSuccess(data) {
 					toast.success(
@@ -173,24 +170,24 @@ export default {
 						name: 'Release Group Job',
 						params: {
 							name: this.$site.doc?.group,
-							id: data
-						}
+							id: data,
+						},
 					});
 
 					this.show = false;
-				}
+				},
 			};
-		}
+		},
 	},
 	methods: {
 		resetValues() {
 			this.targetServer = {
 				label: '',
-				value: ''
+				value: '',
 			};
 			this.targetDateTime = null;
 			this.$resources.isServerAddedInGroup.reset();
-		}
-	}
+		},
+	},
 };
 </script>

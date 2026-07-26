@@ -7,9 +7,11 @@ from collections import OrderedDict
 from typing import TYPE_CHECKING
 
 import frappe
+import pytz
+from frappe import _
 from frappe.core.utils import find, find_all
 from frappe.model.naming import append_number_if_name_exists
-from frappe.utils import flt, sbool
+from frappe.utils import flt, get_datetime, get_system_timezone, now_datetime, sbool
 
 from press.api.github import branches
 from press.api.site import protected
@@ -395,6 +397,7 @@ def update_dependencies(name: str, dependencies: str):
 	for dep, new in zip(
 		sorted(rg.dependencies, key=lambda x: x.dependency),
 		sorted(dependencies, key=lambda x: x["key"]),
+		strict=False,
 	):
 		if dep.dependency != new["key"]:
 			frappe.throw(f"Invalid dependency: {new['key']}")
@@ -765,14 +768,25 @@ def deploy_and_update(
 	apps: list,
 	sites: list | None = None,
 	run_will_fail_check: bool = True,
+	scheduled_time: str | None = None,
 ):
+	if scheduled_time:
+		scheduled_time = (
+			pytz.timezone("Africa/Cairo")
+			.localize(get_datetime(scheduled_time))
+			.astimezone(pytz.timezone(get_system_timezone()))
+			.replace(tzinfo=None)
+		)
+		if scheduled_time <= now_datetime():
+			frappe.throw(_("Update time must be in the future."))
+
 	# Returns name of the Deploy Candidate that is running the build
 	return get_bench_update(
 		name,
 		apps,
 		sites,
 		False,
-	).deploy(run_will_fail_check)
+	).deploy(run_will_fail_check, scheduled_time)
 
 
 @frappe.whitelist()

@@ -55,7 +55,7 @@
 import { getCachedDocumentResource } from 'frappe-ui';
 import DateTimeControl from './DateTimeControl.vue';
 import GenericList from './GenericList.vue';
-import dayjs, { dayjsIST } from '../utils/dayjs';
+import { cairoTimeToServer, dayjsCairo, dayjsLocal } from '../utils/dayjs';
 import { toast } from 'vue-sonner';
 
 export default {
@@ -97,17 +97,17 @@ export default {
 		},
 	},
 	computed: {
-		scheduledTimeInIST() {
+		scheduledTimeInServerTimezone() {
 			if (!this.scheduledTime) return;
-			return dayjsIST(this.scheduledTime).format('YYYY-MM-DDTHH:mm');
+			return cairoTimeToServer(this.scheduledTime).format('YYYY-MM-DDTHH:mm');
 		},
 		scheduledTimeInLocal() {
-			return dayjs(this.scheduledTime).format('lll');
+			return dayjsCairo(this.scheduledTime).format('lll');
 		},
 		listOptions() {
 			return {
 				data: this.updatableApps.filter(
-					(app) => app.current_hash !== app.next_hash,
+					(app) => app.current_hash !== app.next_hash
 				),
 				columns: [
 					{
@@ -163,10 +163,10 @@ export default {
 		updatableApps() {
 			if (!this.$site.doc.update_information.update_available) return [];
 			let installedApps = this.$site.doc.update_information.installed_apps.map(
-				(d) => d.app,
+				(d) => d.app
 			);
 			return this.$site.doc.update_information.apps.filter((app) =>
-				installedApps.includes(app.app),
+				installedApps.includes(app.app)
 			);
 		},
 		$site() {
@@ -186,7 +186,7 @@ export default {
 				{
 					skip_failing_patches: this.skipFailingPatches,
 					skip_backups: this.skipBackups,
-					scheduled_time: this.scheduledTimeInIST,
+					scheduled_time: this.scheduledTimeInServerTimezone,
 				},
 				{
 					onSuccess: () => {
@@ -194,7 +194,7 @@ export default {
 						this.show = false;
 						this.$router.push({ name: 'Site Detail Updates' });
 					},
-				},
+				}
 			);
 		},
 		editUpdate() {
@@ -203,7 +203,7 @@ export default {
 					name: this.existingUpdate,
 					skip_failing_patches: this.skipFailingPatches,
 					skip_backups: this.skipBackups,
-					scheduled_time: this.scheduledTimeInIST,
+					scheduled_time: this.scheduledTimeInServerTimezone,
 				}),
 				{
 					loading: 'Editing scheduled update...',
@@ -218,13 +218,15 @@ export default {
 							? err.messages[0]
 							: err.message || 'Failed to edit scheduled update';
 					},
-				},
+				}
 			);
 		},
 		initializeValues(doc) {
 			this.skipFailingPatches = doc.skipped_failing_patches;
 			this.skipBackups = doc.skipped_backups;
-			this.scheduledTime = dayjs(doc.scheduled_time).format('YYYY-MM-DDTHH:mm');
+			this.scheduledTime = dayjsLocal(doc.scheduled_time).format(
+				'YYYY-MM-DDTHH:mm'
+			);
 		},
 	},
 };

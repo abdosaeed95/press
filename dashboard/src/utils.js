@@ -12,9 +12,8 @@ let utils = {
 		$date(date, serverDatesTimezone = 'Asia/Kolkata') {
 			// assuming all dates on the server are stored in our timezone
 
-			let localZone = DateTime.local().zoneName;
 			return DateTime.fromSQL(date, { zone: serverDatesTimezone }).setZone(
-				localZone
+				'Africa/Cairo'
 			);
 		},
 		round(number, precision) {
@@ -40,7 +39,7 @@ let utils = {
 			// 0:0:2 -> 00:00:02
 			const formattedDuration = value
 				.split(':')
-				.map(x => x.padStart(2, '0'))
+				.map((x) => x.padStart(2, '0'))
 				.join(':');
 
 			const dateTime = Duration.fromISOTime(formattedDuration).toObject();
@@ -92,7 +91,7 @@ let utils = {
 					params: { pathMatch: this.$route.path.substring(1).split('/') },
 					// preserve existing query and hash if any
 					query: this.$route.query,
-					hash: this.$route.hash
+					hash: this.$route.hash,
 				});
 			}
 		},
@@ -123,11 +122,11 @@ let utils = {
 				'>': '&gt;',
 				'"': '&quot;',
 				"'": '&#x27;',
-				'/': '&#x2F;'
+				'/': '&#x2F;',
 			};
 			const reg = /[&<>"'/]/gi;
-			return text.replace(reg, match => map[match]);
-		}
+			return text.replace(reg, (match) => map[match]);
+		},
 	},
 	computed: {
 		$theme() {
@@ -143,8 +142,8 @@ let utils = {
 			} else if (ua.indexOf('x11') > -1 || ua.indexOf('linux') > -1) {
 				return 'linux';
 			}
-		}
-	}
+		},
+	},
 };
 
 export function validateGST(gst) {
