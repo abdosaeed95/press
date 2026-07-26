@@ -282,7 +282,6 @@ def validate_plan(server, plan):
 		frappe.db.get_value("Site Plan", plan, "price_usd") > 0
 		or frappe.db.get_value("Site Plan", plan, "dedicated_server_plan") == 1
 	):
-
 		return
 	if (
 		frappe.session.data.user_type == "System User"
@@ -1743,9 +1742,8 @@ def check_domain_proxied(domain) -> str | None:
 	except requests.exceptions.RequestException as e:
 		frappe.throw("Unable to connect to the domain. Is the DNS correct?\n\n" + str(e))
 	else:
-		if server := res.headers.get("server"):
-			if server.casefold() not in FIRST_PARTY_SERVER_HEADERS:  # eg: cloudflare
-				return server
+		if (server := res.headers.get("server")) and server.casefold() not in FIRST_PARTY_SERVER_HEADERS:
+			return server
 
 
 def check_dns_cname_a(name, domain, ignore_proxying=False):

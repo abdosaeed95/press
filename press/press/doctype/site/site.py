@@ -789,10 +789,6 @@ class Site(Document, TagHelpers):
 		).insert(ignore_if_duplicate=True)
 
 	def after_insert(self):
-		from press.press.doctype.press_role.press_role import (
-			add_permission_for_newly_created_doc,
-		)
-
 		self.capture_signup_event("created_first_site")
 
 		if hasattr(self, "subscription_plan") and self.subscription_plan:
@@ -811,16 +807,6 @@ class Site(Document, TagHelpers):
 		self._create_default_site_domain()
 		create_dns_record(self, record_name=self._get_site_name(self.subdomain))
 		self.create_agent_request()
-
-	@frappe.whitelist()
-	def create_dns_record(self):
-		"""Check if site needs dns records and creates one."""
-
-		create_dns_record(self, record_name=self._get_site_name(self.subdomain))
-
-		add_permission_for_newly_created_doc(self)
-
-		create_site_status_update_webhook_event(self.name)
 
 	def remove_dns_record(self, proxy_server: str):
 		"""Remove dns record of site pointing to proxy."""
@@ -1438,8 +1424,8 @@ class Site(Document, TagHelpers):
 
 		self.db_set("host_name", None)
 
-		#self.delete_physical_backups()
-		#self.delete_offsite_backups()
+		# self.delete_physical_backups()
+		# self.delete_offsite_backups()
 		frappe.db.set_value(
 			"Site Backup",
 			{"site": self.name, "offsite": False},

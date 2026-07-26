@@ -1011,9 +1011,8 @@ class ReleaseGroup(Document, TagHelpers):
 
 			next_hash = app.hash
 
-			update_available = (
-				app.app not in hidden_apps
-				and (not current_hash or current_hash != next_hash or will_branch_change)
+			update_available = app.app not in hidden_apps and (
+				not current_hash or current_hash != next_hash or will_branch_change
 			)
 			if not app.releases:
 				update_available = False
