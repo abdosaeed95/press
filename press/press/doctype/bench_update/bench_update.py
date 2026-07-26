@@ -147,7 +147,9 @@ class BenchUpdate(Document):
 					):
 						continue
 					site_update = frappe.get_doc("Site", row.site).schedule_update(
-						skip_failing_patches=row.skip_failing_patches, skip_backups=row.skip_backups
+						skip_failing_patches=row.skip_failing_patches,
+						skip_backups=row.skip_backups,
+						scheduled_time=row.scheduled_time,
 					)
 					frappe.db.set_value("Bench Site Update", row.name, "site_update", site_update)
 					frappe.db.commit()
@@ -178,6 +180,10 @@ def get_bench_update(
 	if rg_team != current_team:
 		frappe.throw("Bench can only be deployed by the bench owner", exc=frappe.PermissionError)
 
+	for site in sites:
+		if "scheduled_time" not in site:
+			site["scheduled_time"] = None
+
 	bench_update: "BenchUpdate" = frappe.get_doc(
 		{
 			"doctype": "Bench Update",
@@ -189,6 +195,7 @@ def get_bench_update(
 					"server": site["server"],
 					"skip_failing_patches": site["skip_failing_patches"],
 					"skip_backups": site["skip_backups"],
+					"scheduled_time": site["scheduled_time"],
 					"source_candidate": frappe.get_value("Bench", site["bench"], "candidate"),
 				}
 				for site in sites

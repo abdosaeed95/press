@@ -770,15 +770,31 @@ def deploy_and_update(
 	run_will_fail_check: bool = True,
 	scheduled_time: str | None = None,
 ):
-	if scheduled_time:
-		scheduled_time = (
+	def to_server_time(value):
+		if not value:
+			return None
+
+		value = (
 			pytz.timezone("Africa/Cairo")
-			.localize(get_datetime(scheduled_time))
+			.localize(get_datetime(value))
 			.astimezone(pytz.timezone(get_system_timezone()))
 			.replace(tzinfo=None)
 		)
-		if scheduled_time <= now_datetime():
+		if value <= now_datetime():
 			frappe.throw(_("Update time must be in the future."))
+		return value
+
+	scheduled_time = to_server_time(scheduled_time)
+	site_scheduled_times = []
+	for site in sites or []:
+		site["scheduled_time"] = (
+			to_server_time(site["scheduled_time"]) if "scheduled_time" in site else scheduled_time
+		)
+		if site["scheduled_time"]:
+			site_scheduled_times.append(site["scheduled_time"])
+
+	if site_scheduled_times:
+		scheduled_time = min(site_scheduled_times)
 
 	# Returns name of the Deploy Candidate that is running the build
 	return get_bench_update(

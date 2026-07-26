@@ -1,6 +1,7 @@
 import json
 import os
 import time
+from datetime import datetime
 from unittest import skip
 from unittest.mock import MagicMock, Mock, patch
 
@@ -144,6 +145,43 @@ class TestAPIBench(FrappeTestCase):
 
 		self.assertEqual(dc_count_after, dc_count_before + 1)
 		self.assertEqual(bu_count_after, bu_count_before + 1)
+
+	@patch("press.api.bench.now_datetime", return_value=datetime(2026, 7, 27, 10))
+	@patch("press.api.bench.get_system_timezone", return_value="UTC")
+	@patch("press.api.bench.get_bench_update")
+	def test_deploy_and_update_schedules_each_site(
+		self, get_bench_update, _get_system_timezone, _now_datetime
+	):
+		group = new(
+			{
+				"title": "Test Bench",
+				"apps": [{"name": self.app.name, "source": self.app_source.name}],
+				"version": self.version,
+				"cluster": "Default",
+				"saas_app": None,
+				"server": None,
+			}
+		)
+		get_bench_update.return_value.deploy.return_value = "candidate"
+		sites = [
+			{"name": "first.example.com", "scheduled_time": "2026-07-27T16:00"},
+			{"name": "second.example.com", "scheduled_time": "2026-07-27T17:00"},
+			{"name": "shared.example.com"},
+		]
+
+		self.assertEqual(
+			deploy_and_update(
+				group,
+				[],
+				sites,
+				scheduled_time="2026-07-27T18:00",
+			),
+			"candidate",
+		)
+		self.assertEqual(sites[0]["scheduled_time"], datetime(2026, 7, 27, 13))
+		self.assertEqual(sites[1]["scheduled_time"], datetime(2026, 7, 27, 14))
+		self.assertEqual(sites[2]["scheduled_time"], datetime(2026, 7, 27, 15))
+		get_bench_update.return_value.deploy.assert_called_once_with(True, datetime(2026, 7, 27, 13))
 
 	@patch(
 		"press.press.doctype.deploy_candidate.deploy_candidate.frappe.enqueue_doc",

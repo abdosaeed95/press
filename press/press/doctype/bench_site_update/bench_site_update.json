@@ -12,6 +12,7 @@
   "status",
   "source_candidate",
   "server",
+  "scheduled_time",
   "skip_failing_patches",
   "skip_backups"
  ],
@@ -48,6 +49,11 @@
    "fieldtype": "Link",
    "label": "Server",
    "options": "Server"
+  },
+  {
+   "fieldname": "scheduled_time",
+   "fieldtype": "Datetime",
+   "label": "Scheduled Time"
   },
   {
    "default": "0",

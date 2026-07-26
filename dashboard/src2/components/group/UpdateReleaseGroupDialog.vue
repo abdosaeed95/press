@@ -82,15 +82,46 @@
 
 				<div
 					v-if="['select-sites', 'restrict-build'].includes(step)"
-					class="space-y-1"
+					class="space-y-3"
 				>
-					<DateTimeControl
-						v-model="scheduledTime"
-						label="Update time (Cairo)"
+					<FormControl
+						v-if="selectedSites.length"
+						v-model="scheduleMode"
+						label="Schedule updates"
+						type="select"
+						:options="[
+							{ label: 'All selected sites', value: 'all' },
+							{ label: 'Each site separately', value: 'site' },
+						]"
 					/>
-					<p class="text-sm text-gray-600">
-						The deploy and selected site updates will start at this Cairo time.
-					</p>
+					<div v-if="scheduleMode === 'site' && selectedSites.length">
+						<div
+							v-for="site in selectedSites"
+							:key="site.name"
+							class="mb-3 rounded border border-gray-200 p-3"
+						>
+							<p class="mb-2 text-sm font-medium text-gray-800">
+								{{ site.name }}
+							</p>
+							<DateTimeControl
+								v-model="site.scheduled_time"
+								label="Update time (Cairo)"
+							/>
+						</div>
+						<p class="text-sm text-gray-600">
+							The deploy starts at the earliest selected site time.
+						</p>
+					</div>
+					<div v-else class="space-y-1">
+						<DateTimeControl
+							v-model="scheduledTime"
+							label="Update time (Cairo)"
+						/>
+						<p class="text-sm text-gray-600">
+							The deploy and all selected site updates will start at this Cairo
+							time.
+						</p>
+					</div>
 				</div>
 
 				<div v-if="canUpdateInPlace" class="flex gap-2">
@@ -166,6 +197,7 @@ export default {
 			restrictMessage: '',
 			selectedApps: [],
 			selectedSites: [],
+			scheduleMode: 'all',
 			scheduledTime: now
 				.add(15 - (now.minute() % 15), 'minute')
 				.second(0)
@@ -431,10 +463,34 @@ export default {
 			return !this.canShowNext;
 		},
 		scheduledTimeIsFuture() {
+			if (this.scheduleMode === 'site' && this.selectedSites.length) {
+				return this.selectedSites.every(
+					(site) =>
+						site.scheduled_time &&
+						dayjsCairo(site.scheduled_time).isAfter(dayjsCairo())
+				);
+			}
+
 			return (
 				this.scheduledTime &&
 				dayjsCairo(this.scheduledTime).isAfter(dayjsCairo())
 			);
+		},
+		deploymentScheduledTime() {
+			if (this.scheduleMode !== 'site' || !this.selectedSites.length) {
+				return this.scheduledTime;
+			}
+
+			return this.selectedSites.map((site) => site.scheduled_time).sort()[0];
+		},
+		scheduledSites() {
+			return this.selectedSites.map((site) => ({
+				...site,
+				scheduled_time:
+					this.scheduleMode === 'site'
+						? site.scheduled_time
+						: this.scheduledTime,
+			}));
 		},
 		scheduledTimeInCairo() {
 			if (!this.scheduledTime) {
@@ -459,6 +515,10 @@ export default {
 
 			if (this.useInPlaceUpdate) {
 				return `Update ${site} in place`;
+			}
+
+			if (this.scheduleMode === 'site') {
+				return `Deploy and update ${site} at individual times`;
 			}
 
 			return `Deploy and update ${site} at ${this.scheduledTimeInCairo}`;
@@ -509,9 +569,9 @@ export default {
 				params: {
 					name: this.bench,
 					apps: this.selectedApps,
-					sites: this.selectedSites,
+					sites: this.scheduledSites,
 					run_will_fail_check: !this.ignoreWillFailCheck,
-					scheduled_time: this.scheduledTime,
+					scheduled_time: this.deploymentScheduledTime,
 				},
 				validate() {
 					if (
@@ -616,7 +676,14 @@ export default {
 			sites = Array.from(sites);
 			let siteData = this.benchDocResource.doc.deploy_information.sites;
 
-			this.selectedSites = siteData.filter((site) => sites.includes(site.name));
+			this.selectedSites = siteData
+				.filter((site) => sites.includes(site.name))
+				.map((site) => ({
+					...site,
+					scheduled_time:
+						this.selectedSites.find((selected) => selected.name === site.name)
+							?.scheduled_time || this.scheduledTime,
+				}));
 		},
 		deployFrom(app) {
 			if (app.will_branch_change) {
@@ -633,7 +700,10 @@ export default {
 		},
 		updateBench() {
 			if (!this.scheduledTimeIsFuture) {
-				this.errorMessage = 'Please select a future update time in Cairo';
+				this.errorMessage =
+					this.scheduleMode === 'site'
+						? 'Please select a future update time for every site in Cairo'
+						: 'Please select a future update time in Cairo';
 				return;
 			}
 
