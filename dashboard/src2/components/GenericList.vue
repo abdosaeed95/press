@@ -1,14 +1,15 @@
 <template>
 	<ListView
+		ref="listView"
 		:columns="columns"
 		:rows="rows"
 		:options="{
 			selectable: options.selectable || false,
-			onRowClick: row => (options.onRowClick ? options.onRowClick(row) : {}),
-			getRowRoute: options.route ? getRowRoute : null
+			onRowClick: (row) => (options.onRowClick ? options.onRowClick(row) : {}),
+			getRowRoute: options.route ? getRowRoute : null,
 		}"
 		row-key="name"
-		@update:selections="e => this.$emit('update:selections', e)"
+		@update:selections="(e) => this.$emit('update:selections', e)"
 	>
 		<ListHeader>
 			<template v-for="column in columns" :key="column.field">
@@ -50,7 +51,7 @@ import {
 	ListView,
 	ListHeaderItem,
 	ListRow,
-	ListSelectBanner
+	ListSelectBanner,
 } from 'frappe-ui';
 import ObjectListCell from './ObjectListCell.vue';
 
@@ -62,29 +63,43 @@ export default {
 		ListHeaderItem,
 		ListRow,
 		ListSelectBanner,
-		ObjectListCell
+		ObjectListCell,
 	},
-	props: ['options'],
+	props: {
+		options: Object,
+		selections: {
+			type: Array,
+			default: () => [],
+		},
+	},
 	emits: ['update:selections'],
+	mounted() {
+		this.syncSelections();
+	},
+	watch: {
+		selections() {
+			this.syncSelections();
+		},
+	},
 	computed: {
 		columns() {
 			if (!this.options.columns && this.options.data.length > 0) {
-				return Object.keys(this.options.data[0]).map(fieldname => {
+				return Object.keys(this.options.data[0]).map((fieldname) => {
 					return {
 						fieldname,
 						key: fieldname,
-						label: fieldname
+						label: fieldname,
 					};
 				});
 			}
 			return this.options.columns
-				.filter(column => {
+				.filter((column) => {
 					if (column.condition) {
 						return column.condition(this.context);
 					}
 					return true;
 				})
-				.map(column => {
+				.map((column) => {
 					if (!column.key) {
 						column.key = column.fieldname;
 					}
@@ -96,16 +111,28 @@ export default {
 		},
 		context() {
 			return this.options.context;
-		}
+		},
 	},
 	methods: {
+		syncSelections() {
+			const selectedRows = this.$refs.listView?.selections;
+			if (!selectedRows) return;
+
+			const selections = new Set(this.selections);
+			for (const row of selectedRows) {
+				if (!selections.has(row)) selectedRows.delete(row);
+			}
+			for (const row of selections) {
+				selectedRows.add(row);
+			}
+		},
 		getRowRoute(row) {
 			if (this.options.route) {
 				let route = this.options.route(row);
 				return route || this.$route;
 			}
 			return null;
-		}
-	}
+		},
+	},
 };
 </script>

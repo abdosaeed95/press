@@ -745,6 +745,13 @@ def deploy_information(name):
 
 @frappe.whitelist()
 @protected("Release Group")
+def sites_without_slaves(name: str, sites: list[str]):
+	settings = frappe.get_single("Console Integration Settings")
+	return settings.get_sites_without_slaves(sites)
+
+
+@frappe.whitelist()
+@protected("Release Group")
 def deploy(name, apps):
 	team = get_current_team(True)
 	rg: ReleaseGroup = frappe.get_doc("Release Group", name)

@@ -38,15 +38,27 @@
 				<!-- Select Site Step -->
 				<div v-else-if="step === 'select-sites'">
 					<h2 class="mb-4 text-lg font-medium">Select sites to update</h2>
+					<LoadingText
+						v-if="$resources.sitesWithoutSlaves.loading"
+						class="py-8 text-center"
+						text="Checking Console slave links"
+					/>
 					<GenericList
 						class="max-h-[500px]"
-						v-if="benchDocResource.doc.deploy_information.sites.length"
+						v-else-if="
+							slaveLookupComplete &&
+							benchDocResource.doc.deploy_information.sites.length
+						"
 						:options="siteOptions"
+						:selections="selectedSites.map((site) => site.name)"
 						@update:selections="handleSiteSelection"
 					/>
 					<p
 						class="text-center text-base font-medium text-gray-600"
-						v-else-if="!benchDocResource.doc.deploy_information.sites.length"
+						v-else-if="
+							slaveLookupComplete &&
+							!benchDocResource.doc.deploy_information.sites.length
+						"
 					>
 						No active sites to update
 					</p>
@@ -162,7 +174,7 @@
 						$resources.deployAndUpdate.loading ||
 						$resources.updateInPlace.loading
 					"
-					:disabled="!updateTimesAreValid"
+					:disabled="!updateTimesAreValid || !slaveLookupComplete"
 					@click="updateBench"
 				/>
 			</div>
@@ -210,6 +222,7 @@ export default {
 			siteUpdateTime: 'after-deployment',
 			siteScheduledTime: nextSlot.add(15, 'minute').format('YYYY-MM-DDTHH:mm'),
 			siteSchedules: {},
+			slaveLookupComplete: false,
 		};
 	},
 	mounted() {
@@ -222,6 +235,11 @@ export default {
 		}
 	},
 	watch: {
+		step(step) {
+			if (step === 'select-sites') {
+				this.loadSlaveStatus();
+			}
+		},
 		deploymentScheduledTime(time) {
 			const siteTime = dayjsCairo(time)
 				.add(15, 'minute')
@@ -419,6 +437,16 @@ export default {
 					{
 						label: 'Site',
 						fieldname: 'name',
+					},
+					{
+						label: 'Console',
+						fieldname: 'no_slave',
+						type: 'Badge',
+						format(value) {
+							return value ? 'No Slave' : '';
+						},
+						theme: 'orange',
+						width: 0.4,
 					},
 					{
 						label: 'Skip failed patches',
@@ -627,6 +655,20 @@ export default {
 		},
 	},
 	resources: {
+		sitesWithoutSlaves() {
+			return {
+				url: 'press.api.bench.sites_without_slaves',
+				params: {
+					name: this.bench,
+					sites: this.deployInformation.sites.map((site) => site.name),
+				},
+				onSuccess: this.handleSlaveLookupSuccess.bind(this),
+				onError(error) {
+					this.errorMessage =
+						error?.messages?.[0] ?? 'Unable to check Console slave links';
+				},
+			};
+		},
 		deployAndUpdate() {
 			return {
 				url: 'press.api.bench.deploy_and_update',
@@ -684,6 +726,21 @@ export default {
 		},
 	},
 	methods: {
+		loadSlaveStatus() {
+			this.errorMessage = '';
+			this.slaveLookupComplete = !this.deployInformation.sites.length;
+			if (!this.slaveLookupComplete) {
+				this.$resources.sitesWithoutSlaves.submit();
+			}
+		},
+		handleSlaveLookupSuccess(sitesWithoutSlaves) {
+			const names = new Set(sitesWithoutSlaves);
+			for (const site of this.deployInformation.sites) {
+				site.no_slave = names.has(site.name);
+			}
+			this.handleSiteSelection(sitesWithoutSlaves);
+			this.slaveLookupComplete = true;
+		},
 		back() {
 			if (this.step === 'select-apps') {
 				return;

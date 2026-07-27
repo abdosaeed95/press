@@ -108,4 +108,32 @@ describe('Update Bench Group scheduling', () => {
 
 		expect(computed.updateTimesAreValid.call(state)).toBe(false);
 	});
+
+	it('marks and immediately selects sites without slaves', () => {
+		const sites = [
+			{ name: 'no-slave.example.com' },
+			{ name: 'with-slave.example.com' },
+		];
+		const state = {
+			benchDocResource: { doc: { deploy_information: { sites } } },
+			deployInformation: { sites },
+			selectedSites: [],
+			siteSchedules: {},
+			siteScheduledTime: '2026-07-28T03:00',
+			slaveLookupComplete: false,
+		};
+		state.handleSiteSelection = methods.handleSiteSelection.bind(state);
+
+		methods.handleSlaveLookupSuccess.call(state, ['no-slave.example.com']);
+
+		expect(sites).toEqual([
+			{ name: 'no-slave.example.com', no_slave: true },
+			{ name: 'with-slave.example.com', no_slave: false },
+		]);
+		expect(state.selectedSites).toEqual([sites[0]]);
+		expect(state.siteSchedules['no-slave.example.com'].updateTime).toBe(
+			'after-deployment'
+		);
+		expect(state.slaveLookupComplete).toBe(true);
+	});
 });
