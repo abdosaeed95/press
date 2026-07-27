@@ -10,11 +10,12 @@ import AddDomainDialog from '../components/AddDomainDialog.vue';
 import GenericDialog from '../components/GenericDialog.vue';
 import ObjectList from '../components/ObjectList.vue';
 import SiteActions from '../components/SiteActions.vue';
+import { getSiteBulkActions } from '../components/site/siteBulkActions';
 import { getTeam, switchToTeam } from '../data/team';
 import router from '../router';
 import { getRunningJobs } from '../utils/agentJob';
 import { confirmDialog, icon, renderDialog } from '../utils/components';
-import dayjs from '../utils/dayjs';
+import dayjs, { scheduledTimeLabel } from '../utils/dayjs';
 import { bytes, date, userCurrency } from '../utils/format';
 import { getToastErrorMessage } from '../utils/toast';
 import { getDocResource } from '../utils/resource';
@@ -82,6 +83,8 @@ export default {
 		],
 		orderBy: 'creation desc',
 		searchField: 'host_name',
+		selectable: true,
+		hideSelectionBannerOnMobile: true,
 		filterControls() {
 			return [
 				{
@@ -142,7 +145,17 @@ export default {
 					return value || row.name;
 				},
 			},
-			{ label: 'Status', fieldname: 'status', type: 'Badge', width: '140px' },
+			{
+				label: 'Status',
+				fieldname: 'status',
+				type: 'Badge',
+				width: '240px',
+				format(value, row) {
+					return value === 'Scheduled' && row.scheduled_time
+						? `Scheduled on ${scheduledTimeLabel(row.scheduled_time)}`
+						: value;
+				},
+			},
 			{
 				label: 'Plan',
 				fieldname: 'plan',
@@ -246,6 +259,9 @@ export default {
 					},
 				},
 			];
+		},
+		actions({ listResource: sites, selectedRows }) {
+			return getSiteBulkActions(sites, selectedRows);
 		},
 	},
 	detail: {

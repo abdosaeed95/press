@@ -33,6 +33,23 @@ export function dayjsCairo(dateTimeString) {
 		: dayjs().tz(CAIRO_TIMEZONE);
 }
 
+export function scheduledTimeLabel(dateTimeString) {
+	const scheduledTime = dayjsLocal(dateTimeString);
+	const days = scheduledTime
+		.startOf('day')
+		.diff(dayjsLocal().startOf('day'), 'day');
+	const day =
+		days === 0
+			? 'Today'
+			: days === 1
+			? 'Tomorrow'
+			: days > 1 && days < 14
+			? `Next ${scheduledTime.format('ddd')}`
+			: scheduledTime.format('ddd, MMM D');
+
+	return `${day} ${scheduledTime.format('h:mm A')}`;
+}
+
 export function cairoTimeToServer(dateTimeString) {
 	return dayjsCairo(dateTimeString).tz(SERVER_TIMEZONE);
 }

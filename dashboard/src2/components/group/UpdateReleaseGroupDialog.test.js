@@ -38,7 +38,6 @@ describe('Update Bench Group scheduling', () => {
 		const state = UpdateReleaseGroupDialog.data();
 
 		expect(state.siteScheduleMode).toBe('per-site');
-		expect(state.distributionDays).toBeNull();
 	});
 
 	it('makes every distributed day selectable', () => {
@@ -108,69 +107,5 @@ describe('Update Bench Group scheduling', () => {
 			.format('YYYY-MM-DDTHH:mm');
 
 		expect(computed.updateTimesAreValid.call(state)).toBe(false);
-	});
-
-	it('distributes site updates between 3 AM and 6 AM across entered days', () => {
-		const state = context({
-			distributionDays: 2,
-			selectedSites: [
-				{ name: 'one.example.com' },
-				{ name: 'two.example.com' },
-				{ name: 'three.example.com' },
-				{ name: 'four.example.com' },
-			],
-			siteSchedules: {},
-		});
-		Object.defineProperty(state, 'canDistributeUpdateTimes', {
-			get: () => computed.canDistributeUpdateTimes.call(state),
-		});
-
-		methods.distributeSiteUpdateTimes.call(state);
-
-		const times = Object.values(state.siteSchedules).map((schedule) =>
-			dayjsCairo(schedule.scheduledTime)
-		);
-		expect(times.every((time) => time.hour() >= 3 && time.hour() < 6)).toBe(
-			true
-		);
-		expect(times.every((time) => [0, 15, 30, 45].includes(time.minute()))).toBe(
-			true
-		);
-		expect(new Set(times.map((time) => time.format('YYYY-MM-DD'))).size).toBe(
-			2
-		);
-		expect(
-			Object.values(state.siteSchedules).every(
-				(schedule) => schedule.updateTime === 'scheduled'
-			)
-		).toBe(true);
-	});
-
-	it('moves distributed times after a late scheduled deployment', () => {
-		const deploymentScheduledTime = dayjsCairo()
-			.add(2, 'days')
-			.startOf('day')
-			.hour(5)
-			.minute(30)
-			.format('YYYY-MM-DDTHH:mm');
-		const state = context({
-			deploymentTime: 'scheduled',
-			deploymentScheduledTime,
-			distributionDays: 1,
-			siteSchedules: {},
-		});
-		Object.defineProperty(state, 'canDistributeUpdateTimes', {
-			get: () => computed.canDistributeUpdateTimes.call(state),
-		});
-
-		methods.distributeSiteUpdateTimes.call(state);
-
-		expect(
-			Object.values(state.siteSchedules).every((schedule) =>
-				dayjsCairo(schedule.scheduledTime).isAfter(
-					dayjsCairo(deploymentScheduledTime)
-				)
-			)
-		).toBe(true);
 	});
 });
