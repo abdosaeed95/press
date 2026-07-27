@@ -333,7 +333,7 @@ def get_app_subscriptions(app_plans, team: str):
 def jobs(filters=None, order_by=None, limit_start=None, limit_page_length=None):
 	jobs = frappe.get_all(
 		"Agent Job",
-		fields=["name", "job_type", "creation", "status", "start", "end", "duration"],
+		fields=["name", "job_type", "creation", "status", "start", "end", "duration", "job_id"],
 		filters=filters,
 		start=limit_start,
 		limit=limit_page_length,
@@ -341,7 +341,10 @@ def jobs(filters=None, order_by=None, limit_start=None, limit_page_length=None):
 	)
 
 	for job in jobs:
-		job["status"] = "Pending" if job["status"] == "Undelivered" else job["status"]
+		if job.pop("job_id") == -1:
+			job["status"] = "Queued"
+		elif job["status"] == "Undelivered":
+			job["status"] = "Pending"
 
 	return jobs
 
@@ -349,6 +352,7 @@ def jobs(filters=None, order_by=None, limit_start=None, limit_page_length=None):
 @frappe.whitelist()
 def job(job):
 	job = frappe.get_doc("Agent Job", job)
+	deferred = job.job_id == -1
 	job = job.as_dict()
 	whitelisted_fields = [
 		"name",
@@ -363,7 +367,9 @@ def job(job):
 		if key not in whitelisted_fields:
 			job.pop(key, None)
 
-	if job.status == "Undelivered":
+	if deferred:
+		job.status = "Queued"
+	elif job.status == "Undelivered":
 		job.status = "Pending"
 
 	job.steps = frappe.get_all(
@@ -1827,7 +1833,7 @@ def unset_redirect(name, domain):
 @frappe.whitelist()
 @protected("Site")
 def install_app(name, app, plan=None):
-	frappe.get_doc("Site", name).install_app(app, plan)
+	return frappe.get_doc("Site", name).install_app(app, plan)
 
 
 @frappe.whitelist()

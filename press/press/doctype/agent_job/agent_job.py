@@ -152,7 +152,8 @@ class AgentJob(Document):
 	def after_insert(self):
 		self.create_agent_job_steps()
 		self.log_creation()
-		self.enqueue_http_request()
+		if self.job_id != -1:
+			self.enqueue_http_request()
 
 	def enqueue_http_request(self):
 		frappe.enqueue_doc(
@@ -480,7 +481,7 @@ def poll_pending_jobs_server(server):
 		fields=["name", "job_id", "status", "callback_failure_count"],
 		filters={
 			"status": ("in", ["Pending", "Running"]),
-			"job_id": ("!=", 0),
+			"job_id": (">", 0),
 			"server": server.server,
 		},
 		order_by="job_id",
@@ -636,7 +637,7 @@ def fail_old_jobs():
 		"Agent Job",
 		{
 			"status": ("in", ["Pending", "Running"]),
-			"job_id": ("!=", 0),
+			"job_id": (">", 0),
 			"creation": ("<", add_days(None, -2)),
 		},
 		"name",

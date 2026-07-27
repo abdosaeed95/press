@@ -753,21 +753,76 @@ class Site(Document, TagHelpers):
 			# TODO: check if app is available and can be installed
 
 	@dashboard_whitelist()
-	@site_action(["Active"])
 	def install_app(self, app: str, plan: str | None = None) -> str:
-		self.check_marketplace_app_installable(plan)
+		jobs = self.install_apps([{"app": app, "plan": plan}])
+		return jobs[0] if jobs else None
 
-		if find(self.apps, lambda x: x.app == app):
-			return None
+	@dashboard_whitelist()
+	@site_action(["Active", "Pending", "Installing"])
+	def install_apps(self, apps: list[dict] | str) -> list[str]:
+		apps = frappe.parse_json(apps) if isinstance(apps, str) else apps
+		if not isinstance(apps, list):
+			frappe.throw(_("Select at least one app to install."))
 
+		requested_apps = {
+			app.get("app"): app.get("plan") for app in apps if isinstance(app, dict) and app.get("app")
+		}
+		if not requested_apps:
+			frappe.throw(_("Select at least one app to install."))
+		site_status = frappe.db.get_value("Site", self.name, "status", for_update=True)
+		bench_apps = [app.app for app in frappe.get_doc("Bench", self.bench).apps]
+		installed_apps = set(
+			frappe.get_all(
+				"Site App",
+				filters={"parent": self.name, "parenttype": "Site"},
+				pluck="app",
+			)
+		)
+		ongoing_jobs = frappe.get_all(
+			"Agent Job",
+			filters={
+				"site": self.name,
+				"job_type": "Install App on Site",
+				"status": ("in", ["Undelivered", "Pending", "Running"]),
+			},
+			fields=["name", "request_data"],
+			order_by="creation",
+		)
+		queued_apps = {frappe.parse_json(job.request_data).get("name") for job in ongoing_jobs}
+		apps_to_install = [
+			app
+			for app in bench_apps
+			if app in requested_apps and app not in installed_apps and app not in queued_apps
+		]
+		unavailable_apps = set(requested_apps) - set(bench_apps)
+		if unavailable_apps:
+			frappe.throw(
+				_("Apps are not available on this site's bench: {0}").format(
+					frappe.bold(", ".join(sorted(unavailable_apps)))
+				)
+			)
+		if not apps_to_install:
+			return []
+		if site_status != "Active" and not ongoing_jobs:
+			frappe.throw(_("Another site action is already in progress."))
+
+		wait_for_job = ongoing_jobs[-1].name if ongoing_jobs else None
 		agent = Agent(self.server)
-		job = agent.install_app_site(self, app)
-		log_site_activity(self.name, "Install App", app, job.name)
-		self.status = "Pending"
-		self.save()
-		self.install_marketplace_conf(app, plan)
+		jobs = []
+		for app in apps_to_install:
+			plan = requested_apps[app]
+			self.check_marketplace_app_installable(plan)
+			job = agent.install_app_site(self, app, wait_for_job)
+			log_site_activity(self.name, "Install App", app, job.name)
+			self.install_marketplace_conf(app, plan)
+			jobs.append(job.name)
+			wait_for_job = job.name
 
-		return job.name
+		if site_status == "Active":
+			self.status = "Pending"
+			frappe.db.set_value("Site", self.name, "status", self.status)
+
+		return jobs
 
 	@dashboard_whitelist()
 	@site_action(["Active"])
@@ -3635,6 +3690,56 @@ def process_archive_site_job_update(job):
 
 
 def process_install_app_site_job_update(job):
+	next_job = frappe.db.get_value(
+		"Agent Job",
+		{
+			"reference_doctype": "Agent Job",
+			"reference_name": job.name,
+			"job_type": "Install App on Site",
+			"status": ("in", ["Undelivered", "Pending", "Running"]),
+		},
+		["name", "status", "job_id"],
+		as_dict=True,
+		for_update=True,
+	)
+	if job.status == "Success" and next_job and next_job.job_id == -1:
+		next_job = frappe.get_doc("Agent Job", next_job.name)
+		next_job.db_set({"status": "Undelivered", "job_id": 0}, update_modified=False)
+		next_job.enqueue_http_request()
+	elif job.status in ["Failure", "Delivery Failure"]:
+		queued_jobs = frappe.get_all(
+			"Agent Job",
+			filters={
+				"site": job.site,
+				"job_type": "Install App on Site",
+				"status": "Pending",
+				"job_id": -1,
+			},
+			fields=["name", "reference_name"],
+		)
+		pending_jobs = []
+		parent_job = job.name
+		while queued_job := find(queued_jobs, lambda queued_job: queued_job.reference_name == parent_job):
+			pending_jobs.append(queued_job.name)
+			parent_job = queued_job.name
+		if pending_jobs:
+			frappe.db.set_value(
+				"Agent Job",
+				{"name": ("in", pending_jobs)},
+				{
+					"status": "Failure",
+					"output": _("Skipped because a previous app installation failed."),
+				},
+				update_modified=False,
+			)
+			frappe.db.set_value(
+				"Agent Job Step",
+				{"agent_job": ("in", pending_jobs)},
+				"status",
+				"Failure",
+				update_modified=False,
+			)
+
 	updated_status = {
 		"Pending": "Pending",
 		"Running": "Installing",
@@ -3642,11 +3747,13 @@ def process_install_app_site_job_update(job):
 		"Failure": "Active",
 		"Delivery Failure": "Active",
 	}[job.status]
+	if job.status == "Success" and next_job:
+		updated_status = "Installing" if next_job.status == "Running" else "Pending"
 
 	site_status = frappe.get_value("Site", job.site, "status")
+	if job.status in ["Success", "Failure", "Delivery Failure"]:
+		frappe.get_doc("Site", job.site).sync_apps()
 	if updated_status != site_status:
-		site: Site = frappe.get_doc("Site", job.site)
-		site.sync_apps()
 		frappe.db.set_value("Site", job.site, "status", updated_status)
 		create_site_status_update_webhook_event(job.site)
 
