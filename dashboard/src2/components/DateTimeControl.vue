@@ -33,7 +33,7 @@
 import { dayjsCairo } from '../utils/dayjs';
 
 export default {
-	props: ['modelValue', 'label'],
+	props: ['modelValue', 'label', 'minimumTime'],
 	emits: ['update:modelValue'],
 	computed: {
 		scheduledDate: {
@@ -79,11 +79,15 @@ export default {
 			},
 		},
 		dayOptions() {
+			const firstDay =
+				this.minimumTime && dayjsCairo(this.minimumTime).isAfter(dayjsCairo())
+					? dayjsCairo(this.minimumTime)
+					: dayjsCairo();
 			let days = [];
 			for (let i = 0; i < 7; i++) {
 				days.push({
-					label: dayjsCairo().add(i, 'day').format('dddd, MMMM D'),
-					value: dayjsCairo().add(i, 'day').format('YYYY-MM-DD'),
+					label: firstDay.add(i, 'day').format('dddd, MMMM D'),
+					value: firstDay.add(i, 'day').format('YYYY-MM-DD'),
 				});
 			}
 			return days;
@@ -104,6 +108,19 @@ export default {
 						option.value >= (now.minute() < 45 ? now.hour() : now.hour() + 1)
 				);
 			}
+			if (
+				this.minimumTime &&
+				this.scheduledDate === dayjsCairo(this.minimumTime).format('YYYY-MM-DD')
+			) {
+				const minimumTime = dayjsCairo(this.minimumTime);
+				options = options.filter(
+					(option) =>
+						option.value >=
+						(minimumTime.minute() < 45
+							? minimumTime.hour()
+							: minimumTime.hour() + 1)
+				);
+			}
 
 			return options;
 		},
@@ -119,6 +136,16 @@ export default {
 				Number(this.scheduledHour) === now.hour()
 			) {
 				options = options.filter((option) => option.value >= now.minute());
+			}
+			if (
+				this.minimumTime &&
+				this.scheduledDate ===
+					dayjsCairo(this.minimumTime).format('YYYY-MM-DD') &&
+				Number(this.scheduledHour) === dayjsCairo(this.minimumTime).hour()
+			) {
+				options = options.filter(
+					(option) => option.value > dayjsCairo(this.minimumTime).minute()
+				);
 			}
 
 			return options;
