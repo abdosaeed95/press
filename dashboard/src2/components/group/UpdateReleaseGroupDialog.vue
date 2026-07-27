@@ -82,14 +82,68 @@
 
 				<div
 					v-if="['select-sites', 'restrict-build'].includes(step)"
-					class="space-y-1"
+					class="space-y-3"
 				>
-					<DateTimeControl
-						v-model="scheduledTime"
-						label="Update time (Cairo)"
+					<FormControl
+						label="Bench deployment"
+						type="select"
+						:options="deploymentTimeOptions"
+						v-model="deploymentTime"
 					/>
-					<p class="text-sm text-gray-600">
-						The deploy and selected site updates will start at this Cairo time.
+					<DateTimeControl
+						v-if="deploymentTime === 'scheduled'"
+						v-model="deploymentScheduledTime"
+						label="Bench deployment time (Cairo)"
+					/>
+					<div v-if="selectedSites.length" class="border-t pt-3">
+						<FormControl
+							label="Schedule site updates"
+							type="select"
+							:options="siteScheduleModeOptions"
+							v-model="siteScheduleMode"
+						/>
+					</div>
+					<template v-if="selectedSites.length && siteScheduleMode === 'all'">
+						<FormControl
+							label="Site update time"
+							type="select"
+							:options="siteUpdateTimeOptions"
+							v-model="siteUpdateTime"
+						/>
+						<DateTimeControl
+							v-if="siteUpdateTime === 'scheduled'"
+							v-model="siteScheduledTime"
+							label="Site update time (Cairo)"
+							:minimum-time="deployScheduledTime"
+						/>
+					</template>
+					<div
+						v-else-if="selectedSites.length"
+						class="max-h-72 space-y-3 overflow-y-auto"
+					>
+						<div
+							v-for="site in selectedSites"
+							:key="site.name"
+							class="space-y-3 rounded-lg border p-3"
+						>
+							<p class="font-medium text-gray-900">{{ site.name }}</p>
+							<FormControl
+								label="Site update time"
+								type="select"
+								:options="siteUpdateTimeOptions"
+								v-model="siteSchedules[site.name].updateTime"
+							/>
+							<DateTimeControl
+								v-if="siteSchedules[site.name].updateTime === 'scheduled'"
+								v-model="siteSchedules[site.name].scheduledTime"
+								label="Site update time (Cairo)"
+								:minimum-time="deployScheduledTime"
+							/>
+						</div>
+					</div>
+					<p v-if="selectedSites.length" class="text-sm text-gray-600">
+						Update after deployment starts each site as soon as its new bench is
+						ready.
 					</p>
 				</div>
 
@@ -125,7 +179,7 @@
 						$resources.deployAndUpdate.loading ||
 						$resources.updateInPlace.loading
 					"
-					:disabled="!scheduledTimeIsFuture"
+					:disabled="!updateTimesAreValid"
 					@click="updateBench"
 				/>
 			</div>
@@ -150,13 +204,12 @@ export default {
 	props: ['bench'],
 	components: {
 		GenericList,
-		CommitChooser,
-		CommitTag,
 		AlertBanner,
 		DateTimeControl,
 	},
 	data() {
 		const now = dayjsCairo();
+		const nextSlot = now.add(15 - (now.minute() % 15), 'minute').second(0);
 		return {
 			show: true,
 			step: '',
@@ -166,10 +219,12 @@ export default {
 			restrictMessage: '',
 			selectedApps: [],
 			selectedSites: [],
-			scheduledTime: now
-				.add(15 - (now.minute() % 15), 'minute')
-				.second(0)
-				.format('YYYY-MM-DDTHH:mm'),
+			deploymentTime: 'now',
+			deploymentScheduledTime: nextSlot.format('YYYY-MM-DDTHH:mm'),
+			siteScheduleMode: 'all',
+			siteUpdateTime: 'after-deployment',
+			siteScheduledTime: nextSlot.add(15, 'minute').format('YYYY-MM-DDTHH:mm'),
+			siteSchedules: {},
 		};
 	},
 	mounted() {
@@ -180,6 +235,21 @@ export default {
 		} else {
 			this.step = 'select-sites';
 		}
+	},
+	watch: {
+		deploymentScheduledTime(time) {
+			const siteTime = dayjsCairo(time)
+				.add(15, 'minute')
+				.format('YYYY-MM-DDTHH:mm');
+			if (!dayjsCairo(this.siteScheduledTime).isAfter(dayjsCairo(time))) {
+				this.siteScheduledTime = siteTime;
+			}
+			for (const schedule of Object.values(this.siteSchedules)) {
+				if (!dayjsCairo(schedule.scheduledTime).isAfter(dayjsCairo(time))) {
+					schedule.scheduledTime = siteTime;
+				}
+			}
+		},
 	},
 	computed: {
 		updatableAppOptions() {
@@ -430,26 +500,83 @@ export default {
 		canShowDeploy() {
 			return !this.canShowNext;
 		},
-		scheduledTimeIsFuture() {
-			return (
-				this.scheduledTime &&
-				dayjsCairo(this.scheduledTime).isAfter(dayjsCairo())
-			);
+		deploymentTimeOptions() {
+			return [
+				{ label: 'Deploy now', value: 'now' },
+				{ label: 'Schedule deployment', value: 'scheduled' },
+			];
 		},
-		scheduledTimeInCairo() {
-			if (!this.scheduledTime) {
-				return '';
-			}
-
-			return dayjsCairo(this.scheduledTime).format('lll');
+		siteScheduleModeOptions() {
+			return [
+				{ label: 'All sites', value: 'all' },
+				{ label: 'Per site', value: 'per-site' },
+			];
 		},
-		deployLabel() {
-			if (!this.scheduledTime) {
-				return 'Select update time';
+		siteUpdateTimeOptions() {
+			return [
+				{ label: 'Update after deployment', value: 'after-deployment' },
+				{ label: 'Schedule', value: 'scheduled' },
+			];
+		},
+		deployScheduledTime() {
+			return this.deploymentTime === 'scheduled'
+				? this.deploymentScheduledTime
+				: null;
+		},
+		sitesForUpdate() {
+			return this.selectedSites.map((site) => ({
+				...site,
+				scheduled_time:
+					this.siteScheduleMode === 'all'
+						? this.siteUpdateTime === 'scheduled'
+							? this.siteScheduledTime
+							: null
+						: this.siteSchedules[site.name].updateTime === 'scheduled'
+						? this.siteSchedules[site.name].scheduledTime
+						: null,
+			}));
+		},
+		updateTimesAreValid() {
+			if (
+				this.deploymentTime === 'scheduled' &&
+				!this.isFutureUpdateTime(this.deploymentScheduledTime)
+			) {
+				return false;
 			}
 
 			if (this.selectedSites.length === 0) {
-				return `Skip and Deploy at ${this.scheduledTimeInCairo}`;
+				return true;
+			}
+
+			if (this.siteScheduleMode === 'all') {
+				return (
+					this.siteUpdateTime === 'after-deployment' ||
+					this.isValidSiteUpdateTime(this.siteScheduledTime)
+				);
+			}
+
+			return this.selectedSites.every(
+				(site) =>
+					this.siteSchedules[site.name].updateTime === 'after-deployment' ||
+					this.isValidSiteUpdateTime(
+						this.siteSchedules[site.name].scheduledTime
+					)
+			);
+		},
+		deploymentScheduledTimeInCairo() {
+			if (!this.deployScheduledTime) {
+				return '';
+			}
+
+			return dayjsCairo(this.deployScheduledTime).format('lll');
+		},
+		deployLabel() {
+			const deploy = this.deployScheduledTime
+				? `Deploy at ${this.deploymentScheduledTimeInCairo}`
+				: 'Deploy now';
+
+			if (this.selectedSites.length === 0) {
+				return `Skip and ${deploy}`;
 			}
 
 			let site = 'site';
@@ -461,10 +588,22 @@ export default {
 				return `Update ${site} in place`;
 			}
 
-			return `Deploy and update ${site} at ${this.scheduledTimeInCairo}`;
+			if (this.siteScheduleMode === 'per-site') {
+				return `${deploy} and update ${site} at selected times`;
+			}
+
+			return this.siteUpdateTime === 'scheduled'
+				? `${deploy} and update ${site} at ${dayjsCairo(
+						this.siteScheduledTime
+				  ).format('lll')}`
+				: `${deploy} and update ${site} after deployment`;
 		},
 		canUpdateInPlace() {
-			if (this.scheduledTime) {
+			if (
+				this.siteScheduleMode === 'per-site' ||
+				this.siteUpdateTime === 'scheduled' ||
+				this.deployScheduledTime
+			) {
 				return false;
 			}
 
@@ -509,9 +648,9 @@ export default {
 				params: {
 					name: this.bench,
 					apps: this.selectedApps,
-					sites: this.selectedSites,
+					sites: this.sitesForUpdate,
 					run_will_fail_check: !this.ignoreWillFailCheck,
-					scheduled_time: this.scheduledTime,
+					scheduled_time: this.deployScheduledTime,
 				},
 				validate() {
 					if (
@@ -617,6 +756,14 @@ export default {
 			let siteData = this.benchDocResource.doc.deploy_information.sites;
 
 			this.selectedSites = siteData.filter((site) => sites.includes(site.name));
+			for (const site of this.selectedSites) {
+				if (!this.siteSchedules[site.name]) {
+					this.siteSchedules[site.name] = {
+						updateTime: 'after-deployment',
+						scheduledTime: this.siteScheduledTime,
+					};
+				}
+			}
 		},
 		deployFrom(app) {
 			if (app.will_branch_change) {
@@ -632,8 +779,9 @@ export default {
 			).next_release;
 		},
 		updateBench() {
-			if (!this.scheduledTimeIsFuture) {
-				this.errorMessage = 'Please select a future update time in Cairo';
+			if (!this.updateTimesAreValid) {
+				this.errorMessage =
+					'Scheduled site updates must be later than the bench deployment';
 				return;
 			}
 
@@ -650,6 +798,16 @@ export default {
 			} else {
 				this.$resources.deployAndUpdate.submit();
 			}
+		},
+		isFutureUpdateTime(time) {
+			return time && dayjsCairo(time).isAfter(dayjsCairo());
+		},
+		isValidSiteUpdateTime(time) {
+			return (
+				this.isFutureUpdateTime(time) &&
+				(!this.deployScheduledTime ||
+					dayjsCairo(time).isAfter(dayjsCairo(this.deployScheduledTime)))
+			);
 		},
 		setSkipBackupsAndFailingPatches() {
 			for (const site of this.selectedSites) {

@@ -770,15 +770,11 @@ def deploy_and_update(
 	run_will_fail_check: bool = True,
 	scheduled_time: str | None = None,
 ):
-	if scheduled_time:
-		scheduled_time = (
-			pytz.timezone("Africa/Cairo")
-			.localize(get_datetime(scheduled_time))
-			.astimezone(pytz.timezone(get_system_timezone()))
-			.replace(tzinfo=None)
-		)
-		if scheduled_time <= now_datetime():
-			frappe.throw(_("Update time must be in the future."))
+	scheduled_time = get_cairo_scheduled_time(scheduled_time)
+	for site in sites or []:
+		site["scheduled_time"] = get_cairo_scheduled_time(site.get("scheduled_time"))
+		if scheduled_time and site["scheduled_time"] and site["scheduled_time"] <= scheduled_time:
+			frappe.throw(_("Site update time must be later than the bench deployment time."))
 
 	# Returns name of the Deploy Candidate that is running the build
 	return get_bench_update(
@@ -787,6 +783,21 @@ def deploy_and_update(
 		sites,
 		False,
 	).deploy(run_will_fail_check, scheduled_time)
+
+
+def get_cairo_scheduled_time(scheduled_time: str | None):
+	if not scheduled_time:
+		return None
+
+	scheduled_time = (
+		pytz.timezone("Africa/Cairo")
+		.localize(get_datetime(scheduled_time))
+		.astimezone(pytz.timezone(get_system_timezone()))
+		.replace(tzinfo=None)
+	)
+	if scheduled_time <= now_datetime():
+		frappe.throw(_("Update time must be in the future."))
+	return scheduled_time
 
 
 @frappe.whitelist()

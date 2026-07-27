@@ -8,6 +8,7 @@
  "engine": "InnoDB",
  "field_order": [
   "site",
+  "scheduled_time",
   "site_update",
   "status",
   "source_candidate",
@@ -25,6 +26,11 @@
    "options": "Site",
    "reqd": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "scheduled_time",
+   "fieldtype": "Datetime",
+   "label": "Scheduled Time"
   },
   {
    "fieldname": "site_update",

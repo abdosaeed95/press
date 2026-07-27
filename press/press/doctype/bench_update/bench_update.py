@@ -147,7 +147,9 @@ class BenchUpdate(Document):
 					):
 						continue
 					site_update = frappe.get_doc("Site", row.site).schedule_update(
-						skip_failing_patches=row.skip_failing_patches, skip_backups=row.skip_backups
+						skip_failing_patches=row.skip_failing_patches,
+						skip_backups=row.skip_backups,
+						scheduled_time=row.scheduled_time,
 					)
 					frappe.db.set_value("Bench Site Update", row.name, "site_update", site_update)
 					frappe.db.commit()
@@ -190,6 +192,7 @@ def get_bench_update(
 					"skip_failing_patches": site["skip_failing_patches"],
 					"skip_backups": site["skip_backups"],
 					"source_candidate": frappe.get_value("Bench", site["bench"], "candidate"),
+					"scheduled_time": site.get("scheduled_time"),
 				}
 				for site in sites
 			],

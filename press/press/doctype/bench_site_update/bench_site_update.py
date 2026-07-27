@@ -17,6 +17,7 @@ class BenchSiteUpdate(Document):
 		parent: DF.Data
 		parentfield: DF.Data
 		parenttype: DF.Data
+		scheduled_time: DF.Datetime | None
 		server: DF.Link | None
 		site: DF.Link
 		site_update: DF.Link | None
