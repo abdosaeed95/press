@@ -1,0 +1,73 @@
+{
+ "actions": [],
+ "allow_events_in_timeline": 1,
+ "allow_rename": 1,
+ "creation": "2026-07-27 15:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "connection_section",
+  "console_url",
+  "column_break_username",
+  "username",
+  "column_break_password",
+  "password"
+ ],
+ "fields": [
+  {
+   "fieldname": "connection_section",
+   "fieldtype": "Section Break",
+   "label": "Console Connection"
+  },
+  {
+   "description": "URL of the Console site queried when selecting sites for bench updates.",
+   "fieldname": "console_url",
+   "fieldtype": "Data",
+   "label": "Console URL",
+   "options": "URL",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_username",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Console user with read access to Instance records.",
+   "fieldname": "username",
+   "fieldtype": "Data",
+   "label": "Username",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_password",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Password used only by the Press server to query Console.",
+   "fieldname": "password",
+   "fieldtype": "Password",
+   "label": "Password",
+   "reqd": 1
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-07-27 15:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Press",
+ "name": "Console Integration Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
