@@ -10,9 +10,7 @@ from press.press.doctype.console_integration_settings.console_integration_settin
 
 
 class TestConsoleIntegrationSettings(TestCase):
-	@patch(
-		"press.press.doctype.console_integration_settings.console_integration_settings.FrappeClient"
-	)
+	@patch("press.press.doctype.console_integration_settings.console_integration_settings.FrappeClient")
 	def test_only_setup_active_slaves_are_linked(self, frappe_client):
 		client = frappe_client.return_value.__enter__.return_value
 		client.get_list.side_effect = [
