@@ -117,30 +117,51 @@
 							:minimum-time="deployScheduledTime"
 						/>
 					</template>
-					<div
-						v-else-if="selectedSites.length"
-						class="max-h-72 space-y-3 overflow-y-auto"
-					>
-						<div
-							v-for="site in selectedSites"
-							:key="site.name"
-							class="space-y-3 rounded-lg border p-3"
-						>
-							<p class="font-medium text-gray-900">{{ site.name }}</p>
-							<FormControl
-								label="Site update time"
-								type="select"
-								:options="siteUpdateTimeOptions"
-								v-model="siteSchedules[site.name].updateTime"
-							/>
-							<DateTimeControl
-								v-if="siteSchedules[site.name].updateTime === 'scheduled'"
-								v-model="siteSchedules[site.name].scheduledTime"
-								label="Site update time (Cairo)"
-								:minimum-time="deployScheduledTime"
-							/>
+					<template v-else-if="selectedSites.length">
+						<div class="rounded-lg border bg-gray-50 p-3">
+							<div
+								class="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto] sm:items-end"
+							>
+								<FormControl
+									label="Number of days"
+									type="number"
+									:min="1"
+									placeholder="Enter days"
+									v-model.number="distributionDays"
+								/>
+								<Button
+									label="Distribute between 3–6 AM"
+									:disabled="!canDistributeUpdateTimes"
+									@click="distributeSiteUpdateTimes"
+								/>
+							</div>
+							<p class="mt-2 text-sm text-gray-600">
+								Distribute selected sites across the next days in Cairo time.
+							</p>
 						</div>
-					</div>
+						<div class="max-h-72 space-y-3 overflow-y-auto">
+							<div
+								v-for="site in selectedSites"
+								:key="site.name"
+								class="space-y-3 rounded-lg border p-3"
+							>
+								<p class="font-medium text-gray-900">{{ site.name }}</p>
+								<FormControl
+									label="Site update time"
+									type="select"
+									:options="siteUpdateTimeOptions"
+									v-model="siteSchedules[site.name].updateTime"
+								/>
+								<DateTimeControl
+									v-if="siteSchedules[site.name].updateTime === 'scheduled'"
+									v-model="siteSchedules[site.name].scheduledTime"
+									label="Site update time (Cairo)"
+									:minimum-time="deployScheduledTime"
+									:days="distributionDays ? distributionDays + 1 : 7"
+								/>
+							</div>
+						</div>
+					</template>
 					<p v-if="selectedSites.length" class="text-sm text-gray-600">
 						Update after deployment starts each site as soon as its new bench is
 						ready.
@@ -221,10 +242,11 @@ export default {
 			selectedSites: [],
 			deploymentTime: 'now',
 			deploymentScheduledTime: nextSlot.format('YYYY-MM-DDTHH:mm'),
-			siteScheduleMode: 'all',
+			siteScheduleMode: 'per-site',
 			siteUpdateTime: 'after-deployment',
 			siteScheduledTime: nextSlot.add(15, 'minute').format('YYYY-MM-DDTHH:mm'),
 			siteSchedules: {},
+			distributionDays: null,
 		};
 	},
 	mounted() {
@@ -518,6 +540,13 @@ export default {
 				{ label: 'Schedule', value: 'scheduled' },
 			];
 		},
+		canDistributeUpdateTimes() {
+			return (
+				Number.isInteger(this.distributionDays) &&
+				this.distributionDays > 0 &&
+				this.selectedSites.length > 0
+			);
+		},
 		deployScheduledTime() {
 			return this.deploymentTime === 'scheduled'
 				? this.deploymentScheduledTime
@@ -764,6 +793,46 @@ export default {
 					};
 				}
 			}
+		},
+		distributeSiteUpdateTimes() {
+			if (!this.canDistributeUpdateTimes) {
+				return;
+			}
+
+			let firstDay = dayjsCairo().add(1, 'day').startOf('day');
+			const deployment = this.deployScheduledTime
+				? dayjsCairo(this.deployScheduledTime)
+				: null;
+			if (deployment?.startOf('day').isAfter(firstDay)) {
+				firstDay = deployment.startOf('day');
+			}
+
+			const generateTimes = () =>
+				this.selectedSites.map((_, index) => {
+					const offset =
+						Math.floor(
+							((index + 0.5) * this.distributionDays * 12) /
+								this.selectedSites.length
+						) * 15;
+					return firstDay
+						.add(Math.floor(offset / 180), 'day')
+						.hour(3)
+						.minute(offset % 180)
+						.format('YYYY-MM-DDTHH:mm');
+				});
+
+			let times = generateTimes();
+			if (deployment && !dayjsCairo(times[0]).isAfter(deployment)) {
+				firstDay = firstDay.add(1, 'day');
+				times = generateTimes();
+			}
+
+			this.selectedSites.forEach((site, index) => {
+				this.siteSchedules[site.name] = {
+					updateTime: 'scheduled',
+					scheduledTime: times[index],
+				};
+			});
 		},
 		deployFrom(app) {
 			if (app.will_branch_change) {

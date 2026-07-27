@@ -33,7 +33,7 @@
 import { dayjsCairo } from '../utils/dayjs';
 
 export default {
-	props: ['modelValue', 'label', 'minimumTime'],
+	props: ['modelValue', 'label', 'minimumTime', 'days'],
 	emits: ['update:modelValue'],
 	computed: {
 		scheduledDate: {
@@ -84,7 +84,7 @@ export default {
 					? dayjsCairo(this.minimumTime)
 					: dayjsCairo();
 			let days = [];
-			for (let i = 0; i < 7; i++) {
+			for (let i = 0; i < (this.days || 7); i++) {
 				days.push({
 					label: firstDay.add(i, 'day').format('dddd, MMMM D'),
 					value: firstDay.add(i, 'day').format('YYYY-MM-DD'),
