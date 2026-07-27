@@ -136,4 +136,20 @@ describe('Update Bench Group scheduling', () => {
 		);
 		expect(state.slaveLookupComplete).toBe(true);
 	});
+
+	it('shows green No Slave and red Has a Slave badges', () => {
+		const consoleColumn = computed.siteOptions
+			.call({
+				benchDocResource: {
+					doc: { deploy_information: { sites: [] } },
+				},
+				useInPlaceUpdate: false,
+			})
+			.columns.find((column) => column.fieldname === 'no_slave');
+
+		expect(consoleColumn.format(true)).toBe('No Slave');
+		expect(consoleColumn.theme(true)).toBe('green');
+		expect(consoleColumn.format(false)).toBe('Has a Slave');
+		expect(consoleColumn.theme(false)).toBe('red');
+	});
 });
