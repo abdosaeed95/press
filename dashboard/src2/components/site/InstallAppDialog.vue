@@ -13,10 +13,9 @@
 </template>
 
 <script>
-import { getCachedDocumentResource } from 'frappe-ui';
-import { defineAsyncComponent, h } from 'vue';
+import { FormControl, getCachedDocumentResource } from 'frappe-ui';
+import { h } from 'vue';
 import { toast } from 'vue-sonner';
-import { renderDialog } from '../../utils/components';
 import router from '../../router';
 import ObjectList from '../ObjectList.vue';
 import { getToastErrorMessage } from '../../utils/toast';
@@ -32,9 +31,23 @@ export default {
 	components: {
 		ObjectList,
 	},
+	resources: {
+		installApps() {
+			return {
+				url: 'press.api.client.run_doc_method',
+				makeParams: (args) => ({
+					dt: 'Site',
+					dn: this.site,
+					method: 'install_apps',
+					args,
+				}),
+			};
+		},
+	},
 	data() {
 		return {
 			show: true,
+			selectedPlans: {},
 		};
 	},
 	computed: {
@@ -42,78 +55,11 @@ export default {
 			return getCachedDocumentResource('Site', this.site);
 		},
 		listOptions() {
-			const handleInstall = (row) => {
-				if (this.$site.installApp.loading) return;
-
-				if (
-					row.plans &&
-					row.plans.some((plan) => plan.price_inr > 0) &&
-					row.team !== this.$site.doc?.team
-				) {
-					this.show = false;
-
-					let SiteAppPlanSelectDialog = defineAsyncComponent(
-						() => import('./SiteAppPlanSelectDialog.vue'),
-					);
-
-					renderDialog(
-						h(SiteAppPlanSelectDialog, {
-							app: row,
-							currentPlan: null,
-							onPlanSelected: (plan) => {
-								toast.promise(
-									this.$site.installApp.submit({
-										app: row.app,
-										plan: plan.name,
-									}),
-									{
-										loading: 'Installing app...',
-										success: (jobId) => {
-											router.push({
-												name: 'Site Job',
-												params: {
-													name: this.site,
-													id: jobId,
-												},
-											});
-											this.$emit('installed');
-											this.show = false;
-											return 'App will be installed shortly';
-										},
-										error: (e) => getToastErrorMessage(e),
-									},
-								);
-							},
-						}),
-					);
-				} else {
-					toast.promise(
-						this.$site.installApp.submit({
-							app: row.app,
-						}),
-						{
-							loading: 'Installing app...',
-							success: (jobId) => {
-								router.push({
-									name: 'Site Job',
-									params: {
-										name: this.site,
-										id: jobId,
-									},
-								});
-								this.$emit('installed');
-								this.show = false;
-								return 'App will be installed shortly';
-							},
-							error: (e) => getToastErrorMessage(e),
-						},
-					);
-				}
-			};
 			return {
 				label: 'App',
 				fieldname: 'app',
 				fieldtype: 'ListSelection',
+				selectable: true,
 				emptyStateMessage:
 					'No apps found' +
 					(!this.$site.doc?.group_public
@@ -140,21 +86,58 @@ export default {
 						width: '10rem',
 					},
 					{
+						label: 'Plan',
+						fieldname: 'plans',
+						width: '12rem',
+						type: 'Component',
+						component: ({ row }) => {
+							if (!this.requiresPlan(row)) return h('span', '—');
+							return h(FormControl, {
+								type: 'select',
+								placeholder: 'Select plan',
+								options: row.plans.map((plan) => ({
+									label: plan.title,
+									value: plan.name,
+								})),
+								modelValue: this.selectedPlans[row.app],
+								'onUpdate:modelValue': (plan) => {
+									this.selectedPlans[row.app] = plan;
+								},
+							});
+						},
+					},
+					{
 						label: '',
 						fieldname: '',
 						align: 'right',
 						type: 'Button',
 						width: '5rem',
-						Button({ row }) {
+						Button: ({ row }) => {
 							return {
 								label: 'Install',
+								disabled:
+									this.requiresPlan(row) && !this.selectedPlans[row.app],
 								onClick: () => {
-									handleInstall(row);
+									this.installRows([row]);
 								},
 							};
 						},
 					},
 				],
+				primaryAction: ({ selectedRows }) => {
+					const missingPlan = selectedRows.some(
+						(row) => this.requiresPlan(row) && !this.selectedPlans[row.app]
+					);
+					return {
+						label: selectedRows.length
+							? `Install ${selectedRows.length} Apps`
+							: 'Install Apps',
+						variant: 'solid',
+						loading: this.$resources.installApps.loading,
+						disabled: !selectedRows.length || missingPlan,
+						onClick: () => this.installRows(selectedRows),
+					};
+				},
 				resource: () => {
 					return {
 						url: 'press.api.site.available_apps',
@@ -165,6 +148,39 @@ export default {
 					};
 				},
 			};
+		},
+	},
+	methods: {
+		requiresPlan(row) {
+			return (
+				row.plans?.some((plan) => plan.price_inr > 0) &&
+				row.team !== this.$site.doc?.team
+			);
+		},
+		installRows(rows) {
+			if (this.$resources.installApps.loading) return;
+
+			toast.promise(
+				this.$resources.installApps.submit({
+					apps: rows.map((row) => ({
+						app: row.app,
+						plan: this.selectedPlans[row.app],
+					})),
+				}),
+				{
+					loading: 'Queueing app installations...',
+					success: () => {
+						router.push({
+							name: 'Site Jobs',
+							params: { name: this.site },
+						});
+						this.$emit('installed');
+						this.show = false;
+						return 'Apps will be installed one by one';
+					},
+					error: (e) => getToastErrorMessage(e),
+				}
+			);
 		},
 	},
 };

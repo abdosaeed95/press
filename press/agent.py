@@ -288,7 +288,7 @@ class Agent:
 			site=site.name,
 		)
 
-	def install_app_site(self, site, app):
+	def install_app_site(self, site, app, wait_for_job=None):
 		data = {"name": app}
 		return self.create_agent_job(
 			"Install App on Site",
@@ -296,6 +296,10 @@ class Agent:
 			data,
 			bench=site.bench,
 			site=site.name,
+			reference_doctype="Agent Job" if wait_for_job else None,
+			reference_name=wait_for_job,
+			deduplicate=not wait_for_job,
+			deferred=bool(wait_for_job),
 		)
 
 	def uninstall_app_site(self, site, app):
@@ -1013,6 +1017,8 @@ Response: {reason or getattr(result, "text", "Unknown")}
 		host=None,
 		reference_doctype=None,
 		reference_name=None,
+		deduplicate=True,
+		deferred=False,
 	):
 		"""
 		Check if job already exists in Undelivered, Pending, Running state
@@ -1023,7 +1029,7 @@ Response: {reason or getattr(result, "text", "Unknown")}
 			"Press Settings", "disable_agent_job_deduplication", cache=True
 		)
 
-		if not disable_agent_job_deduplication:
+		if deduplicate and not disable_agent_job_deduplication:
 			job = self.get_similar_in_execution_job(
 				job_type, path, bench, site, code_server, upstream, host, method
 			)
@@ -1041,7 +1047,8 @@ Response: {reason or getattr(result, "text", "Unknown")}
 				"site": site,
 				"code_server": code_server,
 				"upstream": upstream,
-				"status": "Undelivered",
+				"status": "Pending" if deferred else "Undelivered",
+				"job_id": -1 if deferred else 0,
 				"request_method": method,
 				"request_path": path,
 				"request_data": json.dumps(data or {}, indent=4, sort_keys=True),
