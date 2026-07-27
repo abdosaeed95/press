@@ -164,6 +164,27 @@ class TestSite(unittest.TestCase):
 	def tearDown(self):
 		frappe.db.rollback()
 
+	@patch(
+		"press.press.doctype.site_update.site_update.benches_with_available_update",
+		return_value={"test-bench"},
+	)
+	@patch("press.press.doctype.site.site.frappe.get_all", return_value=["scheduled.example.com"])
+	def test_scheduled_update_takes_precedence_over_available_update(self, get_all, _):
+		sites = [
+			frappe._dict(name="scheduled.example.com", bench="test-bench", status="Active"),
+			frappe._dict(name="available.example.com", bench="test-bench", status="Active"),
+		]
+		query = Mock()
+		query.where.return_value = query
+		query.select.return_value = query
+		query.run.return_value = sites
+
+		result = Site.get_list_query(query, filters={})
+
+		self.assertEqual(result[0].status, "Scheduled")
+		self.assertEqual(result[1].status, "Update Available")
+		get_all.assert_called_once()
+
 	def test_host_name_updates_perform_checks_on_host_name(self):
 		"""Ensure update of host name triggers verification of host_name."""
 		site = create_test_site("testsubdomain")

@@ -245,9 +245,18 @@ class Site(Document, TagHelpers):
 		else:
 			benches_with_available_update = benches_with_available_update()
 			sites = query.where(Site.status != "Archived").select(Site.bench).run(as_dict=1)
+			scheduled_sites = set(
+				frappe.get_all(
+					"Site Update",
+					filters={"site": ("in", [site.name for site in sites]), "status": "Scheduled"},
+					pluck="site",
+				)
+			)
 
 			for site in sites:
-				if site.bench in benches_with_available_update:
+				if site.name in scheduled_sites:
+					site.status = "Scheduled"
+				elif site.bench in benches_with_available_update:
 					site.status = "Update Available"
 
 		return sites
