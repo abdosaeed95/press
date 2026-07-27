@@ -130,7 +130,7 @@
 									v-model.number="distributionDays"
 								/>
 								<Button
-									label="Distribute between 3–6 AM"
+									label="Apply"
 									:disabled="!canDistributeUpdateTimes"
 									@click="distributeSiteUpdateTimes"
 								/>
@@ -146,6 +146,16 @@
 								class="space-y-3 rounded-lg border p-3"
 							>
 								<p class="font-medium text-gray-900">{{ site.name }}</p>
+								<p
+									v-if="siteSchedules[site.name].updateTime === 'scheduled'"
+									class="text-sm font-medium text-gray-700"
+								>
+									Expected update:
+									{{
+										formatSiteUpdateTime(siteSchedules[site.name].scheduledTime)
+									}}
+									(Cairo)
+								</p>
 								<FormControl
 									label="Site update time"
 									type="select"
@@ -833,6 +843,9 @@ export default {
 					scheduledTime: times[index],
 				};
 			});
+		},
+		formatSiteUpdateTime(time) {
+			return dayjsCairo(time).format('ddd, MMM D, YYYY [at] h:mm A');
 		},
 		deployFrom(app) {
 			if (app.will_branch_change) {

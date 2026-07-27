@@ -173,4 +173,10 @@ describe('Update Bench Group scheduling', () => {
 			)
 		).toBe(true);
 	});
+
+	it('shows the exact Cairo date and time after applying distribution', () => {
+		expect(methods.formatSiteUpdateTime('2026-08-05T19:00')).toBe(
+			'Wed, Aug 5, 2026 at 7:00 PM'
+		);
+	});
 });
