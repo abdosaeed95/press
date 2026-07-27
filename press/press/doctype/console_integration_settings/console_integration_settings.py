@@ -48,7 +48,8 @@ class ConsoleIntegrationSettings(Document):
 					filters={
 						"subscription": ["in", subscriptions],
 						"instance_type": "Slave",
-						"status": ["!=", "Archived"],
+						"setup_complete": 1,
+						"status": ["not in", ["Archived", "Archiving"]],
 					},
 					limit_page_length=10000,
 				)

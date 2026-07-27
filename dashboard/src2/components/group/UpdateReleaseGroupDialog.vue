@@ -443,9 +443,11 @@ export default {
 						fieldname: 'no_slave',
 						type: 'Badge',
 						format(value) {
-							return value ? 'No Slave' : '';
+							return value ? 'No Slave' : 'Has a Slave';
 						},
-						theme: 'orange',
+						theme(value) {
+							return value ? 'green' : 'red';
+						},
 						width: 0.4,
 					},
 					{
