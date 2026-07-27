@@ -172,6 +172,7 @@ class TestSite(unittest.TestCase):
 		"press.press.doctype.site.site.frappe.get_all",
 		return_value=[
 			frappe._dict(
+				name="scheduled-update",
 				site="scheduled.example.com",
 				scheduled_time="2026-08-05 21:30:00",
 			)
@@ -190,7 +191,9 @@ class TestSite(unittest.TestCase):
 		result = Site.get_list_query(query, filters={})
 
 		self.assertEqual(result[0].status, "Scheduled")
+		self.assertEqual(result[0].site_status, "Active")
 		self.assertEqual(result[0].scheduled_time, "2026-08-05 21:30:00")
+		self.assertEqual(result[0].scheduled_update, "scheduled-update")
 		self.assertEqual(result[1].status, "Update Available")
 		get_all.assert_called_once()
 

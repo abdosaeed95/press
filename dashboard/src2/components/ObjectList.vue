@@ -84,6 +84,11 @@
 		</div>
 		<div class="mt-3 min-h-0 flex-1 overflow-y-auto">
 			<ListView
+				:class="{
+					'object-list-view': true,
+					'hide-selection-banner-mobile':
+						options.hideSelectionBannerOnMobile,
+				}"
 				:columns="columns"
 				:rows="filteredRows"
 				:options="{
@@ -98,7 +103,7 @@
 					emptyState: {},
 				}"
 				row-key="name"
-				@update:selections="(e) => this.$emit('update:selections', e)"
+				@update:selections="onSelectionChange"
 			>
 				<template v-if="options.groupHeader" #group-header="{ group }">
 					<component :is="options.groupHeader({ ...context, group })" />
@@ -179,6 +184,7 @@ export default {
 	data() {
 		return {
 			searchQuery: '',
+			selections: new Set(),
 		};
 	},
 	watch: {
@@ -412,6 +418,8 @@ export default {
 			return {
 				...this.options.context,
 				listResource: this.$list,
+				selections: this.selections,
+				selectedRows: this.rows.filter((row) => this.selections.has(row.name)),
 			};
 		},
 		isLoading() {
@@ -436,6 +444,10 @@ export default {
 		},
 	},
 	methods: {
+		onSelectionChange(selections) {
+			this.selections = new Set(selections);
+			this.$emit('update:selections', selections);
+		},
 		filterRow(query, row) {
 			let values = this.options.columns.map((column) => {
 				let value = row[column.fieldname];
@@ -488,3 +500,14 @@ export default {
 	},
 };
 </script>
+
+<style scoped>
+@media (max-width: 640px) {
+	:deep(
+			.object-list-view.hide-selection-banner-mobile
+				> .absolute.inset-x-0.bottom-6
+		) {
+		display: none;
+	}
+}
+</style>

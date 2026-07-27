@@ -10,6 +10,7 @@ import AddDomainDialog from '../components/AddDomainDialog.vue';
 import GenericDialog from '../components/GenericDialog.vue';
 import ObjectList from '../components/ObjectList.vue';
 import SiteActions from '../components/SiteActions.vue';
+import { getSiteBulkActions } from '../components/site/siteBulkActions';
 import { getTeam, switchToTeam } from '../data/team';
 import router from '../router';
 import { getRunningJobs } from '../utils/agentJob';
@@ -82,6 +83,8 @@ export default {
 		],
 		orderBy: 'creation desc',
 		searchField: 'host_name',
+		selectable: true,
+		hideSelectionBannerOnMobile: true,
 		filterControls() {
 			return [
 				{
@@ -256,6 +259,9 @@ export default {
 					},
 				},
 			];
+		},
+		actions({ listResource: sites, selectedRows }) {
+			return getSiteBulkActions(sites, selectedRows);
 		},
 	},
 	detail: {

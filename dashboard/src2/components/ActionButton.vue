@@ -32,13 +32,12 @@ export default {
 			if (this.$attrs.condition) {
 				if (!this.$attrs.condition(this.$attrs.context)) return null;
 			}
+			const label = this.$attrs.showLabel ? this.$attrs.label : 'Options';
 			return {
 				button: {
-					label: 'Options',
+					label,
 					variant: 'ghost',
-					slots: {
-						icon: icon('more-horizontal')
-					}
+					slots: label === 'Options' ? { icon: icon('more-horizontal') } : {}
 				},
 				...this.$attrs,
 				label: this.$attrs.label,
