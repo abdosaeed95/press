@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, ClassVar, Literal
 import frappe
 import frappe.utils
 import pytz
+from frappe import _
 from frappe.core.utils import find
 from frappe.model.document import Document
 from frappe.utils import convert_utc_to_system_timezone
@@ -53,6 +54,7 @@ class SiteUpdate(Document):
 		difference_deploy_type: DF.Literal["", "Pull", "Migrate"]
 		group: DF.Link | None
 		install_all_apps: DF.Check
+		pending_bench_update: DF.Link | None
 		physical_backup_restoration: DF.Link | None
 		recover_job: DF.Link | None
 		scheduled_time: DF.Datetime | None
@@ -177,6 +179,31 @@ class SiteUpdate(Document):
 				f" to {self.destination_bench}",
 				frappe.ValidationError,
 			)
+
+	def retarget(self, destination_bench):
+		if self.status != "Scheduled":
+			frappe.throw(_("Only scheduled site updates can be retargeted"), frappe.ValidationError)
+
+		destination = frappe.db.get_value("Bench", destination_bench, ["candidate", "group"], as_dict=True)
+		if not destination:
+			frappe.throw(_("Could not find suitable Destination Bench"), frappe.ValidationError)
+
+		differences = frappe.get_all(
+			"Deploy Candidate Difference",
+			fields=["name", "destination", "deploy_type"],
+			filters={
+				"group": self.group,
+				"source": self.source_candidate,
+				"destination": destination.candidate,
+			},
+		)
+		self.destination_group = destination.group
+		self.destination_bench = destination_bench
+		self.destination_candidate = destination.candidate
+		self.validate_deploy_candidate_difference(differences)
+		self.validate_apps()
+		self.pending_bench_update = None
+		self.save(ignore_permissions=True)
 
 	def validate_pending_updates(self):
 		if self.has_pending_updates():
@@ -934,7 +961,11 @@ def mark_stuck_updates_as_fatal():
 def run_scheduled_updates():
 	updates = frappe.get_all(
 		"Site Update",
-		{"scheduled_time": ("<=", frappe.utils.now()), "status": "Scheduled"},
+		{
+			"scheduled_time": ("<=", frappe.utils.now()),
+			"status": "Scheduled",
+			"pending_bench_update": ("is", "not set"),
+		},
 		pluck="name",
 	)
 

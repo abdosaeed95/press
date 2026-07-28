@@ -43,25 +43,32 @@
 						class="py-8 text-center"
 						text="Checking Console slave links"
 					/>
-					<GenericList
-						class="max-h-[500px]"
-						v-else-if="
-							slaveLookupComplete &&
-							benchDocResource.doc.deploy_information.sites.length
-						"
-						:options="siteOptions"
-						:selections="selectedSites.map((site) => site.name)"
-						@update:selections="handleSiteSelection"
-					/>
-					<p
-						class="text-center text-base font-medium text-gray-600"
-						v-else-if="
-							slaveLookupComplete &&
-							!benchDocResource.doc.deploy_information.sites.length
-						"
-					>
-						No active sites to update
-					</p>
+					<template v-else-if="slaveLookupComplete">
+						<div
+							v-if="scheduledSites.length"
+							class="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-3"
+						>
+							<FormControl
+								label="Include already scheduled sites"
+								type="checkbox"
+								v-model="includeScheduledSites"
+							/>
+							<p class="mt-1 text-sm text-gray-600">
+								Their existing update time will be preserved and their target
+								will change to this deployment.
+							</p>
+						</div>
+						<GenericList
+							v-if="siteOptions.data.length"
+							class="max-h-[500px]"
+							:options="siteOptions"
+							:selections="selectedSites.map((site) => site.name)"
+							@update:selections="handleSiteSelection"
+						/>
+						<p v-else class="text-center text-base font-medium text-gray-600">
+							No active sites to update
+						</p>
+					</template>
 				</div>
 
 				<!-- Restrict Build Step -->
@@ -107,7 +114,7 @@
 						v-model="deploymentScheduledTime"
 						label="Bench deployment time (Cairo)"
 					/>
-					<div v-if="selectedSites.length" class="border-t pt-3">
+					<div v-if="sitesForScheduling.length" class="border-t pt-3">
 						<FormControl
 							label="Schedule site updates"
 							type="select"
@@ -115,7 +122,9 @@
 							v-model="siteScheduleMode"
 						/>
 					</div>
-					<template v-if="selectedSites.length && siteScheduleMode === 'all'">
+					<template
+						v-if="sitesForScheduling.length && siteScheduleMode === 'all'"
+					>
 						<FormControl
 							label="Site update time"
 							type="select"
@@ -129,17 +138,35 @@
 							:minimum-time="deployScheduledTime"
 						/>
 					</template>
-					<template v-else-if="selectedSites.length">
+					<template v-else-if="sitesForScheduling.length">
 						<SiteUpdateDistribution
-							:sites="selectedSites"
+							:sites="sitesForScheduling"
 							:site-schedules="siteSchedules"
 							:minimum-time="deployScheduledTime"
 						/>
 					</template>
-					<p v-if="selectedSites.length" class="text-sm text-gray-600">
+					<p v-if="sitesForScheduling.length" class="text-sm text-gray-600">
 						Update after deployment starts each site as soon as its new bench is
 						ready.
 					</p>
+					<div
+						v-if="preservedScheduledSites.length"
+						class="space-y-2 rounded-lg border border-blue-200 bg-blue-50 p-3"
+					>
+						<p class="text-sm font-medium text-blue-900">
+							Existing schedules will be preserved
+						</p>
+						<div
+							v-for="site in preservedScheduledSites"
+							:key="site.name"
+							class="flex items-center justify-between gap-3 text-sm text-blue-800"
+						>
+							<span class="truncate">{{ site.name }}</span>
+							<span class="shrink-0">{{
+								scheduledTimeLabel(site.scheduled_time)
+							}}</span>
+						</div>
+					</div>
 				</div>
 
 				<div v-if="canUpdateInPlace" class="flex gap-2">
@@ -190,7 +217,7 @@ import CommitTag from '@/components/utils/CommitTag.vue';
 import GenericList from '../../components/GenericList.vue';
 import { getTeam } from '../../data/team';
 import { DashboardError } from '../../utils/error';
-import { dayjsCairo } from '../../utils/dayjs';
+import { dayjsCairo, dayjsLocal, scheduledTimeLabel } from '../../utils/dayjs';
 import AlertBanner from '../AlertBanner.vue';
 import DateTimeControl from '../DateTimeControl.vue';
 import ReleaseUsage from './ReleaseUsage.vue';
@@ -223,6 +250,7 @@ export default {
 			siteUpdateTime: 'after-deployment',
 			siteScheduledTime: nextSlot.add(15, 'minute').format('YYYY-MM-DDTHH:mm'),
 			siteSchedules: {},
+			includeScheduledSites: false,
 			slaveLookupComplete: false,
 		};
 	},
@@ -253,6 +281,17 @@ export default {
 					schedule.scheduledTime = siteTime;
 				}
 			}
+		},
+		includeScheduledSites(include) {
+			const selected = new Set(this.selectedSites.map((site) => site.name));
+			for (const site of this.scheduledSites) {
+				if (include) {
+					selected.add(site.name);
+				} else {
+					selected.delete(site.name);
+				}
+			}
+			this.handleSiteSelection(selected);
 		},
 	},
 	computed: {
@@ -437,7 +476,9 @@ export default {
 		},
 		siteOptions() {
 			let deployInformation = this.benchDocResource.doc.deploy_information;
-			let siteData = deployInformation.sites;
+			let siteData = deployInformation.sites.filter(
+				(site) => !site.scheduled_update || this.includeScheduledSites
+			);
 			let team = getTeam();
 
 			/**
@@ -510,6 +551,18 @@ export default {
 		deployInformation() {
 			return this.benchDocResource?.doc.deploy_information;
 		},
+		scheduledSites() {
+			return (
+				this.deployInformation?.sites.filter((site) => site.scheduled_update) ??
+				[]
+			);
+		},
+		preservedScheduledSites() {
+			return this.selectedSites.filter((site) => site.scheduled_update);
+		},
+		sitesForScheduling() {
+			return this.selectedSites.filter((site) => !site.scheduled_update);
+		},
 		canShowBack() {
 			if (this.step === 'select-apps') {
 				return false;
@@ -555,17 +608,26 @@ export default {
 				: null;
 		},
 		sitesForUpdate() {
-			return this.selectedSites.map((site) => ({
-				...site,
-				scheduled_time:
-					this.siteScheduleMode === 'all'
-						? this.siteUpdateTime === 'scheduled'
-							? this.siteScheduledTime
-							: null
-						: this.siteSchedules[site.name].updateTime === 'scheduled'
-						? this.siteSchedules[site.name].scheduledTime
-						: null,
-			}));
+			return this.selectedSites.map((site) => {
+				if (site.scheduled_update) {
+					return {
+						...site,
+						preserve_scheduled_update: true,
+					};
+				}
+
+				return {
+					...site,
+					scheduled_time:
+						this.siteScheduleMode === 'all'
+							? this.siteUpdateTime === 'scheduled'
+								? this.siteScheduledTime
+								: null
+							: this.siteSchedules[site.name].updateTime === 'scheduled'
+							? this.siteSchedules[site.name].scheduledTime
+							: null,
+				};
+			});
 		},
 		updateTimesAreValid() {
 			if (
@@ -575,7 +637,15 @@ export default {
 				return false;
 			}
 
-			if (this.selectedSites.length === 0) {
+			if (
+				!this.preservedScheduledSites.every((site) =>
+					this.isValidPreservedSiteUpdateTime(site.scheduled_time)
+				)
+			) {
+				return false;
+			}
+
+			if (this.sitesForScheduling.length === 0) {
 				return true;
 			}
 
@@ -586,7 +656,7 @@ export default {
 				);
 			}
 
-			return this.selectedSites.every(
+			return this.sitesForScheduling.every(
 				(site) =>
 					this.siteSchedules[site.name].updateTime === 'after-deployment' ||
 					this.isValidSiteUpdateTime(
@@ -631,6 +701,7 @@ export default {
 		},
 		canUpdateInPlace() {
 			if (
+				this.preservedScheduledSites.length ||
 				this.siteScheduleMode === 'per-site' ||
 				this.siteUpdateTime === 'scheduled' ||
 				this.deployScheduledTime
@@ -815,8 +886,12 @@ export default {
 			sites = Array.from(sites);
 			let siteData = this.benchDocResource.doc.deploy_information.sites;
 
-			this.selectedSites = siteData.filter((site) => sites.includes(site.name));
-			for (const site of this.selectedSites) {
+			this.selectedSites = siteData.filter(
+				(site) =>
+					sites.includes(site.name) &&
+					(!site.scheduled_update || this.includeScheduledSites)
+			);
+			for (const site of this.sitesForScheduling) {
 				if (!this.siteSchedules[site.name]) {
 					this.siteSchedules[site.name] = {
 						updateTime: 'after-deployment',
@@ -869,6 +944,15 @@ export default {
 					dayjsCairo(time).isAfter(dayjsCairo(this.deployScheduledTime)))
 			);
 		},
+		isValidPreservedSiteUpdateTime(time) {
+			const scheduledTime = dayjsLocal(time);
+			return (
+				scheduledTime.isAfter(dayjsCairo()) &&
+				(!this.deployScheduledTime ||
+					scheduledTime.isAfter(dayjsCairo(this.deployScheduledTime)))
+			);
+		},
+		scheduledTimeLabel,
 		setSkipBackupsAndFailingPatches() {
 			for (const site of this.selectedSites) {
 				site.skip_failing_patches = true;

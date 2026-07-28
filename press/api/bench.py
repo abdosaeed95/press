@@ -30,6 +30,7 @@ from press.press.doctype.release_group.release_group import (
 	ReleaseGroup,
 	new_release_group,
 )
+from press.press.doctype.site.site import get_scheduled_site_updates
 from press.press.doctype.team.team import get_child_team_members
 from press.utils import (
 	get_app_tag,
@@ -826,8 +827,22 @@ def deploy_and_update(
 	scheduled_time: str | None = None,
 ):
 	scheduled_time = get_cairo_scheduled_time(scheduled_time)
-	for site in sites or []:
-		site["scheduled_time"] = get_cairo_scheduled_time(site.get("scheduled_time"))
+	sites = sites or []
+	preserved_sites = [site["name"] for site in sites if site.get("preserve_scheduled_update")]
+	scheduled_updates = get_scheduled_site_updates(preserved_sites) if preserved_sites else {}
+	for site in sites:
+		if site.get("preserve_scheduled_update"):
+			update = scheduled_updates.get(site["name"])
+			if not update:
+				frappe.throw(_("The scheduled update for site {0} no longer exists.").format(site["name"]))
+			site["scheduled_update"] = update.name
+			site["scheduled_time"] = get_datetime(update.scheduled_time)
+			if site["scheduled_time"] <= now_datetime():
+				frappe.throw(
+					_("The scheduled update for site {0} is no longer in the future.").format(site["name"])
+				)
+		else:
+			site["scheduled_time"] = get_cairo_scheduled_time(site.get("scheduled_time"))
 		if scheduled_time and site["scheduled_time"] and site["scheduled_time"] <= scheduled_time:
 			frappe.throw(_("Site update time must be later than the bench deployment time."))
 

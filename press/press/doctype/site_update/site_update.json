@@ -17,6 +17,7 @@
   "destination_candidate",
   "destination_group",
   "scheduled_time",
+  "pending_bench_update",
   "section_break_8",
   "difference",
   "difference_deploy_type",
@@ -235,6 +236,15 @@
    "fieldname": "scheduled_time",
    "fieldtype": "Datetime",
    "label": "Scheduled Time"
+  },
+  {
+   "fieldname": "pending_bench_update",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Pending Bench Update",
+   "no_copy": 1,
+   "options": "Bench Update",
+   "read_only": 1
   },
   {
    "fetch_from": "site.team",

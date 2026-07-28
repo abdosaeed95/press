@@ -24,7 +24,7 @@ class BenchSiteUpdate(Document):
 		skip_backups: DF.Check
 		skip_failing_patches: DF.Check
 		source_candidate: DF.Link | None
-		status: DF.Literal["Pending", "Running", "Failure", "Recovered", "Success", "Fatal"]
+		status: DF.Literal["Pending", "Scheduled", "Running", "Failure", "Recovered", "Success", "Fatal"]
 	# end: auto-generated types
 
 	pass

@@ -26,6 +26,7 @@ from press.press.doctype.app_source.app_source import AppSource, create_app_sour
 from press.press.doctype.deploy_candidate.utils import is_suspended
 from press.press.doctype.resource_tag.tag_helpers import TagHelpers
 from press.press.doctype.server.server import Server
+from press.press.doctype.site.site import get_scheduled_site_updates
 from press.utils import (
 	get_app_tag,
 	get_client_blacklisted_keys,
@@ -710,14 +711,18 @@ class ReleaseGroup(Document, TagHelpers):
 		)
 		out.number_of_apps = len(self.apps)
 
-		out.sites = [
-			site.update({"skip_failing_patches": False, "skip_backups": False})
-			for site in frappe.get_all(
-				"Site",
-				{"group": self.name, "status": ("in", ["Active", "Broken"])},
-				["name", "server", "bench"],
-			)
-		]
+		out.sites = frappe.get_all(
+			"Site",
+			{"group": self.name, "status": ("in", ["Active", "Broken"])},
+			["name", "server", "bench"],
+		)
+		scheduled_updates = get_scheduled_site_updates([site.name for site in out.sites]) if out.sites else {}
+		for site in out.sites:
+			site.skip_failing_patches = False
+			site.skip_backups = False
+			if update := scheduled_updates.get(site.name):
+				site.scheduled_update = update.name
+				site.scheduled_time = update.scheduled_time
 
 		return out
 

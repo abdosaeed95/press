@@ -47,7 +47,7 @@
    "in_list_view": 1,
    "in_preview": 1,
    "label": "Status",
-   "options": "Pending\nRunning\nFailure\nRecovered\nSuccess\nFatal"
+   "options": "Pending\nScheduled\nRunning\nFailure\nRecovered\nSuccess\nFatal"
   },
   {
    "fieldname": "server",

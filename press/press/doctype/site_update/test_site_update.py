@@ -21,7 +21,7 @@ from press.press.doctype.release_group.test_release_group import (
 )
 from press.press.doctype.site.test_site import create_test_bench, create_test_site
 from press.press.doctype.site_plan.test_site_plan import create_test_plan
-from press.press.doctype.site_update.site_update import SiteUpdate
+from press.press.doctype.site_update.site_update import SiteUpdate, run_scheduled_updates
 from press.press.doctype.subscription.test_subscription import create_test_subscription
 
 
@@ -35,6 +35,49 @@ def create_test_site_update(site: str, destination_group: str, status: str):
 class TestSiteUpdate(FrappeTestCase):
 	def tearDown(self):
 		frappe.db.rollback()
+
+	def test_retarget_preserves_schedule_and_uses_new_bench(self):
+		version = "Version 15"
+		app = create_test_app()
+		app_source = create_test_app_source(version=version, app=app)
+		group = create_test_release_group([app], frappe_version=version)
+		bench1 = create_test_bench(group=group)
+
+		create_test_app_release(app_source=app_source)
+		bench2 = create_test_bench(group=group, server=bench1.server)
+		create_test_deploy_candidate_differences(bench2.candidate)
+
+		site = create_test_site(bench=bench1.name)
+		scheduled_time = frappe.utils.add_days(frappe.utils.now_datetime(), 2)
+		site_update_name = site.schedule_update(scheduled_time=scheduled_time)
+		site_update = frappe.get_doc("Site Update", site_update_name)
+		self.assertEqual(site_update.destination_bench, bench2.name)
+
+		create_test_app_release(app_source=app_source)
+		bench3 = create_test_bench(group=group, server=bench1.server)
+		create_test_deploy_candidate_differences(bench3.candidate)
+
+		site_update.retarget(bench3.name)
+		site_update.reload()
+
+		self.assertEqual(site_update.status, "Scheduled")
+		self.assertEqual(site_update.scheduled_time, scheduled_time)
+		self.assertEqual(site_update.destination_bench, bench3.name)
+		self.assertEqual(site_update.destination_candidate, bench3.candidate)
+
+	@patch("press.press.doctype.site_update.site_update.frappe.get_all")
+	def test_reserved_scheduled_updates_wait_for_the_new_bench(self, get_all):
+		get_all.return_value = []
+
+		run_scheduled_updates()
+
+		get_all.assert_called_once()
+		filters = get_all.call_args.args[1]
+		self.assertEqual(get_all.call_args.args[0], "Site Update")
+		self.assertEqual(get_all.call_args.kwargs, {"pluck": "name"})
+		self.assertEqual(filters["status"], "Scheduled")
+		self.assertEqual(filters["pending_bench_update"], ("is", "not set"))
+		self.assertEqual(filters["scheduled_time"][0], "<=")
 
 	@patch.object(AgentJob, "enqueue_http_request", new=Mock())
 	def test_update_of_v12_site_skips_search_index(self):
