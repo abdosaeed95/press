@@ -180,10 +180,10 @@ class GFS(BackupRotationScheme):
 	"""
 
 	hourly = 12  # number of hourly backups to keep
-	daily = 7    # number of daily backups to keep
-	weekly_backup_day = 1   # Sunday (SQL: 1)
+	daily = 7  # number of daily backups to keep
+	weekly_backup_day = 1  # Sunday (SQL: 1)
 	monthly_backup_day = 1  # 1st of each month
-	yearly_backup_day = 1   # Jan 1st (DAYOFYEAR: 1)
+	yearly_backup_day = 1  # Jan 1st (DAYOFYEAR: 1)
 
 	def get_backups_due_for_expiry(self, backup_type: BACKUP_TYPES) -> list[str]:
 		now = frappe.utils.get_datetime()
@@ -194,7 +194,7 @@ class GFS(BackupRotationScheme):
 		oldest_yearly = now - timedelta(days=3653)
 
 		backups = frappe.db.sql(
-		f"""
+			f"""
 		SELECT name FROM `tabSite Backup`
 		WHERE
 			site IN (SELECT name FROM tabSite WHERE status != "Archived") AND
@@ -208,10 +208,9 @@ class GFS(BackupRotationScheme):
 			(DAYOFMONTH(creation) != {self.monthly_backup_day} OR creation < "{oldest_monthly}") AND
 			(DAYOFYEAR(creation) != {self.yearly_backup_day} OR creation < "{oldest_yearly}")
 		""",
-		as_dict=True,
+			as_dict=True,
 		)
 		return [backup["name"] for backup in backups]
-
 
 
 class ModifiableCycle:

@@ -352,9 +352,11 @@ def analytics(name, query, timezone, duration):
 		),
 		"database_connections": (
 			f"""{{__name__=~"mysql_global_status_threads_connected|mysql_global_variables_max_connections", instance="{name}"}}""",
-			lambda x: "Max Connections"
-			if x["__name__"] == "mysql_global_variables_max_connections"
-			else "Connected Clients",
+			lambda x: (
+				"Max Connections"
+				if x["__name__"] == "mysql_global_variables_max_connections"
+				else "Connected Clients"
+			),
 		),
 		"innodb_bp_size": (
 			f"""mysql_global_variables_innodb_buffer_pool_size{{instance='{name}'}}""",
