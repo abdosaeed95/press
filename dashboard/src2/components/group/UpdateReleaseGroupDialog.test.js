@@ -1,7 +1,7 @@
 // Copyright (c) 2026, Frappe and contributors
 // For license information, please see license.txt
 
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import DateTimeControl from '../DateTimeControl.vue';
 import { cairoTimeToServer, dayjsCairo } from '../../utils/dayjs';
 import UpdateReleaseGroupDialog from './UpdateReleaseGroupDialog.vue';
@@ -42,6 +42,10 @@ function context(values = {}) {
 }
 
 describe('Update Bench Group scheduling', () => {
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
 	it('defaults to per-site scheduling', () => {
 		const state = UpdateReleaseGroupDialog.data();
 
@@ -118,7 +122,9 @@ describe('Update Bench Group scheduling', () => {
 		expect(computed.updateTimesAreValid.call(state)).toBe(false);
 	});
 
-	it('marks and immediately selects sites without slaves', () => {
+	it('selects sites without slaves and schedules the next Cairo window', () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-07-29T16:00:00+03:00'));
 		const sites = [
 			{ name: 'no-slave.example.com' },
 			{ name: 'with-slave.example.com' },
@@ -130,12 +136,14 @@ describe('Update Bench Group scheduling', () => {
 			siteSchedules: {},
 			siteScheduledTime: '2026-07-28T03:00',
 			includeScheduledSites: false,
+			deployScheduledTime: null,
 			slaveLookupComplete: false,
 		};
 		Object.defineProperty(state, 'sitesForScheduling', {
 			get: () => computed.sitesForScheduling.call(state),
 		});
 		state.handleSiteSelection = methods.handleSiteSelection.bind(state);
+		state.scheduleNoSlaveSites = methods.scheduleNoSlaveSites.bind(state);
 
 		methods.handleSlaveLookupSuccess.call(state, ['no-slave.example.com']);
 
@@ -144,10 +152,30 @@ describe('Update Bench Group scheduling', () => {
 			{ name: 'with-slave.example.com', no_slave: false },
 		]);
 		expect(state.selectedSites).toEqual([sites[0]]);
-		expect(state.siteSchedules['no-slave.example.com'].updateTime).toBe(
-			'after-deployment'
-		);
+		expect(state.siteSchedules['no-slave.example.com']).toEqual({
+			updateTime: 'scheduled',
+			scheduledTime: '2026-07-30T04:30',
+		});
 		expect(state.slaveLookupComplete).toBe(true);
+	});
+
+	it('moves a no-slave site to the next working window after deployment', () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-07-29T16:00:00+03:00'));
+		const site = { name: 'no-slave.example.com', no_slave: true };
+		const state = context({
+			selectedSites: [site],
+			siteSchedules: {},
+			deploymentTime: 'scheduled',
+			deploymentScheduledTime: '2026-07-30T16:00',
+		});
+
+		methods.scheduleNoSlaveSites.call(state);
+
+		expect(state.siteSchedules[site.name]).toEqual({
+			updateTime: 'scheduled',
+			scheduledTime: '2026-08-02T04:30',
+		});
 	});
 
 	it('keeps scheduled sites excluded until the option is enabled', () => {

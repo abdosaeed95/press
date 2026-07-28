@@ -1,3 +1,6 @@
+// Copyright (c) 2026, Frappe and contributors
+// For license information, please see license.txt
+
 import dayjs from 'dayjs/esm';
 import relativeTime from 'dayjs/esm/plugin/relativeTime';
 import localizedFormat from 'dayjs/esm/plugin/localizedFormat';
@@ -48,12 +51,57 @@ export function scheduledTimeLabel(dateTimeString) {
 			: scheduledTime.format('ddd');
 
 	return `${day}, ${scheduledTime.format('MMM D')} at ${scheduledTime.format(
-		'h:mm A',
+		'h:mm A'
 	)}`;
 }
 
 export function cairoTimeToServer(dateTimeString) {
 	return dayjsCairo(dateTimeString).tz(SERVER_TIMEZONE);
+}
+
+export function distributeSiteUpdateTimes(
+	sites,
+	distributionDays = 1,
+	minimumTime = null
+) {
+	let firstDay = dayjsCairo().add(1, 'day').startOf('day');
+	const minimum = minimumTime ? dayjsCairo(minimumTime) : null;
+	if (minimum?.startOf('day').isAfter(firstDay)) {
+		firstDay = minimum.startOf('day');
+	}
+
+	const isWeekend = (day) => [5, 6].includes(day.day());
+	const nextWorkingDay = (day) =>
+		isWeekend(day) ? day.add(day.day() === 5 ? 2 : 1, 'day') : day;
+	firstDay = nextWorkingDay(firstDay);
+
+	const generateTimes = () => {
+		const days = Array.from({ length: distributionDays }, (_, index) =>
+			firstDay.add(index, 'day')
+		).filter((day) => !isWeekend(day));
+
+		return sites.map((_, index) => {
+			const offset =
+				Math.floor(((index + 0.5) * days.length * 12) / sites.length) * 15;
+			return days[Math.floor(offset / 180)]
+				.hour(3)
+				.minute(offset % 180)
+				.format('YYYY-MM-DDTHH:mm');
+		});
+	};
+
+	let times = generateTimes();
+	if (minimum && !dayjsCairo(times[0]).isAfter(minimum)) {
+		firstDay = nextWorkingDay(firstDay.add(1, 'day'));
+		times = generateTimes();
+	}
+
+	return Object.fromEntries(
+		sites.map((site, index) => [
+			site.name,
+			{ updateTime: 'scheduled', scheduledTime: times[index] },
+		])
+	);
 }
 
 export default dayjs;

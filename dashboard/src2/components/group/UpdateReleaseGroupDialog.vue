@@ -217,7 +217,12 @@ import CommitTag from '@/components/utils/CommitTag.vue';
 import GenericList from '../../components/GenericList.vue';
 import { getTeam } from '../../data/team';
 import { DashboardError } from '../../utils/error';
-import { dayjsCairo, dayjsLocal, scheduledTimeLabel } from '../../utils/dayjs';
+import {
+	dayjsCairo,
+	dayjsLocal,
+	distributeSiteUpdateTimes,
+	scheduledTimeLabel,
+} from '../../utils/dayjs';
 import AlertBanner from '../AlertBanner.vue';
 import DateTimeControl from '../DateTimeControl.vue';
 import ReleaseUsage from './ReleaseUsage.vue';
@@ -269,6 +274,9 @@ export default {
 				this.loadSlaveStatus();
 			}
 		},
+		deploymentTime() {
+			this.scheduleNoSlaveSites();
+		},
 		deploymentScheduledTime(time) {
 			const siteTime = dayjsCairo(time)
 				.add(15, 'minute')
@@ -281,6 +289,7 @@ export default {
 					schedule.scheduledTime = siteTime;
 				}
 			}
+			this.scheduleNoSlaveSites();
 		},
 		includeScheduledSites(include) {
 			const selected = new Set(this.selectedSites.map((site) => site.name));
@@ -828,7 +837,19 @@ export default {
 				site.no_slave = names.has(site.name);
 			}
 			this.handleSiteSelection(sitesWithoutSlaves);
+			this.scheduleNoSlaveSites();
 			this.slaveLookupComplete = true;
+		},
+		scheduleNoSlaveSites() {
+			const sites = this.sitesForScheduling.filter((site) => site.no_slave);
+			if (!sites.length) {
+				return;
+			}
+
+			Object.assign(
+				this.siteSchedules,
+				distributeSiteUpdateTimes(sites, 1, this.deployScheduledTime)
+			);
 		},
 		back() {
 			if (this.step === 'select-apps') {
