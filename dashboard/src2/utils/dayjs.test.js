@@ -13,6 +13,8 @@ describe('scheduledTimeLabel', () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date('2026-07-27T12:00:00+03:00'));
 
-		expect(scheduledTimeLabel('2026-08-05 21:30:00')).toBe('Next Wed 7:00 PM');
+		expect(scheduledTimeLabel('2026-08-05 21:30:00')).toBe(
+			'Next Wed, Aug 5 at 7:00 PM'
+		);
 	});
 });

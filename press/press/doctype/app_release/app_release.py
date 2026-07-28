@@ -13,7 +13,7 @@ from frappe.model.document import Document
 
 from press.api.github import get_access_token
 from press.press.doctype.app_source.app_source import AppSource
-from press.utils import log_error
+from press.utils import get_current_team, log_error
 
 
 class AppReleaseDict(TypedDict):
@@ -29,6 +29,68 @@ class AppReleaseDict(TypedDict):
 class AppReleasePair(TypedDict):
 	old: AppReleaseDict
 	new: AppReleaseDict
+
+
+def get_team_release_usage(releases: list[str], include_sites: bool = False) -> dict:
+	if not releases:
+		return {}
+
+	BenchApp = frappe.qb.DocType("Bench App")
+	Bench = frappe.qb.DocType("Bench")
+	Site = frappe.qb.DocType("Site")
+	rows = (
+		frappe.qb.from_(BenchApp)
+		.inner_join(Bench)
+		.on(BenchApp.parent == Bench.name)
+		.inner_join(Site)
+		.on(Site.bench == Bench.name)
+		.where(BenchApp.release.isin(releases))
+		.where(Bench.status != "Archived")
+		.where(Site.status != "Archived")
+		.where(Site.team == get_current_team())
+		.select(
+			BenchApp.release,
+			Site.name,
+			Site.creation.as_("site_creation"),
+			Bench.creation.as_("bench_creation"),
+		)
+		.run(as_dict=True)
+	)
+
+	usage = {}
+	for row in rows:
+		using_since = max(row.site_creation, row.bench_creation)
+		release_usage = usage.setdefault(
+			row.release,
+			{
+				"site_count": 0,
+				"testing_since": using_since,
+				"oldest_site_date": row.site_creation,
+				"sites": [],
+			},
+		)
+		release_usage["site_count"] += 1
+		release_usage["testing_since"] = min(release_usage["testing_since"], using_since)
+		release_usage["oldest_site_date"] = min(
+			release_usage["oldest_site_date"], row.site_creation
+		)
+		if include_sites:
+			release_usage["sites"].append(
+				{
+					"name": row.name,
+					"creation": row.site_creation,
+					"using_since": using_since,
+				}
+			)
+
+	for release_usage in usage.values():
+		release_usage["tested_days"] = max(
+			(frappe.utils.now_datetime() - release_usage["testing_since"]).days,
+			0,
+		)
+		release_usage["sites"].sort(key=lambda site: site["using_since"])
+
+	return usage
 
 
 class AppRelease(Document):

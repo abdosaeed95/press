@@ -17,6 +17,7 @@ from press.api.github import branches
 from press.api.site import protected
 from press.press.doctype.agent_job.agent_job import job_detail
 from press.press.doctype.app_patch.app_patch import create_app_patch
+from press.press.doctype.app_release.app_release import get_team_release_usage
 from press.press.doctype.bench_update.bench_update import get_bench_update
 from press.press.doctype.cluster.cluster import Cluster
 from press.press.doctype.deploy_candidate_build.deploy_candidate_build import (
@@ -243,10 +244,51 @@ def get_app_versions_list(only_frappe=False):
 		rows = rows.where(AppSource.frappe == 1)
 
 	rows = rows.run(as_dict=True)
+	set_latest_release_usage(rows)
 
 	version_list = unique(rows, lambda x: x.version)
 
 	return version_list, rows
+
+
+def set_latest_release_usage(sources):
+	source_names = list({source.source if "source" in source else source.name for source in sources})
+	if not source_names:
+		return
+
+	AppRelease = frappe.qb.DocType("App Release")
+	LatestRelease = (
+		frappe.qb.from_(AppRelease)
+		.where(AppRelease.source.isin(source_names))
+		.where((AppRelease.public == 0) | (AppRelease.status == "Approved"))
+		.groupby(AppRelease.source)
+		.select(
+			AppRelease.source,
+			frappe.query_builder.functions.Max(AppRelease.creation).as_("creation"),
+		)
+	).as_("LatestRelease")
+	releases = (
+		frappe.qb.from_(AppRelease)
+		.inner_join(LatestRelease)
+		.on(
+			(AppRelease.source == LatestRelease.source)
+			& (AppRelease.creation == LatestRelease.creation)
+		)
+		.select(AppRelease.name, AppRelease.source, AppRelease.hash, AppRelease.creation)
+		.run(as_dict=True)
+	)
+	latest_releases = {release.source: release for release in releases}
+
+	usage = get_team_release_usage([release.name for release in latest_releases.values()])
+	for source in sources:
+		source_name = source.source if "source" in source else source.name
+		if release := latest_releases.get(source_name):
+			source.release = {
+				"name": release.name,
+				"hash": release.hash,
+				"creation": release.creation,
+				"usage": usage.get(release.name),
+			}
 
 
 @frappe.whitelist()
@@ -272,6 +314,7 @@ def options():
 					"branch": source.branch,
 					"repository": source.repository,
 					"repository_owner": source.repository_owner,
+					"release": source.release,
 				}
 				app_dict.setdefault("sources", []).append(source_dict)
 
@@ -519,6 +562,7 @@ def all_apps(name):
 			& (AppSource.public == 1)
 		)
 	).run(as_dict=1)
+	set_latest_release_usage(marketplace_app_sources)
 
 	total_installs_by_app = get_total_installs_by_app()
 
@@ -533,6 +577,13 @@ def all_apps(name):
 		app["total_installs"] = total_installs_by_app.get(app["name"], 0)
 
 	return marketplace_apps
+
+
+@frappe.whitelist()
+def release_usage(release):
+	if not frappe.db.exists("App Release", release):
+		frappe.throw(_("App Release does not exist"))
+	return get_team_release_usage([release], include_sites=True).get(release, {})
 
 
 @frappe.whitelist()
@@ -897,9 +948,32 @@ def branch_list(name: str, app: str) -> list[dict]:
 	marketplace_app = frappe.get_all("Marketplace App", filters={"app": app}, pluck="name", limit=1)
 
 	if marketplace_app and app_source.public and (not belongs_to_current_team(marketplace_app[0])):
-		return get_branches_for_marketplace_app(app, marketplace_app[0], app_source)
+		branch_rows = get_branches_for_marketplace_app(app, marketplace_app[0], app_source)
+	else:
+		branch_rows = branches(repo_owner, repo_name, installation_id)
 
-	return branches(repo_owner, repo_name, installation_id)
+	branch_names = [branch.name for branch in branch_rows]
+	AppSource = frappe.qb.DocType("App Source")
+	AppSourceVersion = frappe.qb.DocType("App Source Version")
+	sources = (
+		frappe.qb.from_(AppSource)
+		.inner_join(AppSourceVersion)
+		.on(AppSourceVersion.parent == AppSource.name)
+		.where(AppSource.app == app)
+		.where(AppSource.branch.isin(branch_names))
+		.where(AppSourceVersion.version == rg.version)
+		.where(AppSource.enabled == 1)
+		.select(AppSource.name, AppSource.branch)
+		.run(as_dict=True)
+	)
+	set_latest_release_usage(sources)
+	sources_by_branch = {source.branch: source for source in sources}
+	for branch in branch_rows:
+		if source := sources_by_branch.get(branch.name):
+			branch.source = source.name
+			branch.release = source.release
+
+	return branch_rows
 
 
 def get_branches_for_marketplace_app(app: str, marketplace_app: str, app_source: AppSource) -> list[dict]:

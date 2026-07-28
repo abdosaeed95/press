@@ -193,6 +193,7 @@ import { DashboardError } from '../../utils/error';
 import { dayjsCairo } from '../../utils/dayjs';
 import AlertBanner from '../AlertBanner.vue';
 import DateTimeControl from '../DateTimeControl.vue';
+import ReleaseUsage from './ReleaseUsage.vue';
 import SiteUpdateDistribution from '../site/SiteUpdateDistribution.vue';
 
 export default {
@@ -359,6 +360,21 @@ export default {
 								return 'First Deploy';
 							}
 							return 'Update Available';
+						},
+					},
+					{
+						label: 'Team testing',
+						fieldname: 'release_usage',
+						type: 'Component',
+						width: 1.1,
+						component({ row: app }) {
+							const release = app.releases.find(
+								(release) => release.name === app.next_release
+							);
+							return h(ReleaseUsage, {
+								release: release?.name,
+								usage: release?.usage,
+							});
 						},
 					},
 					{

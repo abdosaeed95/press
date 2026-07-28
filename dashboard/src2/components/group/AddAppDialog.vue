@@ -148,6 +148,7 @@ import { toast } from 'vue-sonner';
 import { h } from 'vue';
 import { getToastErrorMessage } from '../../utils/toast';
 import NewAppDialog from '../NewAppDialog.vue';
+import ReleaseUsage from './ReleaseUsage.vue';
 
 export default {
 	name: 'AddAppDialog',
@@ -256,6 +257,16 @@ export default {
 							};
 						});
 					},
+				},
+				{
+					label: 'Team testing',
+					type: 'Component',
+					width: '12rem',
+					component: (row) =>
+						h(ReleaseUsage, {
+							release: row.source.release?.name,
+							usage: row.source.release?.usage,
+						}),
 				},
 				{
 					label: '',

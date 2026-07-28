@@ -45,9 +45,11 @@ export function scheduledTimeLabel(dateTimeString) {
 			? 'Tomorrow'
 			: days > 1 && days < 14
 			? `Next ${scheduledTime.format('ddd')}`
-			: scheduledTime.format('ddd, MMM D');
+			: scheduledTime.format('ddd');
 
-	return `${day} ${scheduledTime.format('h:mm A')}`;
+	return `${day}, ${scheduledTime.format('MMM D')} at ${scheduledTime.format(
+		'h:mm A',
+	)}`;
 }
 
 export function cairoTimeToServer(dateTimeString) {

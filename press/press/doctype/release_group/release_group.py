@@ -984,8 +984,13 @@ class ReleaseGroup(Document, TagHelpers):
 		return query.run(as_dict=True)
 
 	def get_app_updates(self, current_apps):
+		from press.press.doctype.app_release.app_release import get_team_release_usage
+
 		next_apps = self.get_next_apps(current_apps)
 		hidden_apps = set(frappe.get_all("App", {"hide_from_updates": True}, pluck="name"))
+		release_usage = get_team_release_usage(
+			[release.name for app in next_apps for release in app.releases]
+		)
 
 		apps = []
 		for app in next_apps:
@@ -1008,6 +1013,7 @@ class ReleaseGroup(Document, TagHelpers):
 
 			for release in app.releases:
 				release.tag = get_app_tag(source.repository, source.repository_owner, release.hash)
+				release.usage = release_usage.get(release.name)
 
 			next_hash = app.hash
 

@@ -152,4 +152,43 @@ describe('Update Bench Group scheduling', () => {
 		expect(consoleColumn.format(false)).toBe('Has a Slave');
 		expect(consoleColumn.theme(false)).toBe('red');
 	});
+
+	it('shows team testing for the selected app release', () => {
+		const release = {
+			name: 'release-2',
+			hash: '2222222',
+			message: 'Second release',
+			usage: { tested_days: 4, site_count: 2 },
+		};
+		const state = {
+			benchDocResource: {
+				doc: {
+					deploy_information: {
+						update_available: true,
+						removed_apps: [],
+						apps: [
+							{
+								name: 'frappe',
+								title: 'Frappe',
+								update_available: true,
+								next_release: release.name,
+								releases: [release],
+								repository_url: 'https://github.com/frappe/frappe',
+								current_hash: '1111111',
+								will_branch_change: false,
+							},
+						],
+					},
+				},
+			},
+		};
+		const options = computed.updatableAppOptions.call(state);
+		const testingColumn = options.columns.find(
+			(column) => column.label === 'Team testing'
+		);
+		const component = testingColumn.component({ row: options.data[0] });
+
+		expect(component.props.release).toBe(release.name);
+		expect(component.props.usage).toEqual(release.usage);
+	});
 });
