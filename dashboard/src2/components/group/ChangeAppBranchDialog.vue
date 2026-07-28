@@ -11,8 +11,14 @@
 					class="w-full"
 					label="Select Branch"
 					type="select"
-					:options="$resources.branches.data"
+					:options="branchOptions"
 					v-model="selectedBranch"
+				/>
+				<ReleaseUsage
+					v-if="selectedRelease"
+					class="mt-3 w-full"
+					:release="selectedRelease.name"
+					:usage="selectedRelease.usage"
 				/>
 				<ErrorMessage
 					class="mt-2 w-full"
@@ -35,9 +41,11 @@
 
 <script>
 import { DashboardError } from '../../utils/error';
+import ReleaseUsage from './ReleaseUsage.vue';
 
 export default {
 	name: 'ChangeAppBranchDialog',
+	components: { ReleaseUsage },
 	emits: ['branchChange'],
 	props: ['bench', 'app'],
 	data() {
@@ -56,9 +64,6 @@ export default {
 				},
 				auto: true,
 				initialData: [],
-				transform(data) {
-					return data.map((d) => d.name);
-				},
 			};
 		},
 		changeBranch() {
@@ -74,6 +79,16 @@ export default {
 					}
 				},
 			};
+		},
+	},
+	computed: {
+		branchOptions() {
+			return this.$resources.branches.data.map((branch) => branch.name);
+		},
+		selectedRelease() {
+			return this.$resources.branches.data.find(
+				(branch) => branch.name === this.selectedBranch,
+			)?.release;
 		},
 	},
 	methods: {

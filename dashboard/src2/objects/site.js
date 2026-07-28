@@ -101,6 +101,12 @@ export default {
 					],
 				},
 				{
+					type: 'select',
+					label: 'Update Status',
+					fieldname: 'update_status',
+					options: ['', 'Update Available', 'Scheduled'],
+				},
+				{
 					type: 'link',
 					label: 'Version',
 					fieldname: 'group.version',

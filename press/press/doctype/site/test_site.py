@@ -197,6 +197,34 @@ class TestSite(unittest.TestCase):
 		self.assertEqual(result[1].status, "Update Available")
 		get_all.assert_called_once()
 
+	@patch(
+		"press.press.doctype.site_update.site_update.benches_with_available_update",
+		return_value={"test-bench"},
+	)
+	@patch(
+		"press.press.doctype.site.site.frappe.get_all",
+		return_value=[
+			frappe._dict(
+				name="scheduled-update",
+				site="scheduled.example.com",
+				scheduled_time="2026-08-05 21:30:00",
+			)
+		],
+	)
+	def test_filters_sites_with_available_updates(self, _, __):
+		sites = [
+			frappe._dict(name="scheduled.example.com", bench="test-bench", status="Active"),
+			frappe._dict(name="available.example.com", bench="test-bench", status="Active"),
+		]
+		query = Mock()
+		query.where.return_value = query
+		query.select.return_value = query
+		query.run.return_value = sites
+
+		result = Site.get_list_query(query, filters={"update_status": "Update Available"})
+
+		self.assertEqual([site.name for site in result], ["available.example.com"])
+
 	def test_host_name_updates_perform_checks_on_host_name(self):
 		"""Ensure update of host name triggers verification of host_name."""
 		site = create_test_site("testsubdomain")

@@ -322,9 +322,13 @@ export default {
 		},
 		rows() {
 			if (this.options.data) {
-				return this.options.data(this.context);
+				return this.options.data({
+					...this.options.context,
+					listResource: this.$list,
+					selections: this.selections,
+				});
 			}
-			return this.$list.data || [];
+			return this.$list?.data || [];
 		},
 		filteredRows() {
 			if (this.options.searchField || !this.searchQuery) return this.rows;

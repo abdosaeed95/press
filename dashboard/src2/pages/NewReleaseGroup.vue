@@ -64,6 +64,30 @@
 					</div>
 				</div>
 			</div>
+			<div v-if="selectedVersionApps.length" class="flex flex-col">
+				<h2 class="text-sm font-medium leading-6 text-gray-900">
+					Version testing in your team
+				</h2>
+				<div class="mt-2 divide-y rounded border">
+					<div
+						v-for="app in selectedVersionApps"
+						:key="app.name"
+						class="grid grid-cols-[1fr_1fr_auto] items-center gap-3 px-3 py-2"
+					>
+						<div>
+							<p class="text-sm font-medium">{{ app.title }}</p>
+							<p class="text-xs text-gray-600">{{ app.source.branch }}</p>
+						</div>
+						<p class="font-mono text-xs text-gray-600">
+							{{ app.source.release?.hash?.slice(0, 7) || 'No release' }}
+						</p>
+						<ReleaseUsage
+							:release="app.source.release?.name"
+							:usage="app.source.release?.usage"
+						/>
+					</div>
+				</div>
+			</div>
 			<div
 				class="flex flex-col"
 				v-if="options?.clusters.length && benchVersion && !server"
@@ -149,13 +173,15 @@ import { DashboardError } from '../utils/error';
 import { h } from 'vue';
 import { Badge } from 'frappe-ui';
 import ObjectList from '../components/ObjectList.vue';
+import ReleaseUsage from '../components/group/ReleaseUsage.vue';
 
 export default {
 	name: 'NewReleaseGroup',
 	components: {
 		Summary,
 		Header,
-		ObjectList
+		ObjectList,
+		ReleaseUsage
 	},
 	props: ['server'],
 	data() {
@@ -263,6 +289,28 @@ export default {
 					}
 				]
 			};
+		},
+		selectedVersionApps() {
+			const version = this.options.versions.find(
+				version => version.name === this.benchVersion
+			);
+			const frappeApp = version?.apps.find(app => app.name === 'frappe');
+			const apps = frappeApp
+				? [
+						{
+							name: frappeApp.name,
+							title: frappeApp.title,
+							source: frappeApp.source
+						}
+				  ]
+				: [];
+			return apps.concat(
+				(this.preInstalledApps[this.benchVersion] || []).map(app => ({
+					name: app.app,
+					title: app.title,
+					source: app
+				}))
+			);
 		},
 		summaryOptions() {
 			return [

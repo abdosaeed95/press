@@ -111,6 +111,50 @@ DOCTYPE_SERVER_TYPE_MAP = {
 ARCHIVE_AFTER_SUSPEND_DAYS = 21
 
 
+def get_scheduled_site_updates(sites=None):
+	filters = {"status": "Scheduled"}
+	if sites is not None:
+		filters["site"] = ("in", sites)
+	return {
+		update.site: update
+		for update in frappe.get_all(
+			"Site Update",
+			filters=filters,
+			fields=["name", "site", "scheduled_time"],
+		)
+	}
+
+
+def filter_site_update_status(query, Site, update_status, available_benches):
+	if not update_status:
+		return query, None
+
+	scheduled_updates = get_scheduled_site_updates()
+	if update_status == "Scheduled":
+		return (
+			(query.where(Site.name.isin(list(scheduled_updates))), scheduled_updates)
+			if scheduled_updates
+			else (None, scheduled_updates)
+		)
+	if not available_benches:
+		return None, scheduled_updates
+
+	available_update = Site.bench.isin(available_benches)
+	if scheduled_updates:
+		available_update &= Site.name.notin(list(scheduled_updates))
+	return query.where(available_update), scheduled_updates
+
+
+def set_site_update_status(site, scheduled_updates, available_benches):
+	site.site_status = site.status
+	if site.name in scheduled_updates:
+		site.status = "Scheduled"
+		site.scheduled_time = scheduled_updates[site.name].scheduled_time
+		site.scheduled_update = scheduled_updates[site.name].name
+	elif site.bench in available_benches:
+		site.status = "Update Available"
+
+
 class Site(Document, TagHelpers):
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
@@ -241,29 +285,21 @@ class Site(Document, TagHelpers):
 
 		status = filters.get("status")
 		if status == "Archived":
-			sites = query.where(Site.status == status).run(as_dict=1)
-		else:
-			benches_with_available_update = benches_with_available_update()
-			sites = query.where(Site.status != "Archived").select(Site.bench).run(as_dict=1)
-			scheduled_updates = {
-				update.site: update
-				for update in frappe.get_all(
-					"Site Update",
-					filters={"site": ("in", [site.name for site in sites]), "status": "Scheduled"},
-					fields=["name", "site", "scheduled_time"],
-				)
-			}
+			return query.where(Site.status == status).run(as_dict=1)
 
-			for site in sites:
-				site.site_status = site.status
-				if site.name in scheduled_updates:
-					site.status = "Scheduled"
-					site.scheduled_time = scheduled_updates[site.name].scheduled_time
-					site.scheduled_update = scheduled_updates[site.name].name
-				elif site.bench in benches_with_available_update:
-					site.status = "Update Available"
+		available_benches = benches_with_available_update()
+		update_status = filters.get("update_status")
+		query, scheduled_updates = filter_site_update_status(query, Site, update_status, available_benches)
+		if query is None:
+			return []
 
-		return sites
+		sites = query.where(Site.status != "Archived").select(Site.bench).run(as_dict=1)
+		if scheduled_updates is None:
+			scheduled_updates = get_scheduled_site_updates([site.name for site in sites])
+		for site in sites:
+			set_site_update_status(site, scheduled_updates, available_benches)
+
+		return [site for site in sites if not update_status or site.status == update_status]
 
 	@staticmethod
 	def on_not_found(name):

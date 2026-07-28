@@ -31,4 +31,32 @@ describe('ObjectList selection context', () => {
 		expect([...state.selections]).toEqual(['one.example.com']);
 		expect(state.$emit).toHaveBeenCalledWith('update:selections', selections);
 	});
+
+	it('returns no rows while a resource is being initialized', () => {
+		expect(
+			ObjectList.computed.rows.call({
+				options: {},
+				$list: undefined,
+			})
+		).toEqual([]);
+	});
+
+	it('passes a non-recursive context to inline data sources', () => {
+		const data = vi.fn(() => [{ name: 'one.example.com' }]);
+		const selections = new Set(['one.example.com']);
+		const listResource = { data: [] };
+
+		expect(
+			ObjectList.computed.rows.call({
+				options: { context: { source: 'test' }, data },
+				$list: listResource,
+				selections,
+			})
+		).toEqual([{ name: 'one.example.com' }]);
+		expect(data).toHaveBeenCalledWith({
+			source: 'test',
+			listResource,
+			selections,
+		});
+	});
 });
