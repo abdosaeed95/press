@@ -6,7 +6,7 @@ from __future__ import annotations
 from contextlib import suppress
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import TYPE_CHECKING, Callable, ClassVar, Final, TypedDict
+from typing import TYPE_CHECKING, ClassVar, Final, TypedDict
 
 import frappe
 import requests
@@ -31,6 +31,8 @@ from press.press.report.binary_log_browser.binary_log_browser import (
 from press.press.report.mariadb_slow_queries.mariadb_slow_queries import execute, normalize_query
 
 if TYPE_CHECKING:
+	from collections.abc import Callable
+
 	from elasticsearch_dsl.response import AggResponse
 	from elasticsearch_dsl.response.aggs import FieldBucket, FieldBucketData
 
@@ -633,7 +635,10 @@ def normalize_datasets(datasets: list[Dataset]) -> list[Dataset]:
 		n_query = normalize_query(data_dict["path"])
 		if n_datasets.get(n_query):
 			n_datasets[n_query]["values"] = [
-				x + y for x, y in zip(n_datasets[n_query]["values"], data_dict["values"])
+				x + y
+				for x, y in zip(
+					n_datasets[n_query]["values"], data_dict["values"], strict=False
+				)
 			]
 		else:
 			data_dict["path"] = n_query
