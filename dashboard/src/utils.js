@@ -1,6 +1,9 @@
 import { DateTime, Duration } from 'luxon';
 import theme from '../tailwind.theme.json';
 
+export const CAIRO_TIMEZONE = 'Africa/Cairo';
+const STORED_DATETIME_TIMEZONE = 'Asia/Kolkata';
+
 let utils = {
 	methods: {
 		$plural(number, singular, plural) {
@@ -9,11 +12,9 @@ let utils = {
 			}
 			return plural;
 		},
-		$date(date, serverDatesTimezone = 'Asia/Kolkata') {
-			// assuming all dates on the server are stored in our timezone
-
-			return DateTime.fromSQL(date, { zone: serverDatesTimezone }).setZone(
-				'Africa/Cairo'
+		$date(date, storedDatetimeTimezone = STORED_DATETIME_TIMEZONE) {
+			return DateTime.fromSQL(date, { zone: storedDatetimeTimezone }).setZone(
+				CAIRO_TIMEZONE
 			);
 		},
 		round(number, precision) {

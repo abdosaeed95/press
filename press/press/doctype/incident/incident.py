@@ -21,7 +21,7 @@ from twilio.base.exceptions import TwilioRestException
 
 from press.api.server import prometheus_query
 from press.telegram_utils import Telegram
-from press.utils import log_error
+from press.utils import CAIRO_TIMEZONE, log_error
 
 if TYPE_CHECKING:
 	from twilio.rest.api.v2010.account.call import CallInstance
@@ -146,7 +146,7 @@ class Incident(WebsiteGenerator):
 		load = prometheus_query(
 			f"""avg_over_time(node_load5{{instance="{name}", job="node"}}[{timespan}s])""",
 			lambda x: x,
-			"Asia/Kolkata",
+			CAIRO_TIMEZONE,
 			timespan,
 			timespan + 1,
 		)["datasets"]
@@ -197,7 +197,7 @@ class Incident(WebsiteGenerator):
 		cpu_info = prometheus_query(
 			f"""avg by (mode)(rate(node_cpu_seconds_total{{instance="{resource}", job="node"}}[{timespan}s])) * 100""",
 			lambda x: x["mode"],
-			"Asia/Kolkata",
+			CAIRO_TIMEZONE,
 			timespan,
 			timespan + 1,
 		)["datasets"]
@@ -325,7 +325,7 @@ class Incident(WebsiteGenerator):
 			return
 		with sync_playwright() as p:
 			browser = p.chromium.launch(headless=True, channel="chromium")
-			page = browser.new_page(locale="en-IN", timezone_id="Asia/Kolkata")
+			page = browser.new_page(locale="en-EG", timezone_id=CAIRO_TIMEZONE)
 			page.set_extra_http_headers({"Authorization": self.get_grafana_auth_header()})
 
 			self.add_node_exporter_screenshot(page, self.resource or self.server)

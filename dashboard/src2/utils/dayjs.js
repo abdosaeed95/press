@@ -20,12 +20,12 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.extend(advancedFormat);
 
-const CAIRO_TIMEZONE = 'Africa/Cairo';
-const SERVER_TIMEZONE = 'Asia/Calcutta';
+export const CAIRO_TIMEZONE = 'Africa/Cairo';
+const STORED_DATETIME_TIMEZONE = 'Asia/Calcutta';
 
 export function dayjsLocal(dateTimeString) {
 	const dateTime = dateTimeString
-		? dayjs.tz(dateTimeString, SERVER_TIMEZONE)
+		? dayjs.tz(dateTimeString, STORED_DATETIME_TIMEZONE)
 		: dayjs();
 	return dateTime.tz(CAIRO_TIMEZONE);
 }
@@ -56,7 +56,7 @@ export function scheduledTimeLabel(dateTimeString) {
 }
 
 export function cairoTimeToServer(dateTimeString) {
-	return dayjsCairo(dateTimeString).tz(SERVER_TIMEZONE);
+	return dayjsCairo(dateTimeString).tz(STORED_DATETIME_TIMEZONE);
 }
 
 export function distributeSiteUpdateTimes(

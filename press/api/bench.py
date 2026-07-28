@@ -33,6 +33,7 @@ from press.press.doctype.release_group.release_group import (
 from press.press.doctype.site.site import get_scheduled_site_updates
 from press.press.doctype.team.team import get_child_team_members
 from press.utils import (
+	CAIRO_TIMEZONE,
 	get_app_tag,
 	get_client_blacklisted_keys,
 	get_current_team,
@@ -860,7 +861,7 @@ def get_cairo_scheduled_time(scheduled_time: str | None):
 		return None
 
 	scheduled_time = (
-		pytz.timezone("Africa/Cairo")
+		pytz.timezone(CAIRO_TIMEZONE)
 		.localize(get_datetime(scheduled_time))
 		.astimezone(pytz.timezone(get_system_timezone()))
 		.replace(tzinfo=None)

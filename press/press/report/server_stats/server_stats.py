@@ -5,6 +5,7 @@ import frappe
 from frappe.utils import rounded
 
 from press.api.server import calculate_swap, prometheus_query, total_resource, usage
+from press.utils import CAIRO_TIMEZONE
 
 
 def execute(filters=None):
@@ -144,7 +145,7 @@ def calculate_load(server):
 
 	result = {}
 	for usage_type, query in query_map.items():
-		response = prometheus_query(query[0], query[1], "Asia/Kolkata", 120, 120)["datasets"]
+		response = prometheus_query(query[0], query[1], CAIRO_TIMEZONE, 120, 120)["datasets"]
 		if response:
 			result[usage_type] = response[0]["values"][-1]
 	return result

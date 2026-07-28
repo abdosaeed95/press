@@ -395,7 +395,7 @@ import { getCachedDocumentResource } from 'frappe-ui';
 import LineChart from '@/components/charts/LineChart.vue';
 import BarChart from '@/components/charts/BarChart.vue';
 import AnalyticsCard from '../site/AnalyticsCard.vue';
-import dayjs from '../../utils/dayjs';
+import { CAIRO_TIMEZONE } from '../../utils/dayjs';
 
 export default {
 	props: ['serverName'],
@@ -408,7 +408,7 @@ export default {
 		return {
 			duration: '1 Hour',
 			showAdvancedAnalytics: false,
-			localTimezone: dayjs.tz.guess(),
+			timezone: CAIRO_TIMEZONE,
 			slowLogsDurationType: 'Denormalized',
 			slowLogsFrequencyType: 'Denormalized',
 			chosenServer: this.$route.query.server ?? this.serverName,
@@ -442,7 +442,7 @@ export default {
 				url: 'press.api.server.analytics',
 				params: {
 					name: this.chosenServer,
-					timezone: this.localTimezone,
+					timezone: this.timezone,
 					query: 'loadavg',
 					duration: this.duration,
 				},
@@ -454,7 +454,7 @@ export default {
 				url: 'press.api.server.analytics',
 				params: {
 					name: this.chosenServer,
-					timezone: this.localTimezone,
+					timezone: this.timezone,
 					query: 'cpu',
 					duration: this.duration,
 				},
@@ -466,7 +466,7 @@ export default {
 				url: 'press.api.server.analytics',
 				params: {
 					name: this.chosenServer,
-					timezone: this.localTimezone,
+					timezone: this.timezone,
 					query: 'memory',
 					duration: this.duration,
 				},
@@ -478,7 +478,7 @@ export default {
 				url: 'press.api.server.analytics',
 				params: {
 					name: this.chosenServer,
-					timezone: this.localTimezone,
+					timezone: this.timezone,
 					query: 'network',
 					duration: this.duration,
 				},
@@ -490,7 +490,7 @@ export default {
 				url: 'press.api.server.analytics',
 				params: {
 					name: this.chosenServer,
-					timezone: this.localTimezone,
+					timezone: this.timezone,
 					query: 'iops',
 					duration: this.duration,
 				},
@@ -502,7 +502,7 @@ export default {
 				url: 'press.api.server.analytics',
 				params: {
 					name: this.chosenServer,
-					timezone: this.localTimezone,
+					timezone: this.timezone,
 					query: 'space',
 					duration: this.duration,
 				},
@@ -515,7 +515,7 @@ export default {
 				params: {
 					name: this.chosenServer,
 					query: 'count',
-					timezone: this.localTimezone,
+					timezone: this.timezone,
 					duration: this.duration,
 				},
 				auto:
@@ -528,7 +528,7 @@ export default {
 				params: {
 					name: this.chosenServer,
 					query: 'duration',
-					timezone: this.localTimezone,
+					timezone: this.timezone,
 					duration: this.duration,
 				},
 				auto:
@@ -541,7 +541,7 @@ export default {
 				params: {
 					name: this.chosenServer,
 					query: 'count',
-					timezone: this.localTimezone,
+					timezone: this.timezone,
 					duration: this.duration,
 					normalize: this.slowLogsFrequencyType === 'Normalized',
 				},
@@ -556,7 +556,7 @@ export default {
 				params: {
 					name: this.chosenServer,
 					query: 'duration',
-					timezone: this.localTimezone,
+					timezone: this.timezone,
 					duration: this.duration,
 					normalize: this.slowLogsDurationType === 'Normalized',
 				},
@@ -570,7 +570,7 @@ export default {
 				url: 'press.api.server.analytics',
 				params: {
 					name: this.chosenServer,
-					timezone: this.localTimezone,
+					timezone: this.timezone,
 					query: 'database_uptime',
 					duration: this.duration,
 				},
@@ -582,7 +582,7 @@ export default {
 				url: 'press.api.server.analytics',
 				params: {
 					name: this.chosenServer,
-					timezone: this.localTimezone,
+					timezone: this.timezone,
 					query: 'database_commands_count',
 					duration: this.duration,
 				},
@@ -595,7 +595,7 @@ export default {
 				url: 'press.api.server.analytics',
 				params: {
 					name: this.chosenServer,
-					timezone: this.localTimezone,
+					timezone: this.timezone,
 					query: 'database_connections',
 					duration: this.duration,
 				},
@@ -608,7 +608,7 @@ export default {
 				url: 'press.api.server.analytics',
 				params: {
 					name: this.chosenServer,
-					timezone: this.localTimezone,
+					timezone: this.timezone,
 					query: 'innodb_bp_size',
 					duration: this.duration,
 				},
@@ -621,7 +621,7 @@ export default {
 				url: 'press.api.server.analytics',
 				params: {
 					name: this.chosenServer,
-					timezone: this.localTimezone,
+					timezone: this.timezone,
 					query: 'innodb_bp_size_of_total_ram',
 					duration: this.duration,
 				},
@@ -634,7 +634,7 @@ export default {
 				url: 'press.api.server.analytics',
 				params: {
 					name: this.chosenServer,
-					timezone: this.localTimezone,
+					timezone: this.timezone,
 					query: 'innodb_bp_miss_percent',
 					duration: this.duration,
 				},
@@ -647,7 +647,7 @@ export default {
 				url: 'press.api.server.analytics',
 				params: {
 					name: this.chosenServer,
-					timezone: this.localTimezone,
+					timezone: this.timezone,
 					query: 'innodb_avg_row_lock_time',
 					duration: this.duration,
 				},
@@ -681,7 +681,7 @@ export default {
 			if (!loadavg) return;
 
 			loadavg.datasets.sort(
-				(a, b) => Number(a.name.split(' ')[2]) - Number(b.name.split(' ')[2]),
+				(a, b) => Number(a.name.split(' ')[2]) - Number(b.name.split(' ')[2])
 			);
 
 			return this.transformMultiLineChartData(loadavg);

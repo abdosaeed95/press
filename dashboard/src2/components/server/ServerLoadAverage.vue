@@ -24,7 +24,7 @@
 			:chartTheme="[
 				$theme.colors.green[500],
 				$theme.colors.yellow[400],
-				$theme.colors.red[500]
+				$theme.colors.red[500],
 			]"
 			:data="loadAverageData"
 			:showCard="false"
@@ -34,7 +34,7 @@
 	</div>
 </template>
 <script>
-import dayjs from '../../utils/dayjs';
+import { CAIRO_TIMEZONE } from '../../utils/dayjs';
 import LineChart from '@/components/charts/LineChart.vue';
 
 export default {
@@ -43,18 +43,17 @@ export default {
 	components: { LineChart },
 	resources: {
 		loadavg() {
-			let localTimezone = dayjs.tz.guess();
 			return {
 				url: 'press.api.server.analytics',
 				params: {
 					name: this.server,
-					timezone: localTimezone,
+					timezone: CAIRO_TIMEZONE,
 					query: 'loadavg',
-					duration: '6 Hour'
+					duration: '6 Hour',
 				},
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	computed: {
 		loadAverageData() {
@@ -66,7 +65,7 @@ export default {
 			);
 
 			return this.transformMultiLineChartData(loadavg);
-		}
+		},
 	},
 	methods: {
 		transformMultiLineChartData(data, stack = null, percentage = false) {
@@ -86,14 +85,14 @@ export default {
 				for (let i = 0; i < values.length; i++) {
 					dataset.push([
 						+new Date(data.labels[i]),
-						percentage ? (values[i] / total[i]) * 100 : values[i]
+						percentage ? (values[i] / total[i]) * 100 : values[i],
 					]);
 				}
 				return { name, dataset, stack };
 			});
 
 			return { datasets, yMax: percentage ? 100 : null };
-		}
-	}
+		},
+	},
 };
 </script>

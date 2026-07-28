@@ -14,7 +14,7 @@
 					{ label: 'Method', name: 'method', class: 'w-1/12' },
 					{ label: 'Path', name: 'path', class: 'w-5/12' },
 					{ label: 'Status Code', name: 'status', class: 'w-2/12' },
-					{ label: 'CPU Time (seconds)', name: 'cpu_time', class: 'w-2/12' }
+					{ label: 'CPU Time (seconds)', name: 'cpu_time', class: 'w-2/12' },
 				]"
 				:data="formatData"
 				:filters="[sortFilter, dateFilter]"
@@ -57,13 +57,14 @@
 
 <script>
 import { DateTime } from 'luxon';
+import { CAIRO_TIMEZONE } from '@/utils';
 import Report from '@/components/Report.vue';
 
 export default {
 	name: 'SiteRequestLogs',
 	props: ['site'],
 	components: {
-		Report
+		Report,
 	},
 	data() {
 		return {
@@ -75,22 +76,22 @@ export default {
 				options: [
 					'Time (Ascending)',
 					'Time (Descending)',
-					'CPU Time (Descending)'
+					'CPU Time (Descending)',
 				],
 				type: 'select',
-				value: 'CPU Time (Descending)'
+				value: 'CPU Time (Descending)',
 			},
 			dateFilter: {
 				name: 'date',
 				type: 'date',
-				value: null
-			}
+				value: null,
+			},
 		};
 	},
 	watch: {
 		sort(value) {
 			this.reset();
-		}
+		},
 	},
 	resources: {
 		requestLogs() {
@@ -98,41 +99,41 @@ export default {
 				url: 'press.api.analytics.request_logs',
 				params: {
 					name: this.site?.name,
-					timezone: DateTime.local().zoneName,
+					timezone: CAIRO_TIMEZONE,
 					sort: this.sortFilter.value,
 					date: this.dateFilter.value || this.today,
-					start: this.start
+					start: this.start,
 				},
 				auto: Boolean(this.today),
 				pageLength: 10,
 				keepData: true,
-				initialData: []
+				initialData: [],
 			};
 		},
 		getPlan() {
 			return {
 				url: 'press.api.site.current_plan',
 				params: {
-					name: this.site?.name
+					name: this.site?.name,
 				},
-				auto: true
+				auto: true,
 			};
-		}
+		},
 	},
 	methods: {
 		reset() {
 			this.$resources.requestLogs.reset();
 			this.start = 0;
-		}
+		},
 	},
 	computed: {
 		today() {
-			return DateTime.local().toISODate();
+			return DateTime.now().setZone(CAIRO_TIMEZONE).toISODate();
 		},
 		formatData() {
 			let requestData = this.$resources.requestLogs.data;
 			let data = [];
-			requestData.forEach(log => {
+			requestData.forEach((log) => {
 				log.time = this.formatDate(log.timestamp, 'TIME_24_WITH_SHORT_OFFSET');
 				log.method = log.request.method;
 				log.path = log.request.path;
@@ -144,12 +145,12 @@ export default {
 					{ name: 'Method', value: log.method, class: 'w-1/12' },
 					{ name: 'Path', value: log.path, class: 'w-5/12 break-all pr-2' },
 					{ name: 'Status', value: log.status, class: 'w-2/12' },
-					{ name: 'CPU Time', value: log.cpu_time, class: 'w-2/12' }
+					{ name: 'CPU Time', value: log.cpu_time, class: 'w-2/12' },
 				];
 				data.push(row);
 			});
 			return data;
-		}
-	}
+		},
+	},
 };
 </script>

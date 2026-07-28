@@ -4,6 +4,7 @@
 import frappe
 
 from press.api.server import prometheus_query
+from press.utils import CAIRO_TIMEZONE
 
 
 def execute(filters=None):
@@ -80,7 +81,7 @@ def get_data(filters):
 	prom_res = prometheus_query(
 		f'sum(avg_over_time(container_memory_rss{{instance="{server_name}", name=~".+"}}[5m])) by (name)',
 		lambda x: x,
-		"Asia/Kolkata",
+		CAIRO_TIMEZONE,
 		60,
 		60,
 	)["datasets"]
@@ -93,7 +94,7 @@ def get_data(filters):
 	prom_res = prometheus_query(
 		f'sum(avg_over_time(container_memory_rss{{instance="{server_name}", name=~".+"}}[6h])) by (name)',
 		lambda x: x,
-		"Asia/Kolkata",
+		CAIRO_TIMEZONE,
 		6 * 3600,
 		60,
 	)["datasets"]
@@ -106,7 +107,7 @@ def get_data(filters):
 	prom_res = prometheus_query(
 		f'sum(max_over_time(container_memory_rss{{instance="{server_name}", name=~".+"}}[6h])) by (name)',
 		lambda x: x,
-		"Asia/Kolkata",
+		CAIRO_TIMEZONE,
 		6 * 3600,
 		60,
 	)["datasets"]

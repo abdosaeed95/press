@@ -7,6 +7,8 @@ import time
 import frappe
 from frappe.desk.page.setup_wizard.setup_wizard import setup_complete
 
+from press.utils import CAIRO_TIMEZONE
+
 ADMIN_EMAIL = ""
 HOME_DIRECTORY = ""
 CERTBOT_DIRECTORY = os.path.join(HOME_DIRECTORY, ".certbot")
@@ -67,7 +69,7 @@ def complete_setup_wizard():
 		{
 			"language": "English",
 			"country": "India",
-			"timezone": "Asia/Kolkata",
+			"timezone": CAIRO_TIMEZONE,
 			"currency": "INR",
 		}
 	)

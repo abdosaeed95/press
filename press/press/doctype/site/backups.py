@@ -18,7 +18,7 @@ from press.press.doctype.remote_file.remote_file import delete_remote_backup_obj
 from press.press.doctype.site.site import Literal, Site
 from press.press.doctype.site_backup.site_backup import SiteBackup
 from press.press.doctype.subscription.subscription import Subscription
-from press.utils import log_error
+from press.utils import CAIRO_TIMEZONE, log_error
 
 
 def timing(f):
@@ -275,7 +275,7 @@ class ScheduledBackupJob:
 		)
 
 	def get_site_time(self, site: dict[str, str]) -> datetime:
-		timezone = site.timezone or "Asia/Kolkata"
+		timezone = site.timezone or CAIRO_TIMEZONE
 		site_timezone = pytz.timezone(timezone)
 		return self.server_time.astimezone(site_timezone)
 

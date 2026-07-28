@@ -146,3 +146,4 @@ press.patches.v0_7_0.replace_slim_excluded_apps_with_app_flag
 press.patches.v0_7_0.rename_site_skip_scheduled_backups_field
 press.press.doctype.drip_email.patches.migrate_to_product_trial_field
 press.press.doctype.mpesa_payment_record.patches.add_unique_constraint
+press.patches.v0_7_0.set_cairo_system_timezone

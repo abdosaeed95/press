@@ -15,7 +15,7 @@ from frappe.utils.data import add_to_date, now_datetime
 from frappe.utils.telemetry import init_telemetry
 
 from press.api.client import dashboard_whitelist
-from press.utils import log_error
+from press.utils import CAIRO_TIMEZONE, log_error
 
 if TYPE_CHECKING:
 	from press.press.doctype.site.site import Site
@@ -165,7 +165,7 @@ class ProductTrialRequest(Document):
 					"Account Request", {"email": team_user.email}, "geo_location"
 				)
 
-			timezone = frappe.parse_json(account_request_geo_data or {}).get("timezone", "Asia/Kolkata")
+			timezone = frappe.parse_json(account_request_geo_data or {}).get("timezone", CAIRO_TIMEZONE)
 
 			return json.dumps(
 				{

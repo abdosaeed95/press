@@ -489,7 +489,7 @@ class TestIncident(FrappeTestCase):
 				}
 			],
 			"labels": [
-				datetime(2025, 1, 17, 12, 40, 41, 241000, tzinfo=zoneinfo.ZoneInfo(key="Asia/Kolkata")),
+				datetime(2025, 1, 17, 12, 40, 41, 241000, tzinfo=zoneinfo.ZoneInfo(key="Africa/Cairo")),
 			],
 		}
 
