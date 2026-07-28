@@ -23,7 +23,7 @@ from press.api.client import dashboard_whitelist
 from press.press.doctype.physical_backup_restoration.physical_backup_restoration import (
 	get_physical_backup_restoration_steps,
 )
-from press.utils import log_error
+from press.utils import CAIRO_TIMEZONE, log_error
 
 if TYPE_CHECKING:
 	from press.press.doctype.agent_job.agent_job import AgentJob
@@ -777,7 +777,7 @@ def is_site_in_deploy_hours(site):
 	if site.status in ("Inactive", "Suspended"):
 		return True
 	server_time = datetime.now()
-	timezone = site.timezone or "Asia/Kolkata"
+	timezone = site.timezone or CAIRO_TIMEZONE
 	site_timezone = pytz.timezone(timezone)
 	site_time = server_time.astimezone(site_timezone)
 	deploy_hours = frappe.get_hooks("deploy_hours")

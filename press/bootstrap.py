@@ -7,6 +7,8 @@ import time
 import frappe
 from frappe.desk.page.setup_wizard.setup_wizard import setup_complete
 
+from press.utils import CAIRO_TIMEZONE
+
 ADMIN_EMAIL = ""
 HOME_DIRECTORY = ""
 CERTBOT_DIRECTORY = os.path.join(HOME_DIRECTORY, ".certbot")
@@ -67,7 +69,7 @@ def complete_setup_wizard():
 		{
 			"language": "English",
 			"country": "India",
-			"timezone": "Asia/Kolkata",
+			"timezone": CAIRO_TIMEZONE,
 			"currency": "INR",
 		}
 	)
@@ -278,15 +280,11 @@ def setup_teams():
 	from press.press.doctype.team.team import Team
 
 	signup("cloud@erpnext.com")
-	request = frappe.get_all(
-		"Account Request", ["*"], {"email": "cloud@erpnext.com"}, limit=1
-	)[0]
+	request = frappe.get_all("Account Request", ["*"], {"email": "cloud@erpnext.com"}, limit=1)[0]
 	cloud = Team.create_new(request, "Frappe", "Cloud", "FrappeCloud@1", "India", False)
 
 	signup("aditya@erpnext.com")
-	request = frappe.get_all(
-		"Account Request", ["*"], {"email": "aditya@erpnext.com"}, limit=1
-	)[0]
+	request = frappe.get_all("Account Request", ["*"], {"email": "aditya@erpnext.com"}, limit=1)[0]
 	aditya = Team.create_new(request, "Aditya", "Hase", "AdityaHase@1", "India", False)
 
 	cloud.append("team_members", {"user": aditya.name})

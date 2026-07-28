@@ -17,7 +17,7 @@ from press.api.bench import all as all_benches
 from press.api.site import protected
 from press.press.doctype.site_plan.plan import Plan
 from press.press.doctype.team.team import get_child_team_members
-from press.utils import get_current_team
+from press.utils import CAIRO_TIMEZONE, get_current_team
 
 if TYPE_CHECKING:
 	from press.press.doctype.cluster.cluster import Cluster
@@ -243,7 +243,7 @@ def usage(name):
 
 	result = {}
 	for usage_type, query in query_map.items():
-		response = prometheus_query(query[0], query[1], "Asia/Kolkata", 120, 120)["datasets"]
+		response = prometheus_query(query[0], query[1], CAIRO_TIMEZONE, 120, 120)["datasets"]
 		if response:
 			result[usage_type] = response[0]["values"][-1]
 	return result
@@ -269,7 +269,7 @@ def total_resource(name):
 
 	result = {}
 	for usage_type, query in query_map.items():
-		response = prometheus_query(query[0], query[1], "Asia/Kolkata", 120, 120)["datasets"]
+		response = prometheus_query(query[0], query[1], CAIRO_TIMEZONE, 120, 120)["datasets"]
 		if response:
 			result[usage_type] = response[0]["values"][-1]
 	return result
@@ -304,7 +304,7 @@ def calculate_swap(name):
 
 	result = {}
 	for usage_type, query in query_map.items():
-		response = prometheus_query(query[0], query[1], "Asia/Kolkata", 120, 120)["datasets"]
+		response = prometheus_query(query[0], query[1], CAIRO_TIMEZONE, 120, 120)["datasets"]
 		if response:
 			result[usage_type] = response[0]["values"][-1]
 	return result
@@ -352,9 +352,11 @@ def analytics(name, query, timezone, duration):
 		),
 		"database_connections": (
 			f"""{{__name__=~"mysql_global_status_threads_connected|mysql_global_variables_max_connections", instance="{name}"}}""",
-			lambda x: "Max Connections"
-			if x["__name__"] == "mysql_global_variables_max_connections"
-			else "Connected Clients",
+			lambda x: (
+				"Max Connections"
+				if x["__name__"] == "mysql_global_variables_max_connections"
+				else "Connected Clients"
+			),
 		),
 		"innodb_bp_size": (
 			f"""mysql_global_variables_innodb_buffer_pool_size{{instance='{name}'}}""",

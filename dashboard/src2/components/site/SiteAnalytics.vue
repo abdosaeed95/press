@@ -327,7 +327,7 @@
 </template>
 
 <script>
-import dayjs from '../../utils/dayjs';
+import { CAIRO_TIMEZONE } from '../../utils/dayjs';
 import LineChart from '@/components/charts/LineChart.vue';
 import BarChart from '@/components/charts/BarChart.vue';
 import SiteUptime from './SiteUptime.vue';
@@ -348,7 +348,7 @@ export default {
 		return {
 			duration: '24h',
 			showAdvancedAnalytics: false,
-			localTimezone: dayjs.tz.guess(),
+			timezone: CAIRO_TIMEZONE,
 			slowLogsDurationType: 'Denormalized',
 			slowLogsFrequencyType: 'Denormalized',
 			allowDrillDown: false,
@@ -368,7 +368,7 @@ export default {
 				url: 'press.api.analytics.get',
 				params: {
 					name: this.name,
-					timezone: this.localTimezone,
+					timezone: this.timezone,
 					duration: this.duration,
 				},
 				auto: true,
@@ -379,7 +379,7 @@ export default {
 				url: 'press.api.analytics.get_advanced_analytics',
 				params: {
 					name: this.name,
-					timezone: this.localTimezone,
+					timezone: this.timezone,
 					duration: this.duration,
 				},
 				auto: this.showAdvancedAnalytics,
@@ -391,7 +391,7 @@ export default {
 				params: {
 					name: this.name,
 					agg_type: 'count',
-					timezone: this.localTimezone,
+					timezone: this.timezone,
 					duration: this.duration,
 					normalize: this.slowLogsFrequencyType === 'Normalized',
 				},
@@ -404,7 +404,7 @@ export default {
 				params: {
 					name: this.name,
 					agg_type: 'duration',
-					timezone: this.localTimezone,
+					timezone: this.timezone,
 					duration: this.duration,
 					normalize: this.slowLogsDurationType === 'Normalized',
 				},

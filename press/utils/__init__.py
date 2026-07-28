@@ -29,6 +29,8 @@ from frappe.utils.caching import site_cache
 
 from press.utils.email_validator import validate_email
 
+CAIRO_TIMEZONE = "Africa/Cairo"
+
 
 class SupervisorProcess(TypedDict):
 	program: str

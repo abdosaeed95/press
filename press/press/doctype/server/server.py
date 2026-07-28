@@ -28,7 +28,7 @@ from press.overrides import get_permission_query_conditions_for_doctype
 from press.press.doctype.resource_tag.tag_helpers import TagHelpers
 from press.runner import Ansible
 from press.telegram_utils import Telegram
-from press.utils import fmt_timedelta, log_error
+from press.utils import CAIRO_TIMEZONE, fmt_timedelta, log_error
 
 if typing.TYPE_CHECKING:
 	from press.infrastructure.doctype.arm_build_record.arm_build_record import ARMBuildRecord
@@ -1396,7 +1396,7 @@ class BaseServer(Document, TagHelpers):
 		response = prometheus_query(
 			f"""node_filesystem_avail_bytes{{instance="{self.name}", job="node", mountpoint="{mountpoint}"}}""",
 			lambda x: x["mountpoint"],
-			"Asia/Kolkata",
+			CAIRO_TIMEZONE,
 			60,
 			60,
 		)["datasets"]
@@ -1415,7 +1415,7 @@ class BaseServer(Document, TagHelpers):
 node_filesystem_avail_bytes{{instance="{self.name}", mountpoint="{mountpoint}"}}[3h], 6*3600
 			)""",
 			lambda x: x["mountpoint"],
-			"Asia/Kolkata",
+			CAIRO_TIMEZONE,
 			120,
 			120,
 		)["datasets"]
@@ -1429,7 +1429,7 @@ node_filesystem_avail_bytes{{instance="{self.name}", mountpoint="{mountpoint}"}}
 		response = prometheus_query(
 			f"""node_filesystem_size_bytes{{instance="{self.name}", job="node", mountpoint="{mountpoint}"}}""",
 			lambda x: x["mountpoint"],
-			"Asia/Kolkata",
+			CAIRO_TIMEZONE,
 			120,
 			120,
 		)["datasets"]
