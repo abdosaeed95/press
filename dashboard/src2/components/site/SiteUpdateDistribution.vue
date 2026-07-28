@@ -61,7 +61,7 @@
 </template>
 
 <script>
-import { dayjsCairo } from '../../utils/dayjs';
+import { dayjsCairo, distributeSiteUpdateTimes } from '../../utils/dayjs';
 import DateTimeControl from '../DateTimeControl.vue';
 
 export default {
@@ -107,47 +107,14 @@ export default {
 				return;
 			}
 
-			let firstDay = dayjsCairo().add(1, 'day').startOf('day');
-			const minimumTime = this.minimumTime
-				? dayjsCairo(this.minimumTime)
-				: null;
-			if (minimumTime?.startOf('day').isAfter(firstDay)) {
-				firstDay = minimumTime.startOf('day');
-			}
-
-			const isWeekend = (day) => [5, 6].includes(day.day());
-			const nextWorkingDay = (day) =>
-				isWeekend(day) ? day.add(day.day() === 5 ? 2 : 1, 'day') : day;
-			firstDay = nextWorkingDay(firstDay);
-
-			const generateTimes = () => {
-				const days = Array.from({ length: this.distributionDays }, (_, index) =>
-					firstDay.add(index, 'day')
-				).filter((day) => !isWeekend(day));
-
-				return this.sites.map((_, index) => {
-					const offset =
-						Math.floor(((index + 0.5) * days.length * 12) / this.sites.length) *
-						15;
-					return days[Math.floor(offset / 180)]
-						.hour(3)
-						.minute(offset % 180)
-						.format('YYYY-MM-DDTHH:mm');
-				});
-			};
-
-			let times = generateTimes();
-			if (minimumTime && !dayjsCairo(times[0]).isAfter(minimumTime)) {
-				firstDay = nextWorkingDay(firstDay.add(1, 'day'));
-				times = generateTimes();
-			}
-
-			this.sites.forEach((site, index) => {
-				this.siteSchedules[site.name] = {
-					updateTime: 'scheduled',
-					scheduledTime: times[index],
-				};
-			});
+			Object.assign(
+				this.siteSchedules,
+				distributeSiteUpdateTimes(
+					this.sites,
+					this.distributionDays,
+					this.minimumTime
+				)
+			);
 		},
 		formatSiteUpdateTime(time) {
 			return dayjsCairo(time).format('ddd, MMM D, YYYY [at] h:mm A');
