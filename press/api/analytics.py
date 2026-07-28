@@ -820,7 +820,7 @@ class GenerateReportReports(BackgroundJobGroupByChart):
 def get_usage(site, type, timezone, timespan, timegrain):
 	log_server = frappe.db.get_single_value("Press Settings", "log_server")
 	if not log_server:
-		return {"datasets": [], "labels": []}
+		return []
 
 	url = f"https://{log_server}/elasticsearch/filebeat-*/_search"
 	password = get_decrypted_password("Log Server", log_server, "kibana_password")
@@ -856,7 +856,7 @@ def get_usage(site, type, timezone, timespan, timegrain):
 	buckets = []
 
 	if not response.get("aggregations"):
-		return {"datasets": [], "labels": []}
+		return []
 
 	for bucket in response["aggregations"]["date_histogram"]["buckets"]:
 		buckets.append(
