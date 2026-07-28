@@ -78,43 +78,33 @@ def get_data(filters):
 			}
 		)
 
-	prom_res = prometheus_query(
-		f'sum(avg_over_time(container_memory_rss{{instance="{server_name}", name=~".+"}}[5m])) by (name)',
-		lambda x: x,
-		CAIRO_TIMEZONE,
-		60,
-		60,
-	)["datasets"]
-	for row in result:
-		for prom_row in prom_res:
-			if row["bench"] == prom_row["name"]["name"]:
-				row["5m_avg_server_ram"] = prom_row["values"][-1] / 1024 / 1024
-				break
-
-	prom_res = prometheus_query(
-		f'sum(avg_over_time(container_memory_rss{{instance="{server_name}", name=~".+"}}[6h])) by (name)',
-		lambda x: x,
-		CAIRO_TIMEZONE,
-		6 * 3600,
-		60,
-	)["datasets"]
-	for row in result:
-		for prom_row in prom_res:
-			if row["bench"] == prom_row["name"]["name"]:
-				row["6h_avg_server_ram"] = prom_row["values"][-1] / 1024 / 1024
-				break
-
-	prom_res = prometheus_query(
-		f'sum(max_over_time(container_memory_rss{{instance="{server_name}", name=~".+"}}[6h])) by (name)',
-		lambda x: x,
-		CAIRO_TIMEZONE,
-		6 * 3600,
-		60,
-	)["datasets"]
-	for row in result:
-		for prom_row in prom_res:
-			if row["bench"] == prom_row["name"]["name"]:
-				row["max_server_ram"] = prom_row["values"][-1] / 1024 / 1024
-				break
+	for fieldname, query, timespan in (
+		(
+			"5m_avg_server_ram",
+			f'sum(avg_over_time(container_memory_rss{{instance="{server_name}", name=~".+"}}[5m])) by (name)',
+			60,
+		),
+		(
+			"6h_avg_server_ram",
+			f'sum(avg_over_time(container_memory_rss{{instance="{server_name}", name=~".+"}}[6h])) by (name)',
+			6 * 3600,
+		),
+		(
+			"max_server_ram",
+			f'sum(max_over_time(container_memory_rss{{instance="{server_name}", name=~".+"}}[6h])) by (name)',
+			6 * 3600,
+		),
+	):
+		set_memory_usage(result, server_name, fieldname, query, timespan)
 
 	return result
+
+
+def set_memory_usage(result, server_name, fieldname, query, timespan):
+	memory_by_bench = {
+		row["name"]["name"]: row["values"][-1] / 1024 / 1024
+		for row in prometheus_query(query, lambda x: x, CAIRO_TIMEZONE, timespan, 60)["datasets"]
+	}
+	for row in result:
+		if row["bench"] in memory_by_bench:
+			row[fieldname] = memory_by_bench[row["bench"]]
