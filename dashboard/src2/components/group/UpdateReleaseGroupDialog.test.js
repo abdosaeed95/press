@@ -3,10 +3,10 @@
 
 import { describe, expect, it } from 'vitest';
 import DateTimeControl from '../DateTimeControl.vue';
-import { dayjsCairo } from '../../utils/dayjs';
+import { cairoTimeToServer, dayjsCairo } from '../../utils/dayjs';
 import UpdateReleaseGroupDialog from './UpdateReleaseGroupDialog.vue';
 
-const { computed, methods } = UpdateReleaseGroupDialog;
+const { computed, methods, watch } = UpdateReleaseGroupDialog;
 
 function context(values = {}) {
 	const deploymentScheduledTime = dayjsCairo()
@@ -27,8 +27,16 @@ function context(values = {}) {
 
 	state.isFutureUpdateTime = methods.isFutureUpdateTime.bind(state);
 	state.isValidSiteUpdateTime = methods.isValidSiteUpdateTime.bind(state);
+	state.isValidPreservedSiteUpdateTime =
+		methods.isValidPreservedSiteUpdateTime.bind(state);
 	Object.defineProperty(state, 'deployScheduledTime', {
 		get: () => computed.deployScheduledTime.call(state),
+	});
+	Object.defineProperty(state, 'preservedScheduledSites', {
+		get: () => computed.preservedScheduledSites.call(state),
+	});
+	Object.defineProperty(state, 'sitesForScheduling', {
+		get: () => computed.sitesForScheduling.call(state),
 	});
 	return state;
 }
@@ -38,6 +46,7 @@ describe('Update Bench Group scheduling', () => {
 		const state = UpdateReleaseGroupDialog.data();
 
 		expect(state.siteScheduleMode).toBe('per-site');
+		expect(state.includeScheduledSites).toBe(false);
 	});
 
 	it('makes every distributed day selectable', () => {
@@ -120,8 +129,12 @@ describe('Update Bench Group scheduling', () => {
 			selectedSites: [],
 			siteSchedules: {},
 			siteScheduledTime: '2026-07-28T03:00',
+			includeScheduledSites: false,
 			slaveLookupComplete: false,
 		};
+		Object.defineProperty(state, 'sitesForScheduling', {
+			get: () => computed.sitesForScheduling.call(state),
+		});
 		state.handleSiteSelection = methods.handleSiteSelection.bind(state);
 
 		methods.handleSlaveLookupSuccess.call(state, ['no-slave.example.com']);
@@ -135,6 +148,106 @@ describe('Update Bench Group scheduling', () => {
 			'after-deployment'
 		);
 		expect(state.slaveLookupComplete).toBe(true);
+	});
+
+	it('keeps scheduled sites excluded until the option is enabled', () => {
+		const sites = [
+			{ name: 'regular.example.com' },
+			{
+				name: 'scheduled.example.com',
+				scheduled_update: 'site-update-1',
+			},
+		];
+		const base = {
+			benchDocResource: { doc: { deploy_information: { sites } } },
+			useInPlaceUpdate: false,
+		};
+
+		expect(
+			computed.siteOptions.call({
+				...base,
+				includeScheduledSites: false,
+			}).data
+		).toEqual([sites[0]]);
+		expect(
+			computed.siteOptions.call({
+				...base,
+				includeScheduledSites: true,
+			}).data
+		).toEqual(sites);
+	});
+
+	it('selects scheduled sites without changing their existing time', () => {
+		const scheduledTime = cairoTimeToServer(
+			dayjsCairo().add(2, 'days').format('YYYY-MM-DDTHH:mm')
+		).format('YYYY-MM-DD HH:mm:ss');
+		const sites = [
+			{ name: 'regular.example.com' },
+			{
+				name: 'scheduled.example.com',
+				scheduled_update: 'site-update-1',
+				scheduled_time: scheduledTime,
+			},
+		];
+		const state = {
+			benchDocResource: { doc: { deploy_information: { sites } } },
+			selectedSites: [sites[0]],
+			scheduledSites: [sites[1]],
+			siteSchedules: {},
+			siteScheduledTime: '2026-07-28T03:00',
+			includeScheduledSites: true,
+		};
+		Object.defineProperty(state, 'sitesForScheduling', {
+			get: () => computed.sitesForScheduling.call(state),
+		});
+		state.handleSiteSelection = methods.handleSiteSelection.bind(state);
+
+		watch.includeScheduledSites.call(state, true);
+
+		expect(state.selectedSites).toEqual(sites);
+		expect(state.selectedSites[1].scheduled_time).toBe(scheduledTime);
+		expect(state.siteSchedules['scheduled.example.com']).toBeUndefined();
+	});
+
+	it('preserves the existing schedule and marks it for retargeting', () => {
+		const scheduledTime = cairoTimeToServer(
+			dayjsCairo().add(2, 'days').format('YYYY-MM-DDTHH:mm')
+		).format('YYYY-MM-DD HH:mm:ss');
+		const scheduledSite = {
+			name: 'scheduled.example.com',
+			scheduled_update: 'site-update-1',
+			scheduled_time: scheduledTime,
+		};
+		const state = context({ selectedSites: [scheduledSite] });
+
+		expect(computed.updateTimesAreValid.call(state)).toBe(true);
+		expect(computed.sitesForUpdate.call(state)).toEqual([
+			{
+				...scheduledSite,
+				preserve_scheduled_update: true,
+			},
+		]);
+	});
+
+	it('rejects a preserved site time before the bench deployment', () => {
+		const siteTime = dayjsCairo().add(2, 'days');
+		const state = context({
+			deploymentTime: 'scheduled',
+			deploymentScheduledTime: siteTime
+				.add(1, 'hour')
+				.format('YYYY-MM-DDTHH:mm'),
+			selectedSites: [
+				{
+					name: 'scheduled.example.com',
+					scheduled_update: 'site-update-1',
+					scheduled_time: cairoTimeToServer(
+						siteTime.format('YYYY-MM-DDTHH:mm')
+					).format('YYYY-MM-DD HH:mm:ss'),
+				},
+			],
+		});
+
+		expect(computed.updateTimesAreValid.call(state)).toBe(false);
 	});
 
 	it('shows green No Slave and red Has a Slave badges', () => {

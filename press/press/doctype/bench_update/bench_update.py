@@ -118,6 +118,37 @@ class BenchUpdate(Document):
 
 		return bench.update_inplace(self.apps, sites)
 
+	def schedule_site_update(self, row, bench):
+		if row.site_update:
+			frappe.get_doc("Site Update", row.site_update).retarget(bench)
+			return True
+
+		if frappe.get_all(
+			"Site Update",
+			{"site": row.site, "status": ("in", ("Pending", "Running", "Failure"))},
+			ignore_ifnull=True,
+			limit=1,
+		):
+			return False
+
+		site_update = frappe.get_doc("Site", row.site).schedule_update(
+			skip_failing_patches=row.skip_failing_patches,
+			skip_backups=row.skip_backups,
+			scheduled_time=row.scheduled_time,
+		)
+		frappe.db.set_value("Bench Site Update", row.name, "site_update", site_update)
+		return True
+
+	def reserve_scheduled_site_updates(self):
+		site_updates = [row.site_update for row in self.sites if row.site_update]
+		if site_updates:
+			frappe.db.set_value(
+				"Site Update",
+				{"name": ("in", site_updates), "status": "Scheduled"},
+				"pending_bench_update",
+				self.name,
+			)
+
 	def update_sites_on_server(self, bench, server):
 		# This method gets called multiple times concurrently when a new candidate is deployed
 		# Avoid saving the doc to avoid TimestampMismatchError
@@ -137,21 +168,10 @@ class BenchUpdate(Document):
 				frappe.db.commit()
 				continue
 
-			if row.status == "Pending" and not row.site_update:
+			if row.status in ("Pending", "Scheduled"):
 				try:
-					if frappe.get_all(
-						"Site Update",
-						{"site": row.site, "status": ("in", ("Pending", "Running", "Failure"))},
-						ignore_ifnull=True,
-						limit=1,
-					):
+					if not self.schedule_site_update(row, bench):
 						continue
-					site_update = frappe.get_doc("Site", row.site).schedule_update(
-						skip_failing_patches=row.skip_failing_patches,
-						skip_backups=row.skip_backups,
-						scheduled_time=row.scheduled_time,
-					)
-					frappe.db.set_value("Bench Site Update", row.name, "site_update", site_update)
 					frappe.db.commit()
 				except Exception:
 					# Rollback the failed attempt and set status to Failure
@@ -193,10 +213,12 @@ def get_bench_update(
 					"skip_backups": site["skip_backups"],
 					"source_candidate": frappe.get_value("Bench", site["bench"], "candidate"),
 					"scheduled_time": site.get("scheduled_time"),
+					"site_update": site.get("scheduled_update"),
 				}
 				for site in sites
 			],
 			"is_inplace_update": is_inplace_update,
 		}
 	).insert(ignore_permissions=True)
+	bench_update.reserve_scheduled_site_updates()
 	return bench_update
