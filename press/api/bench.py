@@ -270,10 +270,7 @@ def set_latest_release_usage(sources):
 	releases = (
 		frappe.qb.from_(AppRelease)
 		.inner_join(LatestRelease)
-		.on(
-			(AppRelease.source == LatestRelease.source)
-			& (AppRelease.creation == LatestRelease.creation)
-		)
+		.on((AppRelease.source == LatestRelease.source) & (AppRelease.creation == LatestRelease.creation))
 		.select(AppRelease.name, AppRelease.source, AppRelease.hash, AppRelease.creation)
 		.run(as_dict=True)
 	)

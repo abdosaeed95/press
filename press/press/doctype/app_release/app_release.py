@@ -71,9 +71,7 @@ def get_team_release_usage(releases: list[str], include_sites: bool = False) -> 
 		)
 		release_usage["site_count"] += 1
 		release_usage["testing_since"] = min(release_usage["testing_since"], using_since)
-		release_usage["oldest_site_date"] = min(
-			release_usage["oldest_site_date"], row.site_creation
-		)
+		release_usage["oldest_site_date"] = min(release_usage["oldest_site_date"], row.site_creation)
 		if include_sites:
 			release_usage["sites"].append(
 				{

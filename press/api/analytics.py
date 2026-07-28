@@ -635,10 +635,7 @@ def normalize_datasets(datasets: list[Dataset]) -> list[Dataset]:
 		n_query = normalize_query(data_dict["path"])
 		if n_datasets.get(n_query):
 			n_datasets[n_query]["values"] = [
-				x + y
-				for x, y in zip(
-					n_datasets[n_query]["values"], data_dict["values"], strict=False
-				)
+				x + y for x, y in zip(n_datasets[n_query]["values"], data_dict["values"], strict=False)
 			]
 		else:
 			data_dict["path"] = n_query

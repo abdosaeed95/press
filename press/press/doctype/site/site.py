@@ -289,9 +289,7 @@ class Site(Document, TagHelpers):
 
 		available_benches = benches_with_available_update()
 		update_status = filters.get("update_status")
-		query, scheduled_updates = filter_site_update_status(
-			query, Site, update_status, available_benches
-		)
+		query, scheduled_updates = filter_site_update_status(query, Site, update_status, available_benches)
 		if query is None:
 			return []
 
