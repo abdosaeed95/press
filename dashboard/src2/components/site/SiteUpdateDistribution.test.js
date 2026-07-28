@@ -1,7 +1,7 @@
 // Copyright (c) 2026, Frappe and contributors
 // For license information, please see license.txt
 
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { dayjsCairo } from '../../utils/dayjs';
 import SiteUpdateDistribution from './SiteUpdateDistribution.vue';
 
@@ -27,7 +27,13 @@ function context(values = {}) {
 }
 
 describe('Site update distribution', () => {
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
 	it('distributes site updates between 3 AM and 6 AM across entered days', () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-07-27T12:00:00+03:00'));
 		const state = context();
 
 		methods.distributeSiteUpdateTimes.call(state);
@@ -44,6 +50,25 @@ describe('Site update distribution', () => {
 		expect(new Set(times.map((time) => time.format('YYYY-MM-DD'))).size).toBe(
 			2
 		);
+	});
+
+	it('skips Friday and Saturday when distributing updates', () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-07-30T12:00:00+03:00'));
+		const state = context({
+			distributionDays: 7,
+			sites: Array.from({ length: 14 }, (_, index) => ({
+				name: `${index}.example.com`,
+			})),
+		});
+
+		methods.distributeSiteUpdateTimes.call(state);
+
+		const times = Object.values(state.siteSchedules).map((schedule) =>
+			dayjsCairo(schedule.scheduledTime)
+		);
+		expect(times[0].format('YYYY-MM-DD')).toBe('2026-08-02');
+		expect(times.every((time) => ![5, 6].includes(time.day()))).toBe(true);
 	});
 
 	it('moves distributed times after a late minimum time', () => {

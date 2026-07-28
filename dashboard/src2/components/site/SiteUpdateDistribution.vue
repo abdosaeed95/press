@@ -19,7 +19,8 @@
 				/>
 			</div>
 			<p class="mt-2 text-sm text-gray-600">
-				Distribute selected sites between 3 AM and 6 AM Cairo time.
+				Distribute selected sites between 3 AM and 6 AM Cairo time. Friday and
+				Saturday are skipped.
 			</p>
 		</div>
 		<div class="max-h-72 space-y-3 overflow-y-auto">
@@ -114,22 +115,30 @@ export default {
 				firstDay = minimumTime.startOf('day');
 			}
 
-			const generateTimes = () =>
-				this.sites.map((_, index) => {
+			const isWeekend = (day) => [5, 6].includes(day.day());
+			const nextWorkingDay = (day) =>
+				isWeekend(day) ? day.add(day.day() === 5 ? 2 : 1, 'day') : day;
+			firstDay = nextWorkingDay(firstDay);
+
+			const generateTimes = () => {
+				const days = Array.from({ length: this.distributionDays }, (_, index) =>
+					firstDay.add(index, 'day')
+				).filter((day) => !isWeekend(day));
+
+				return this.sites.map((_, index) => {
 					const offset =
-						Math.floor(
-							((index + 0.5) * this.distributionDays * 12) / this.sites.length
-						) * 15;
-					return firstDay
-						.add(Math.floor(offset / 180), 'day')
+						Math.floor(((index + 0.5) * days.length * 12) / this.sites.length) *
+						15;
+					return days[Math.floor(offset / 180)]
 						.hour(3)
 						.minute(offset % 180)
 						.format('YYYY-MM-DDTHH:mm');
 				});
+			};
 
 			let times = generateTimes();
 			if (minimumTime && !dayjsCairo(times[0]).isAfter(minimumTime)) {
-				firstDay = firstDay.add(1, 'day');
+				firstDay = nextWorkingDay(firstDay.add(1, 'day'));
 				times = generateTimes();
 			}
 
