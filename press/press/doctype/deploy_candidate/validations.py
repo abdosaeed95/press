@@ -99,6 +99,7 @@ class PreBuildValidations:
 			self._check_frappe_dependencies(app, frappe_deps)
 
 	def _validate_required_apps(self):
+		slim_excluded_apps = self._get_slim_excluded_apps()
 		for app, pm in self.pmf.items():
 			hooks_path = get_filepath(
 				pm["repo_path"],
@@ -118,19 +119,37 @@ class PreBuildValidations:
 				)
 				continue
 
-			self._check_required_apps(app, required_apps)
+			self._check_required_apps(app, required_apps, slim_excluded_apps)
 
-	def _check_required_apps(self, app: str, required_apps: list[str]):
+	def _get_slim_excluded_apps(self) -> set[str]:
+		if not self.dc.apply_new_build or not self.dc.build_runtime_image:
+			return set()
+
+		excluded_apps = set(frappe.get_all("App", {"exclude_from_slim_images": True}, pluck="name"))
+		return {app.app_name for app in self.dc.apps if app.app in excluded_apps}
+
+	def _check_required_apps(
+		self,
+		app: str,
+		required_apps: list[str],
+		slim_excluded_apps: set[str],
+	):
 		for ra in required_apps:
-			if self.dc.has_app(ra):
-				continue
+			if not self.dc.has_app(ra):
+				# Do not change args without updating deploy_notifications.py
+				raise Exception(
+					"Required app not found",
+					app,
+					ra,
+				)
 
-			# Do not change args without updating deploy_notifications.py
-			raise Exception(
-				"Required app not found",
-				app,
-				ra,
-			)
+			if ra.rsplit("/", 1)[-1] in slim_excluded_apps:
+				# Do not change args without updating deploy_notifications.py
+				raise Exception(
+					"Required app excluded from slim image",
+					app,
+					ra,
+				)
 
 	def _check_frappe_dependencies(self, app: str, frappe_deps: dict[str, str]):
 		for dep_app, expected in frappe_deps.items():
