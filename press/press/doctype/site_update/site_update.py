@@ -115,6 +115,8 @@ class SiteUpdate(Document):
 		if not self.is_new():
 			return
 
+		self.validate_updates_enabled()
+
 		# Assume same-group migration if destination_group isn't set
 		if not self.destination_group:
 			self.destination_group = self.group
@@ -139,6 +141,13 @@ class SiteUpdate(Document):
 		self.validate_pending_updates()
 		self.validate_past_failed_updates()
 		self.set_physical_backup_mode_if_eligible()
+
+	def validate_updates_enabled(self):
+		if frappe.db.get_value("Site", self.site, "disable_updates"):
+			frappe.throw(
+				_("Updates are disabled for site {0}.").format(frappe.bold(self.site)),
+				frappe.ValidationError,
+			)
 
 	def validate_destination_bench(self, differences):
 		if not self.destination_bench:
@@ -298,6 +307,7 @@ class SiteUpdate(Document):
 
 	@dashboard_whitelist()
 	def start(self):
+		self.validate_updates_enabled()
 		self.status = "Pending"
 		self.update_start = frappe.utils.now()
 		self.save()
@@ -665,6 +675,7 @@ def sites_with_available_update(server=None):
 			"bench": ("in", benches),
 			"only_update_at_specified_time": False,  # will be taken care of by another scheduled job
 			"skip_auto_updates": False,
+			"disable_updates": False,
 		},
 		fields=["name", "timezone", "bench", "server", "status"],
 	)
@@ -972,6 +983,8 @@ def run_scheduled_updates():
 	for update in updates:
 		try:
 			doc = frappe.get_doc("Site Update", update)
+			if frappe.db.get_value("Site", doc.site, "disable_updates"):
+				continue
 			doc.validate()
 			doc.start()
 			frappe.db.commit()

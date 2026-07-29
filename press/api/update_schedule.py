@@ -70,6 +70,7 @@ def get_pending_sites():
 		.select(site.name, site.host_name, site.status, site.bench)
 		.where(site.team == get_current_team())
 		.where(site.status.isin(["Active", "Inactive", "Suspended", "Broken"]))
+		.where(site.disable_updates == 0)
 		.where(site.bench.isin(benches))
 		.where(site.name.notin(active_update_sites))
 		.orderby(site.host_name)

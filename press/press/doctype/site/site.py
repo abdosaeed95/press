@@ -139,7 +139,7 @@ def filter_site_update_status(query, Site, update_status, available_benches):
 	if not available_benches:
 		return None, scheduled_updates
 
-	available_update = Site.bench.isin(available_benches)
+	available_update = Site.bench.isin(available_benches) & (Site.disable_updates == 0)
 	if scheduled_updates:
 		available_update &= Site.name.notin(list(scheduled_updates))
 	return query.where(available_update), scheduled_updates
@@ -151,7 +151,7 @@ def set_site_update_status(site, scheduled_updates, available_benches):
 		site.status = "Scheduled"
 		site.scheduled_time = scheduled_updates[site.name].scheduled_time
 		site.scheduled_update = scheduled_updates[site.name].name
-	elif site.bench in available_benches:
+	elif site.bench in available_benches and not site.disable_updates:
 		site.status = "Update Available"
 
 
@@ -268,6 +268,7 @@ class Site(Document, TagHelpers):
 		"server",
 		"host_name",
 		"skip_auto_updates",
+		"disable_updates",
 		"additional_system_user_created",
 		"label",
 		"signup_time",
@@ -293,7 +294,7 @@ class Site(Document, TagHelpers):
 		if query is None:
 			return []
 
-		sites = query.where(Site.status != "Archived").select(Site.bench).run(as_dict=1)
+		sites = query.where(Site.status != "Archived").select(Site.bench, Site.disable_updates).run(as_dict=1)
 		if scheduled_updates is None:
 			scheduled_updates = get_scheduled_site_updates([site.name for site in sites])
 		for site in sites:
@@ -2616,7 +2617,9 @@ class Site(Document, TagHelpers):
 		)
 
 		out = frappe._dict()
-		out.update_available = self.bench in benches_with_available_update(site=self.name)
+		out.update_available = not self.disable_updates and self.bench in benches_with_available_update(
+			site=self.name
+		)
 		if not out.update_available:
 			return out
 
