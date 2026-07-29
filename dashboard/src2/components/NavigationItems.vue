@@ -20,7 +20,7 @@ import Globe from '~icons/lucide/globe';
 import Shield from '~icons/lucide/shield';
 import Notification from '~icons/lucide/inbox';
 import Code from '~icons/lucide/code';
-import FileSearch from '~icons/lucide/file-search';
+import CalendarDays from '~icons/lucide/calendar-days';
 import { unreadNotificationsCount } from '../data/notifications';
 
 export default {
@@ -35,7 +35,7 @@ export default {
 			const enforce2FA = Boolean(
 				!this.$team.doc.is_desk_user &&
 					this.$team.doc.enforce_2fa &&
-					!this.$team.doc.user_info?.is_2fa_enabled,
+					!this.$team.doc.user_info?.is_2fa_enabled
 			);
 
 			return [
@@ -61,7 +61,7 @@ export default {
 								},
 								unreadNotificationsCount.data > 99
 									? '99+'
-									: unreadNotificationsCount.data,
+									: unreadNotificationsCount.data
 							);
 						}
 					},
@@ -74,6 +74,14 @@ export default {
 					isActive:
 						['Site List', 'Site Detail', 'New Site'].includes(routeName) ||
 						routeName.startsWith('Site Detail'),
+					disabled: enforce2FA,
+				},
+				{
+					name: 'Update Schedule',
+					icon: () => h(CalendarDays),
+					route: '/update-schedule',
+					isActive: routeName === 'Update Schedule',
+					condition: onboardingComplete,
 					disabled: enforce2FA,
 				},
 				{
@@ -160,7 +168,6 @@ export default {
 						'Log Browser',
 						'Binlog Browser',
 					].includes(routeName),
-					disabled: enforce2FA,
 				},
 				{
 					name: 'Billing',
