@@ -22,6 +22,7 @@ def trigger():
 			"status": ("in", ("Active", "Inactive")),
 			"only_update_at_specified_time": True,
 			"skip_auto_updates": False,
+			"disable_updates": False,
 			"bench": (
 				"in",
 				benches_with_available_update(),  # An update should be available for this site

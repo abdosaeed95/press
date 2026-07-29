@@ -1196,7 +1196,7 @@ def get(name):
 				)
 				or [None]
 			)[0],
-			"auto_updates_enabled": not site.skip_auto_updates,
+			"auto_updates_enabled": not site.skip_auto_updates and not site.disable_updates,
 		},
 		"pending_for_long": site.pending_for_long,
 		"site_migration": site_migration,
@@ -1209,7 +1209,7 @@ def get(name):
 def check_for_updates(name):
 	site = frappe.get_doc("Site", name)
 	out = frappe._dict()
-	out.update_available = site.bench in benches_with_available_update(site=name)
+	out.update_available = not site.disable_updates and site.bench in benches_with_available_update(site=name)
 	if not out.update_available:
 		return out
 
