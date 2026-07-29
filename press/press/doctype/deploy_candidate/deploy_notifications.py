@@ -162,6 +162,11 @@ def handlers() -> "list[UserAddressableHandlerTuple]":
 			None,
 		),
 		(
+			"Required app excluded from slim image",
+			update_with_required_app_excluded_prebuild,
+			None,
+		),
+		(
 			"ModuleNotFoundError: No module named",
 			update_with_module_not_found,
 			check_if_app_updated,
@@ -794,6 +799,31 @@ def update_with_required_app_not_found_prebuild(
 	details["traceback"] = None
 	details["message"] = fmt(message)
 	details["assistance_url"] = DOC_URLS["required-app-not-found"]
+	return True
+
+
+def update_with_required_app_excluded_prebuild(
+	details: "Details",
+	dc: "DeployCandidate",
+	dcb: "DeployCandidateBuild",
+	exc: BaseException,
+):
+	if len(exc.args) != 3:
+		return False
+
+	_, app, required_app = exc.args
+
+	details["title"] = frappe._("Validation Failed: Required app excluded from slim image")
+	message = frappe._(
+		"""
+		<p><b>{0}</b> requires <b>{1}</b>, but that app is excluded
+		from slim images.</p>
+
+		<p>Disable <b>Exclude From Slim Images</b> for the required app and rebuild.</p>
+		"""
+	).format(app, required_app)
+	details["traceback"] = None
+	details["message"] = fmt(message)
 	return True
 
 

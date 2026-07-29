@@ -15,6 +15,9 @@ if typing.TYPE_CHECKING:
 	from press.press.doctype.app_source.app_source import AppSource
 
 
+REQUIRED_RUNTIME_APPS = {"frappe", "console_agent"}
+
+
 class App(Document):
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
@@ -44,8 +47,8 @@ class App(Document):
 	dashboard_fields: typing.ClassVar = ["title"]
 
 	def validate(self):
-		if self.name == "frappe" and self.exclude_from_slim_images:
-			frappe.throw(_("Frappe cannot be excluded from slim images."))
+		if self.name in REQUIRED_RUNTIME_APPS and self.exclude_from_slim_images:
+			frappe.throw(_("{0} cannot be excluded from slim images.").format(frappe.bold(self.title)))
 
 	def add_source(
 		self,

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2019, Frappe and Contributors
 # See license.txt
 
@@ -15,14 +14,22 @@ if TYPE_CHECKING:
 
 
 def create_test_app(name: str = "frappe", title: str = "Frappe Framework") -> "App":
-	return frappe.get_doc({"doctype": "App", "name": name, "title": title}).insert(
-		ignore_if_duplicate=True
-	)
+	return frappe.get_doc({"doctype": "App", "name": name, "title": title}).insert(ignore_if_duplicate=True)
 
 
 class TestApp(unittest.TestCase):
 	def tearDown(self):
 		frappe.db.rollback()
+
+	def test_required_runtime_apps_cannot_be_excluded(self):
+		for name in ("frappe", "console_agent"):
+			app = frappe.new_doc("App")
+			app.name = name
+			app.title = name
+			app.exclude_from_slim_images = 1
+
+			with self.subTest(app=name), self.assertRaises(frappe.ValidationError):
+				app.validate()
 
 	def test_create_frappe_app(self):
 		app = create_test_app("frappe", "Frappe Framework")
