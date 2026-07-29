@@ -7,10 +7,17 @@
 		}"
 	>
 		<template #body-content>
-			<template v-if="updatableApps.length > 0">
+			<div v-if="$site.get.loading" class="grid place-items-center py-12">
+				<LoadingIndicator class="h-5 w-5" />
+			</div>
+			<template v-else-if="updatableApps.length > 0">
 				<GenericList :options="listOptions" />
 				<div class="mt-4 flex flex-col space-y-4">
-					<DateTimeControl v-model="scheduledTime" label="Schedule Time" />
+					<DateTimeControl
+						v-model="scheduledTime"
+						label="Schedule Time"
+						:days="scheduleDays"
+					/>
 					<div class="flex flex-col space-y-2">
 						<FormControl
 							label="Skip failing patches if any"
@@ -28,7 +35,10 @@
 			<div v-else class="text-center text-base text-gray-600">
 				No apps to update
 			</div>
-			<ErrorMessage class="mt-4" :message="$site.scheduleUpdate.error" />
+			<ErrorMessage
+				class="mt-4"
+				:message="$site.get.error || $site.scheduleUpdate.error"
+			/>
 		</template>
 		<template #actions>
 			<Button
@@ -39,7 +49,7 @@
 				@click="editUpdate"
 			/>
 			<Button
-				v-else
+				v-else-if="!$site.get.loading && updatableApps.length"
 				class="w-full"
 				variant="solid"
 				:loading="$site.scheduleUpdate.loading"
@@ -52,10 +62,10 @@
 	</Dialog>
 </template>
 <script>
-import { getCachedDocumentResource } from 'frappe-ui';
 import DateTimeControl from './DateTimeControl.vue';
 import GenericList from './GenericList.vue';
 import { cairoTimeToServer, dayjsCairo, dayjsLocal } from '../utils/dayjs';
+import { getDocResource } from '../utils/resource';
 import { toast } from 'vue-sonner';
 
 export default {
@@ -66,7 +76,17 @@ export default {
 			required: true,
 		},
 		existingUpdate: String,
+		initialScheduledTime: {
+			type: String,
+			default: '',
+		},
+		stayOnPage: Boolean,
+		scheduleDays: {
+			type: Number,
+			default: 7,
+		},
 	},
+	emits: ['scheduled'],
 	components: {
 		GenericList,
 		DateTimeControl,
@@ -75,7 +95,7 @@ export default {
 		return {
 			show: true,
 			skipFailingPatches: false,
-			scheduledTime: '',
+			scheduledTime: this.initialScheduledTime,
 			skipBackups: false,
 		};
 	},
@@ -161,16 +181,22 @@ export default {
 			};
 		},
 		updatableApps() {
-			if (!this.$site.doc.update_information.update_available) return [];
-			let installedApps = this.$site.doc.update_information.installed_apps.map(
-				(d) => d.app
-			);
-			return this.$site.doc.update_information.apps.filter((app) =>
+			let update_information = this.$site.doc?.update_information;
+			if (!update_information?.update_available) return [];
+			let installedApps = update_information.installed_apps.map((d) => d.app);
+			return update_information.apps.filter((app) =>
 				installedApps.includes(app.app)
 			);
 		},
 		$site() {
-			return getCachedDocumentResource('Site', this.site);
+			return getDocResource({
+				doctype: 'Site',
+				name: this.site,
+				whitelistedMethods: {
+					scheduleUpdate: 'schedule_update',
+					editScheduledUpdate: 'edit_scheduled_update',
+				},
+			});
 		},
 		siteUpdate() {
 			return this.$resources.siteUpdate;
@@ -192,7 +218,10 @@ export default {
 					onSuccess: () => {
 						this.$site.reload();
 						this.show = false;
-						this.$router.push({ name: 'Site Detail Updates' });
+						this.$emit('scheduled');
+						if (!this.stayOnPage) {
+							this.$router.push({ name: 'Site Detail Updates' });
+						}
 					},
 				}
 			);
@@ -211,6 +240,7 @@ export default {
 						this.show = false;
 						this.$site.reload();
 						this.siteUpdate.reload();
+						this.$emit('scheduled');
 						return 'Scheduled update edited successfully';
 					},
 					error: (err) => {

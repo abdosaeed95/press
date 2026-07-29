@@ -297,6 +297,11 @@ let router = createRouter({
 			props: true,
 		},
 		{
+			name: 'Update Schedule',
+			path: '/update-schedule',
+			component: () => import('./pages/UpdateSchedule.vue'),
+		},
+		{
 			name: 'CreateSiteForMarketplaceApp',
 			path: '/create-site/:app',
 			component: () => import('./pages/CreateSiteForMarketplaceApp.vue'),
