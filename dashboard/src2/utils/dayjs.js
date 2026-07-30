@@ -70,15 +70,22 @@ export function distributeSiteUpdateTimes(
 		firstDay = minimum.startOf('day');
 	}
 
-	const isWeekend = (day) => [5, 6].includes(day.day());
-	const nextWorkingDay = (day) =>
-		isWeekend(day) ? day.add(day.day() === 5 ? 2 : 1, 'day') : day;
-	firstDay = nextWorkingDay(firstDay);
+	const isBlockedDay = (day) =>
+		[5, 6].includes(day.day()) ||
+		day.date() <= 3 ||
+		day.date() === day.daysInMonth();
+	const nextSchedulingDay = (day) => {
+		while (isBlockedDay(day)) {
+			day = day.add(1, 'day');
+		}
+		return day;
+	};
+	firstDay = nextSchedulingDay(firstDay);
 
 	const generateTimes = () => {
 		const days = Array.from({ length: distributionDays }, (_, index) =>
 			firstDay.add(index, 'day')
-		).filter((day) => !isWeekend(day));
+		).filter((day) => !isBlockedDay(day));
 
 		return sites.map((_, index) => {
 			const offset =
@@ -92,7 +99,7 @@ export function distributeSiteUpdateTimes(
 
 	let times = generateTimes();
 	if (minimum && !dayjsCairo(times[0]).isAfter(minimum)) {
-		firstDay = nextWorkingDay(firstDay.add(1, 'day'));
+		firstDay = nextSchedulingDay(firstDay.add(1, 'day'));
 		times = generateTimes();
 	}
 

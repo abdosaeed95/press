@@ -19,8 +19,8 @@
 				/>
 			</div>
 			<p class="mt-2 text-sm text-gray-600">
-				Distribute selected sites between 3 AM and 6 AM Cairo time. Friday and
-				Saturday are skipped.
+				Distribute selected sites between 3 AM and 6 AM Cairo time. Friday,
+				Saturday, and the last day through the 3rd of each month are skipped.
 			</p>
 		</div>
 		<div class="max-h-72 space-y-3 overflow-y-auto">
