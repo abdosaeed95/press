@@ -2,7 +2,7 @@
 	<div>
 		<div class="mb-3">
 			<div>
-				<h2 class="space-y-1 mt-6 text-lg font-semibold">
+				<h2 class="mt-6 space-y-1 text-lg font-semibold">
 					Enter the Application Server Details
 				</h2>
 				<div class="mt-6 flex flex-col gap-4">
@@ -23,7 +23,7 @@
 					<ErrorMessage class="text-sm" :message="privateIpErrorMessage" />
 				</div>
 
-				<h2 class="space-y-1 mt-8 text-lg font-semibold">
+				<h2 class="mt-8 space-y-1 text-lg font-semibold">
 					Enter the DB Server Details
 				</h2>
 				<div class="mt-6 flex flex-col gap-4">
@@ -43,6 +43,31 @@
 					/>
 					<ErrorMessage class="text-sm" :message="dbPrivateIpErrorMessage" />
 				</div>
+
+				<h2 class="mt-8 space-y-1 text-lg font-semibold">
+					Cloudflare Connection
+				</h2>
+				<div class="mt-6 flex flex-col gap-4">
+					<FormControl
+						type="checkbox"
+						label="Route server management through Cloudflare"
+						:modelValue="behindCloudflare"
+						@update:modelValue="$emit('update:behindCloudflare', $event)"
+						:disabled="cloudflareZones.length === 0"
+					/>
+					<FormControl
+						v-if="behindCloudflare"
+						type="select"
+						label="Cloudflare Zone"
+						:options="cloudflareZones"
+						:modelValue="cloudflareZone"
+						@update:modelValue="$emit('update:cloudflareZone', $event)"
+					/>
+					<p v-if="behindCloudflare" class="text-sm text-gray-600">
+						The public IP is used only for the initial tunnel bootstrap. Press
+						uses the tunnel after it becomes healthy.
+					</p>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -50,18 +75,29 @@
 <script>
 export default {
 	name: 'SelfHostedServerForm',
-	props: ['appPublicIP', 'appPrivateIP', 'dbPublicIP', 'dbPrivateIP', 'error'],
+	props: [
+		'appPublicIP',
+		'appPrivateIP',
+		'dbPublicIP',
+		'dbPrivateIP',
+		'behindCloudflare',
+		'cloudflareZone',
+		'cloudflareZones',
+		'error',
+	],
 	emits: [
 		'update:appPublicIP',
 		'update:appPrivateIP',
 		'update:dbPublicIP',
 		'update:dbPrivateIP',
-		'update:error'
+		'update:behindCloudflare',
+		'update:cloudflareZone',
+		'update:error',
 	],
 	watch: {
 		hasError() {
 			this.$emit('update:error', this.hasError);
-		}
+		},
 	},
 	mounted() {
 		this.$emit('update:error', this.hasError);
@@ -86,7 +122,7 @@ export default {
 				this.dbPublicIpErrorMessage !== null ||
 				this.dbPrivateIpErrorMessage !== null
 			);
-		}
+		},
 	},
 	methods: {
 		validateIP(ip, type) {
@@ -98,7 +134,7 @@ export default {
 			} catch {
 				return `${type} IP cannot be blank`;
 			}
-		}
-	}
+		},
+	},
 };
 </script>

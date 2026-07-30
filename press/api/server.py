@@ -151,6 +151,10 @@ def get(name):
 		"server_tags": [{"name": x.tag, "tag": x.tag_name} for x in server.tags],
 		"tags": frappe.get_all("Press Tag", {"team": server.team, "doctype_name": "Server"}, ["name", "tag"]),
 		"type": "database-server" if server.meta.name == "Database Server" else "server",
+		"behind_cloudflare": server.behind_cloudflare,
+		"cloudflare_tunnel_status": server.cloudflare_tunnel_status,
+		"cloudflare_ssh_hostname": server.cloudflare_ssh_hostname,
+		"cloudflare_last_synced": server.cloudflare_last_synced,
 	}
 
 

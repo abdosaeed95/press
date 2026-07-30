@@ -1,4 +1,6 @@
 import json
+import shlex
+import shutil
 
 import frappe
 import wrapt
@@ -13,6 +15,7 @@ from ansible.plugins.action.async_status import ActionModule
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.display import Display
 from ansible.vars.manager import VariableManager
+from frappe import _
 from frappe.utils import cstr
 from frappe.utils import now_datetime as now
 
@@ -151,13 +154,35 @@ class AnsibleCallback(CallbackBase):
 
 
 class Ansible:
-	def __init__(self, server, playbook, user="root", variables=None, port=22):
+	def __init__(
+		self,
+		server,
+		playbook,
+		user="root",
+		variables=None,
+		port=22,
+		sensitive_variables=None,
+		use_cloudflare=True,
+	):
 		self.patch()
 		self.server = server
 		self.playbook = playbook
 		self.playbook_path = frappe.get_app_path("press", "playbooks", self.playbook)
-		self.host = f"{server.ip}:{port}"
 		self.variables = variables or {}
+		self.sensitive_variables = sensitive_variables or {}
+		self.host = f"{server.ip}:{port}"
+
+		if (
+			use_cloudflare
+			and server.doctype in ("Server", "Database Server", "Proxy Server")
+			and server.behind_cloudflare
+			and server.cloudflare_ssh_hostname
+			and server.cloudflare_tunnel_status in ("Healthy", "Degraded")
+		):
+			self.host = f"{server.cloudflare_ssh_hostname}:{port}"
+			self.sensitive_variables["ansible_ssh_common_args"] = self._cloudflare_ssh_common_args()
+
+		extra_variables = {**self.variables, **self.sensitive_variables}
 
 		constants.HOST_KEY_CHECKING = False
 		context.CLIARGS = ImmutableDict(
@@ -165,7 +190,7 @@ class Ansible:
 			check=False,
 			connection="ssh",
 			# This is the only way to pass variables that preserves newlines
-			extra_vars=[f"{cstr(key)}='{cstr(value)}'" for key, value in self.variables.items()],
+			extra_vars=[f"{cstr(key)}='{cstr(value)}'" for key, value in extra_variables.items()],
 			remote_user=user,
 			start_at_task=None,
 			syntax=False,
@@ -183,6 +208,24 @@ class Ansible:
 		self.display = Display()
 		self.display.verbosity = 1
 		self.create_ansible_play()
+
+	def _cloudflare_ssh_common_args(self):
+		from press.press.doctype.cloudflare_settings.cloudflare_settings import (
+			get_cloudflare_settings,
+		)
+
+		settings = get_cloudflare_settings(required=True)
+		cloudflared = shutil.which("cloudflared")
+		if not cloudflared:
+			frappe.throw(_("Install cloudflared on the Press server before using Cloudflare SSH."))
+		command = f"{shlex.quote(cloudflared)} access ssh --hostname %h"
+		if settings.manage_access:
+			client_id, client_secret = settings.ensure_access_service_token()[1:]
+			command += (
+				f" --service-token-id {shlex.quote(client_id)}"
+				f" --service-token-secret {shlex.quote(client_secret)}"
+			)
+		return f'-o ProxyCommand="{command}"'
 
 	def patch(self):
 		def modified_action_module_run(*args, **kwargs):
@@ -237,7 +280,13 @@ class Ansible:
 				"doctype": "Ansible Play",
 				"server_type": self.server.doctype,
 				"server": self.server.name,
-				"variables": json.dumps(self.variables, indent=4),
+				"variables": json.dumps(
+					{
+						**self.variables,
+						**{key: "***" for key in self.sensitive_variables},
+					},
+					indent=4,
+				),
 				"playbook": self.playbook,
 				"play": play.get_name(),
 			}

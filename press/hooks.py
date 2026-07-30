@@ -213,6 +213,7 @@ scheduler_events = {
 		"press.press.doctype.site.backups.cleanup_offsite",
 	],
 	"hourly_long": [
+		"press.integrations.cloudflare_server.reconcile_cloudflare",
 		"press.press.doctype.release_group.release_group.prune_servers_without_sites",
 		"press.press.doctype.server.server.scale_workers",
 		"press.press.doctype.usage_record.usage_record.link_unlinked_usage_records",

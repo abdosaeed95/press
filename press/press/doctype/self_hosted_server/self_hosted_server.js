@@ -3,6 +3,33 @@
 
 frappe.ui.form.on('Self Hosted Server', {
 	refresh: function (frm) {
+		if (
+			frm.doc.behind_cloudflare &&
+			frappe.user.has_role('System Manager')
+		) {
+			frm.add_custom_button(
+				__('Show Cloudflare Bootstrap'),
+				async () => {
+					const { message: commands } = await frm.call(
+						'show_cloudflare_bootstrap',
+					);
+					const content = Object.entries(commands)
+						.map(
+							([label, command]) =>
+								`<h5>${frappe.utils.escape_html(label)}</h5><pre>${frappe.utils.escape_html(command)}</pre>`,
+						)
+						.join('');
+					frappe.msgprint({
+						title: __('Cloudflare Bootstrap Commands'),
+						message: `${__(
+							'These one-time commands contain secret tunnel tokens. Run each command only on its intended server.'
+						)}${content}`,
+						wide: true,
+					});
+				},
+				__('Cloudflare'),
+			);
+		}
 		frm.add_web_link(
 			`/dashboard/servers/${frm.doc.name}`,
 			__('Visit Dashboard'),

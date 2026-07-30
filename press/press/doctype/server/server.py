@@ -227,6 +227,7 @@ class BaseServer(Document, TagHelpers):
 	def validate(self):
 		self.validate_cluster()
 		self.validate_agent_password()
+		self.validate_cloudflare()
 		if self.doctype == "Database Server" and not self.self_hosted_mariadb_server:
 			self.self_hosted_mariadb_server = self.private_ip
 
@@ -235,10 +236,29 @@ class BaseServer(Document, TagHelpers):
 
 		self.validate_mounts()
 
+	def validate_cloudflare(self):
+		if not self.behind_cloudflare:
+			return
+		if not self.cloudflare_zone:
+			frappe.throw(_("Cloudflare Zone is required."))
+		if frappe.db.get_value("Root Domain", self.cloudflare_zone, "dns_provider") != "Cloudflare":
+			frappe.throw(_("Cloudflare Zone must use the Cloudflare DNS provider."))
+		if self.doctype != "Database Server" and not self.name.endswith(f".{self.cloudflare_zone}"):
+			frappe.throw(_("Server hostname must be within the selected Cloudflare Zone."))
+
 	def _set_hostname_abbreviation(self):
 		self.hostname_abbreviation = get_hostname_abbreviation(self.hostname)
 
 	def after_insert(self):
+		if self.behind_cloudflare:
+			frappe.enqueue_doc(
+				self.doctype,
+				self.name,
+				"_setup_cloudflare",
+				queue="long",
+				timeout=1200,
+				enqueue_after_commit=True,
+			)
 		if self.ip and (
 			self.doctype not in ["Database Server", "Server", "Proxy Server"] or not self.is_self_hosted
 		):
@@ -250,6 +270,23 @@ class BaseServer(Document, TagHelpers):
 			domain = frappe.get_doc("Root Domain", self.domain)
 
 			if domain.generic_dns_provider:
+				return
+
+			if domain.cloudflare_dns_provider:
+				if self.behind_cloudflare:
+					if not self.cloudflare_tunnel_id:
+						return
+					record_type = "CNAME"
+					content = f"{self.cloudflare_tunnel_id}.cfargotunnel.com"
+				else:
+					record_type = "A"
+					content = self.ip
+				domain.cloudflare_client.upsert_dns_record(
+					domain.cloudflare_zone_id,
+					self.name,
+					record_type,
+					content,
+				)
 				return
 
 			client = boto3.client(
@@ -280,6 +317,45 @@ class BaseServer(Document, TagHelpers):
 			)
 		except Exception:
 			log_error("Route 53 Record Creation Error", domain=domain.name, server=self.name)
+
+	@frappe.whitelist()
+	def setup_cloudflare(self):
+		frappe.only_for("System Manager")
+		self.db_set("cloudflare_tunnel_status", "Pending")
+		frappe.enqueue_doc(
+			self.doctype,
+			self.name,
+			"_setup_cloudflare",
+			queue="long",
+			timeout=1200,
+			enqueue_after_commit=True,
+		)
+
+	def _setup_cloudflare(self):
+		from press.integrations.cloudflare_server import provision_server
+
+		return provision_server(self)
+
+	@frappe.whitelist()
+	def refresh_cloudflare(self):
+		frappe.only_for("System Manager")
+		from press.integrations.cloudflare_server import refresh_server
+
+		return refresh_server(self)
+
+	@frappe.whitelist()
+	def show_cloudflare_bootstrap(self):
+		frappe.only_for("System Manager")
+		from press.integrations.cloudflare_server import get_bootstrap_command
+
+		return get_bootstrap_command(self)
+
+	@frappe.whitelist()
+	def revoke_cloudflare(self):
+		frappe.only_for("System Manager")
+		from press.integrations.cloudflare_server import revoke_server
+
+		revoke_server(self)
 
 	def add_server_to_public_groups(self):
 		groups = frappe.get_all("Release Group", {"public": True, "enabled": True}, "name")
@@ -550,6 +626,10 @@ class BaseServer(Document, TagHelpers):
 		agent.cleanup_unused_files()
 
 	def on_trash(self):
+		if self.cloudflare_tunnel_id:
+			from press.integrations.cloudflare_server import revoke_server
+
+			revoke_server(self)
 		plays = frappe.get_all("Ansible Play", filters={"server": self.name})
 		for play in plays:
 			frappe.delete_doc("Ansible Play", play.name)
@@ -776,6 +856,10 @@ class BaseServer(Document, TagHelpers):
 			frappe.throw(
 				_("Cannot archive server with benches. Please drop them from their respective dashboards.")
 			)
+		if self.cloudflare_tunnel_id:
+			from press.integrations.cloudflare_server import revoke_server
+
+			revoke_server(self)
 		self.status = "Pending"
 		self.save()
 		if self.is_self_hosted:
@@ -1560,7 +1644,15 @@ class Server(BaseServer):
 		agent_password: DF.Password | None
 		auto_add_storage_max: DF.Int
 		auto_add_storage_min: DF.Int
+		behind_cloudflare: DF.Check
 		cluster: DF.Link | None
+		cloudflare_access_application_id: DF.Data | None
+		cloudflare_error: DF.Code | None
+		cloudflare_last_synced: DF.Datetime | None
+		cloudflare_ssh_hostname: DF.Data | None
+		cloudflare_tunnel_id: DF.Data | None
+		cloudflare_tunnel_status: DF.Literal["Inactive", "Pending", "Healthy", "Degraded", "Error"]
+		cloudflare_zone: DF.Link | None
 		database_server: DF.Link | None
 		disable_agent_job_auto_retry: DF.Check
 		domain: DF.Link | None

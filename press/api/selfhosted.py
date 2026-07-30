@@ -39,6 +39,8 @@ def create_self_hosted_server(server_details, team, proxy_server):
 				"plan": server_details.plan["name"],
 				"database_plan": server_details.plan["name"],
 				"new_server": True,
+				"behind_cloudflare": server_details.behind_cloudflare,
+				"cloudflare_zone": server_details.cloudflare_zone,
 			},
 		).insert()
 	except frappe.DuplicateEntryError as e:
@@ -142,6 +144,25 @@ def get_plans():
 
 
 @frappe.whitelist()
+def get_cloudflare_options():
+	from press.press.doctype.cloudflare_settings.cloudflare_settings import (
+		get_cloudflare_settings,
+	)
+
+	settings = get_cloudflare_settings()
+	return {
+		"enabled": bool(settings and settings.manage_dns and settings.manage_tunnels),
+		"zones": frappe.get_all(
+			"Root Domain",
+			{"dns_provider": "Cloudflare"},
+			pluck="name",
+		)
+		if settings and settings.manage_dns and settings.manage_tunnels
+		else [],
+	}
+
+
+@frappe.whitelist()
 def check_dns(domain, ip):
 	try:
 		resolver = Resolver(configure=False)
@@ -168,6 +189,4 @@ def create_and_verify_selfhosted(server):
 		return frappe.get_value("Self Hosted Server", self_hosted_server_name, "server")
 
 	else:
-		frappe.throw(
-			"Server verification failed. Please check the server details and try again."
-		)
+		frappe.throw("Server verification failed. Please check the server details and try again.")

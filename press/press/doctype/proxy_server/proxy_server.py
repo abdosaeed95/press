@@ -31,7 +31,15 @@ class ProxyServer(BaseServer):
 		agent_password: DF.Password | None
 		auto_add_storage_max: DF.Int
 		auto_add_storage_min: DF.Int
+		behind_cloudflare: DF.Check
 		cluster: DF.Link | None
+		cloudflare_access_application_id: DF.Data | None
+		cloudflare_error: DF.Code | None
+		cloudflare_last_synced: DF.Datetime | None
+		cloudflare_ssh_hostname: DF.Data | None
+		cloudflare_tunnel_id: DF.Data | None
+		cloudflare_tunnel_status: DF.Literal["Inactive", "Pending", "Healthy", "Degraded", "Error"]
+		cloudflare_zone: DF.Link | None
 		disable_agent_job_auto_retry: DF.Check
 		domain: DF.Link | None
 		domains: DF.Table[ProxyServerDomain]

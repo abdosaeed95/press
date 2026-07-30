@@ -3,9 +3,10 @@
 
 frappe.ui.form.on('Server', {
 	refresh: function (frm) {
+		add_cloudflare_actions(frm);
 		frm.add_web_link(
 			`/dashboard/servers/${frm.doc.name}`,
-			__('Visit Dashboard'),
+			__('Visit Dashboard')
 		);
 
 		const ping_actions = [
@@ -38,7 +39,7 @@ frappe.ui.form.on('Server', {
 				const res = await frm.call(method);
 				if (res.message && method == 'ping_agent_job') {
 					frappe.msgprint(
-						`Agejt Job <a href="/app/agent-job/${res?.message}">${res?.message}</a> created.`,
+						`Agejt Job <a href="/app/agent-job/${res?.message}">${res?.message}</a> created.`
 					);
 				} else if (res.message) {
 					frappe.msgprint(res.message);
@@ -245,7 +246,7 @@ frappe.ui.form.on('Server', {
 										} else {
 											frm.refresh();
 										}
-									}),
+									})
 							);
 						} else {
 							frm.call(method).then((r) => {
@@ -257,7 +258,7 @@ frappe.ui.form.on('Server', {
 							});
 						}
 					},
-					__('Actions'),
+					__('Actions')
 				);
 			}
 		});
@@ -287,7 +288,7 @@ frappe.ui.form.on('Server', {
 					});
 					dialog.show();
 				},
-				__('Actions'),
+				__('Actions')
 			);
 			frm.add_custom_button(
 				__('Reset Swap'),
@@ -299,7 +300,7 @@ frappe.ui.form.on('Server', {
 								fieldtype: 'Int',
 								label: __('Swap Size (GB)'),
 								description: __(
-									'This will reset swap space to specified size. 0 or empty to remove all.',
+									'This will reset swap space to specified size. 0 or empty to remove all.'
 								),
 								fieldname: 'swap_size',
 								default: 1,
@@ -315,7 +316,7 @@ frappe.ui.form.on('Server', {
 					});
 					dialog.show();
 				},
-				__('Actions'),
+				__('Actions')
 			);
 		}
 	},
@@ -330,7 +331,55 @@ async function frappe_confirm(label) {
 		frappe.confirm(
 			`Are you sure you want to ${label.toLowerCase()}?`,
 			() => r(true),
-			() => r(false),
+			() => r(false)
 		);
 	});
+}
+
+function add_cloudflare_actions(frm) {
+	if (
+		!frm.doc.behind_cloudflare ||
+		!frappe.user.has_role('System Manager')
+	)
+		return;
+
+	if (
+		!frm.doc.cloudflare_tunnel_id ||
+		['Inactive', 'Error'].includes(frm.doc.cloudflare_tunnel_status)
+	) {
+		frm.add_custom_button(
+			__('Setup Cloudflare'),
+			() => frm.call('setup_cloudflare').then(() => frm.reload_doc()),
+			__('Cloudflare')
+		);
+	}
+	frm.add_custom_button(
+		__('Show Bootstrap Command'),
+		async () => {
+			const { message } = await frm.call('show_cloudflare_bootstrap');
+			frappe.msgprint({
+				title: __('Cloudflare Bootstrap Command'),
+				message: `${__(
+					'This one-time command contains a secret tunnel token. Run it only on the intended server.'
+				)}<pre>${frappe.utils.escape_html(message)}</pre>`,
+				wide: true,
+			});
+		},
+		__('Cloudflare')
+	);
+	if (frm.doc.cloudflare_tunnel_id) {
+		frm.add_custom_button(
+			__('Refresh Tunnel Status'),
+			() => frm.call('refresh_cloudflare').then(() => frm.reload_doc()),
+			__('Cloudflare')
+		);
+		frm.add_custom_button(
+			__('Revoke Tunnel'),
+			() =>
+				frappe.confirm(__('Permanently revoke this Cloudflare Tunnel?'), () =>
+					frm.call('revoke_cloudflare').then(() => frm.reload_doc())
+				),
+			__('Cloudflare')
+		);
+	}
 }
