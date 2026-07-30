@@ -22,8 +22,6 @@ def create_dns_record(doc, record_name=None):
 
 	if frappe.flags.in_test:
 		return
-  
-	is_standalone = frappe.get_value("Server", doc.server, "is_standalone")
 
 	proxy_server, is_standalone = frappe.get_value("Server", doc.server, ["proxy_server", "is_standalone"])
 
@@ -58,6 +56,18 @@ def _change_dns_record(method: str, domain: RootDomain, proxy_server: str, recor
 	method: CREATE | DELETE | UPSERT
 	"""
 	if domain.generic_dns_provider:
+		return
+
+	if domain.cloudflare_dns_provider:
+		if method == "DELETE":
+			domain.cloudflare_client.delete_dns_records(domain.cloudflare_zone_id, record_name, "CNAME")
+			return
+		domain.cloudflare_client.upsert_dns_record(
+			domain.cloudflare_zone_id,
+			record_name,
+			"CNAME",
+			get_cloudflare_target(proxy_server),
+		)
 		return
 
 	client = boto3.client(
@@ -103,3 +113,11 @@ def _change_dns_record(method: str, domain: RootDomain, proxy_server: str, recor
 			site=record_name,
 			proxy_server=proxy_server,
 		)
+
+
+def get_cloudflare_target(server: str) -> str:
+	for doctype in ("Proxy Server", "Server", "Database Server"):
+		tunnel_id = frappe.db.get_value(doctype, server, "cloudflare_tunnel_id")
+		if tunnel_id:
+			return f"{tunnel_id}.cfargotunnel.com"
+	return server

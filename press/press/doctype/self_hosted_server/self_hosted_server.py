@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
 from frappe.model.naming import make_autoname
 
@@ -33,7 +34,11 @@ class SelfHostedServer(Document):
 		apps: DF.Table[SiteAnalyticsApp]
 		architecture: DF.Data | None
 		bench_directory: DF.Data | None
+		behind_cloudflare: DF.Check
 		cluster: DF.Link | None
+		cloudflare_last_synced: DF.Datetime | None
+		cloudflare_tunnel_status: DF.Literal["Inactive", "Pending", "Healthy", "Degraded", "Error"]
+		cloudflare_zone: DF.Link | None
 		database_plan: DF.Link | None
 		database_server: DF.Link | None
 		database_service: DF.Literal["AWS - RDS"]
@@ -84,7 +89,6 @@ class SelfHostedServer(Document):
 		self.validate_is_duplicate()
 
 	def autoname(self):
-		
 		self.name = f"{self.hostname}.{self.hybrid_domain}"
 		self.domain = self.hybrid_domain
 
@@ -92,6 +96,13 @@ class SelfHostedServer(Document):
 		self.set_proxy_details()
 		self.set_mariadb_config()
 		self.set_database_plan()
+		if self.behind_cloudflare and (
+			not self.cloudflare_zone
+			or frappe.db.get_value("Root Domain", self.cloudflare_zone, "dns_provider") != "Cloudflare"
+		):
+			frappe.throw(_("Select a Root Domain managed by Cloudflare."))
+		if self.behind_cloudflare and not self.name.endswith(f".{self.cloudflare_zone}"):
+			frappe.throw(_("Self Hosted Server hostname must be within the selected Cloudflare Zone."))
 
 		if not self.agent_password:
 			self.agent_password = frappe.generate_hash(length=32)
@@ -327,6 +338,23 @@ class SelfHostedServer(Document):
 			self._create_server_plan("Unlimited")
 			self.database_plan = "Unlimited"
 
+	@frappe.whitelist()
+	def show_cloudflare_bootstrap(self):
+		frappe.only_for("System Manager")
+		from press.integrations.cloudflare_server import get_bootstrap_command
+
+		commands = {}
+		for label, doctype, name in (
+			(_("Application Server"), "Server", self.server),
+			(_("Database Server"), "Database Server", self.database_server),
+			(_("Proxy Server"), "Proxy Server", self.proxy_server if self.dedicated_proxy else None),
+		):
+			if name:
+				commands[label] = get_bootstrap_command(frappe.get_doc(doctype, name))
+		if not commands:
+			frappe.throw(_("Create the server records before generating Cloudflare bootstrap commands."))
+		return commands
+
 	def _create_server_plan(self, plan_name):
 		plan = frappe.new_doc("Server Plan")
 		plan.name = plan_name
@@ -359,6 +387,8 @@ class SelfHostedServer(Document):
 					"agent_password": self.get_password("agent_password"),
 					"is_server_setup": not self.new_server,
 					"plan": self.database_plan,
+					"behind_cloudflare": self.behind_cloudflare,
+					"cloudflare_zone": self.cloudflare_zone,
 				},
 			).insert()
 
@@ -436,6 +466,8 @@ class SelfHostedServer(Document):
 					"ram": self.ram,
 					"new_worker_allocation": True,
 					"plan": self.plan,
+					"behind_cloudflare": self.behind_cloudflare,
+					"cloudflare_zone": self.cloudflare_zone,
 				},
 			).insert()
 
@@ -569,6 +601,8 @@ class SelfHostedServer(Document):
 					"cluster": self.cluster,
 					"ssh_user": self.ssh_user,
 					"ssh_port": self.ssh_port,
+					"behind_cloudflare": self.behind_cloudflare,
+					"cloudflare_zone": self.cloudflare_zone,
 				},
 			).insert()
 

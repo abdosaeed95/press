@@ -70,7 +70,15 @@
   "db_vcpus",
   "db_total_storage",
   "column_break_krqz",
-  "db_ram"
+  "db_ram",
+  "cloudflare_tab",
+  "cloudflare_section",
+  "behind_cloudflare",
+  "cloudflare_zone",
+  "column_break_cloudflare",
+  "cloudflare_tunnel_status",
+  "column_break_cloudflare_sync",
+  "cloudflare_last_synced"
  ],
  "fields": [
   {
@@ -448,6 +456,56 @@
    "fieldtype": "Select",
    "label": "Database Service",
    "options": "AWS - RDS"
+  },
+  {
+   "fieldname": "cloudflare_tab",
+   "fieldtype": "Tab Break",
+   "label": "Cloudflare"
+  },
+  {
+   "fieldname": "cloudflare_section",
+   "fieldtype": "Section Break",
+   "label": "Connection"
+  },
+  {
+   "default": "0",
+   "description": "Provision Press-managed Cloudflare Tunnels for every server created by this setup.",
+   "fieldname": "behind_cloudflare",
+   "fieldtype": "Check",
+   "in_list_filter": 1,
+   "label": "Behind Cloudflare"
+  },
+  {
+   "depends_on": "eval:doc.behind_cloudflare",
+   "fieldname": "cloudflare_zone",
+   "fieldtype": "Link",
+   "in_list_filter": 1,
+   "label": "Cloudflare Zone",
+   "mandatory_depends_on": "eval:doc.behind_cloudflare",
+   "options": "Root Domain"
+  },
+  {
+   "fieldname": "column_break_cloudflare",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Inactive",
+   "fieldname": "cloudflare_tunnel_status",
+   "fieldtype": "Select",
+   "in_list_filter": 1,
+   "label": "Tunnel Status",
+   "options": "Inactive\nPending\nHealthy\nDegraded\nError",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_cloudflare_sync",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cloudflare_last_synced",
+   "fieldtype": "Datetime",
+   "label": "Last Synced",
+   "read_only": 1
   }
  ],
  "links": [],

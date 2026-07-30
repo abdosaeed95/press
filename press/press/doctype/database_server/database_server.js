@@ -3,6 +3,7 @@
 
 frappe.ui.form.on('Database Server', {
 	refresh: function (frm) {
+		add_cloudflare_actions(frm);
 		frm.add_web_link(
 			`/dashboard/servers/${frm.doc.name}`,
 			__('Visit Dashboard'),
@@ -332,3 +333,48 @@ frappe.ui.form.on('Database Server', {
 		press.set_hostname_abbreviation(frm);
 	},
 });
+
+function add_cloudflare_actions(frm) {
+	if (!frm.doc.behind_cloudflare || !frappe.user.has_role('System Manager'))
+		return;
+
+	if (
+		!frm.doc.cloudflare_tunnel_id ||
+		['Inactive', 'Error'].includes(frm.doc.cloudflare_tunnel_status)
+	) {
+		frm.add_custom_button(
+			__('Setup Cloudflare'),
+			() => frm.call('setup_cloudflare').then(() => frm.reload_doc()),
+			__('Cloudflare'),
+		);
+	}
+	frm.add_custom_button(
+		__('Show Bootstrap Command'),
+		async () => {
+			const { message } = await frm.call('show_cloudflare_bootstrap');
+			frappe.msgprint({
+				title: __('Cloudflare Bootstrap Command'),
+				message: `${__(
+					'This one-time command contains a secret tunnel token. Run it only on the intended server.',
+				)}<pre>${frappe.utils.escape_html(message)}</pre>`,
+				wide: true,
+			});
+		},
+		__('Cloudflare'),
+	);
+	if (frm.doc.cloudflare_tunnel_id) {
+		frm.add_custom_button(
+			__('Refresh Tunnel Status'),
+			() => frm.call('refresh_cloudflare').then(() => frm.reload_doc()),
+			__('Cloudflare'),
+		);
+		frm.add_custom_button(
+			__('Revoke Tunnel'),
+			() =>
+				frappe.confirm(__('Permanently revoke this Cloudflare Tunnel?'), () =>
+					frm.call('revoke_cloudflare').then(() => frm.reload_doc()),
+				),
+			__('Cloudflare'),
+		);
+	}
+}

@@ -6,6 +6,7 @@ import os
 import re
 import shlex
 import subprocess
+import tempfile
 import time
 from contextlib import suppress
 from datetime import datetime
@@ -474,6 +475,10 @@ class LetsEncrypt(BaseCA):
 
 	def _obtain_wildcard(self):
 		domain = frappe.get_doc("Root Domain", self.domain[2:])
+		if domain.cloudflare_dns_provider:
+			self._obtain_with_cloudflare()
+			return
+
 		environment = os.environ
 		environment.update(
 			{
@@ -481,11 +486,14 @@ class LetsEncrypt(BaseCA):
 				"AWS_SECRET_ACCESS_KEY": domain.get_password("aws_secret_access_key"),
 			}
 		)
-		self.run(self._certbot_command(), environment=environment)
+		self.run(self._certbot_command("--dns-route53"), environment=environment)
 
 	def _obtain_naked_with_dns(self):
 		domain = frappe.get_all("Root Domain", pluck="name", limit=1)[0]
 		domain = frappe.get_doc("Root Domain", domain)
+		if domain.cloudflare_dns_provider:
+			self._obtain_with_cloudflare()
+			return
 		environment = os.environ
 		environment.update(
 			{
@@ -493,18 +501,29 @@ class LetsEncrypt(BaseCA):
 				"AWS_SECRET_ACCESS_KEY": domain.get_password("aws_secret_access_key"),
 			}
 		)
-		self.run(self._certbot_command(), environment=environment)
+		self.run(self._certbot_command("--dns-route53"), environment=environment)
+
+	def _obtain_with_cloudflare(self):
+		from press.press.doctype.cloudflare_settings.cloudflare_settings import (
+			get_cloudflare_settings,
+		)
+
+		settings = get_cloudflare_settings(required=True)
+		with tempfile.NamedTemporaryFile(mode="w", prefix="certbot-cloudflare-") as credentials:
+			credentials.write(f"dns_cloudflare_api_token = {settings.get_password('api_token')}\n")
+			credentials.flush()
+			os.chmod(credentials.name, 0o600)
+			self.run(
+				self._certbot_command(f"--dns-cloudflare --dns-cloudflare-credentials {credentials.name}")
+			)
 
 	def _obtain_naked(self):
 		if not os.path.exists(self.webroot_directory):
 			os.mkdir(self.webroot_directory)
 		self.run(self._certbot_command())
 
-	def _certbot_command(self):
-		if self.wildcard or frappe.conf.developer_mode:
-			plugin = "--dns-route53"
-		else:
-			plugin = f"--webroot --webroot-path {self.webroot_directory}"
+	def _certbot_command(self, plugin=None):
+		plugin = plugin or f"--webroot --webroot-path {self.webroot_directory}"
 
 		staging = "--staging" if self.staging else ""
 		force_renewal = "--keep" if frappe.conf.developer_mode else "--force-renewal"

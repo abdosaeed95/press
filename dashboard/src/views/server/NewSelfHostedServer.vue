@@ -26,6 +26,9 @@
 						v-model:appPrivateIP="appPrivateIP"
 						v-model:dbPublicIP="dbPublicIP"
 						v-model:dbPrivateIP="dbPrivateIP"
+						v-model:behindCloudflare="behindCloudflare"
+						v-model:cloudflareZone="cloudflareZone"
+						:cloudflareZones="cloudflareZones"
 						v-model:error="ipInvalid"
 					/>
 				</div>
@@ -111,7 +114,7 @@ export default {
 		SelfHostedHostname,
 		SelfHostedServerPlan,
 		SelfHostedServerForm,
-		SelfHostedServerVerify
+		SelfHostedServerVerify,
 	},
 	data() {
 		return {
@@ -121,6 +124,9 @@ export default {
 			appPrivateIP: null,
 			dbPublicIP: null,
 			dbPrivateIP: null,
+			behindCloudflare: false,
+			cloudflareZone: null,
+			cloudflareZones: [],
 			validationMessage: null,
 			serverDoc: null,
 			ssh_key: null,
@@ -135,37 +141,44 @@ export default {
 					name: 'SelfHostedHostname',
 					validate: () => {
 						return this.title;
-					}
+					},
 				},
 				{
 					name: 'SelfHostedServerPlan',
 					validate: () => {
 						return this.selectedPlan;
-					}
+					},
 				},
 				{
 					name: 'ServerDetails',
 					validate: () => {
-						return this.appPublicIP;
-					}
+						return (
+							this.appPublicIP &&
+							(!this.behindCloudflare || this.cloudflareZone)
+						);
+					},
 				},
 				{
 					name: 'VerifyServer',
 					validate: () => {
 						return this.playOutput;
-					}
-				}
-			]
+					},
+				},
+			],
 		};
 	},
 	async mounted() {
 		const plans = await this.$call('press.api.selfhosted.get_plans');
-		this.options = plans.map(plan => {
+		this.options = plans.map((plan) => {
 			plan.disabled = !this.$account.hasBillingInfo;
 			plan.vcpu = 'Any';
 			return plan;
 		});
 		this.ssh_key = await this.$call('press.api.selfhosted.sshkey');
+		const cloudflare = await this.$call(
+			'press.api.selfhosted.get_cloudflare_options',
+		);
+		this.cloudflareZones = cloudflare.enabled ? cloudflare.zones : [];
 	},
 	resources: {
 		newServer() {
@@ -178,30 +191,32 @@ export default {
 						app_private_ip: this.appPrivateIP,
 						db_public_ip: this.dbPublicIP,
 						db_private_ip: this.dbPrivateIP,
-						plan: this.selectedPlan
-					}
+						behind_cloudflare: this.behindCloudflare,
+						cloudflare_zone: this.cloudflareZone,
+						plan: this.selectedPlan,
+					},
 				},
 				onSuccess(data) {
 					this.serverDoc = data;
-				}
+				},
 			};
 		},
 		verify() {
 			return {
 				url: 'press.api.selfhosted.verify',
 				params: {
-					server: this.serverDoc
+					server: this.serverDoc,
 				},
 				onSuccess(data) {
 					this.playOutput = data;
-				}
+				},
 			};
 		},
 		setupServer() {
 			return {
 				url: 'press.api.selfhosted.setup',
 				params: {
-					server: this.serverDoc
+					server: this.serverDoc,
 				},
 				validate() {
 					let canCreate = this.title;
@@ -212,9 +227,9 @@ export default {
 					if (!canCreate) {
 						return 'Cannot create server';
 					}
-				}
+				},
 			};
-		}
+		},
 	},
 	computed: {},
 	methods: {
@@ -229,7 +244,7 @@ export default {
 			if (this.agreedToRegionConsent) {
 				this.$router.replace(`/servers/`);
 			}
-		}
-	}
+		},
+	},
 };
 </script>

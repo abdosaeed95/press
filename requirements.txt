@@ -1,6 +1,8 @@
 ansible==3.4.0
 beautifulsoup4
 boto3==1.29.7
+certbot==3.1.0
+certbot-dns-cloudflare==2.11.1
 Click
 coverage
 dnspython==1.16.0

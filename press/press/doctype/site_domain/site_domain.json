@@ -17,7 +17,16 @@
   "redirect_to_primary",
   "dns_section",
   "dns_type",
-  "dns_response"
+  "dns_response",
+  "cloudflare_section",
+  "cloudflare_custom_hostname_id",
+  "cloudflare_hostname_status",
+  "column_break_cloudflare_ssl",
+  "cloudflare_ssl_status",
+  "cloudflare_last_synced",
+  "column_break_cloudflare_details",
+  "cloudflare_verification",
+  "cloudflare_error"
  ],
  "fields": [
   {
@@ -104,6 +113,56 @@
    "fieldname": "dns_response",
    "fieldtype": "Code",
    "label": "DNS Response",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cloudflare_section",
+   "fieldtype": "Section Break",
+   "label": "Cloudflare for SaaS"
+  },
+  {
+   "fieldname": "cloudflare_custom_hostname_id",
+   "fieldtype": "Data",
+   "label": "Custom Hostname ID",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "cloudflare_hostname_status",
+   "fieldtype": "Data",
+   "label": "Hostname Status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_cloudflare_ssl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cloudflare_ssl_status",
+   "fieldtype": "Data",
+   "label": "SSL Status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cloudflare_last_synced",
+   "fieldtype": "Datetime",
+   "label": "Last Synced",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_cloudflare_details",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cloudflare_verification",
+   "fieldtype": "Code",
+   "label": "Verification Records",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cloudflare_error",
+   "fieldtype": "Code",
+   "label": "Last Error",
    "read_only": 1
   }
  ],

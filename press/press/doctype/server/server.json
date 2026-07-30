@@ -87,7 +87,19 @@
   "tags",
   "mounts_section",
   "has_data_volume",
-  "mounts"
+  "mounts",
+  "cloudflare_tab",
+  "cloudflare_connection_section",
+  "behind_cloudflare",
+  "cloudflare_zone",
+  "cloudflare_tunnel_status",
+  "column_break_cloudflare_tunnel",
+  "cloudflare_tunnel_id",
+  "cloudflare_ssh_hostname",
+  "column_break_cloudflare_sync",
+  "cloudflare_access_application_id",
+  "cloudflare_last_synced",
+  "cloudflare_error"
  ],
  "fields": [
   {
@@ -599,6 +611,84 @@
    "fieldname": "stop_deployments",
    "fieldtype": "Check",
    "label": "Stop deployments"
+  },
+  {
+   "fieldname": "cloudflare_tab",
+   "fieldtype": "Tab Break",
+   "label": "Cloudflare"
+  },
+  {
+   "fieldname": "cloudflare_connection_section",
+   "fieldtype": "Section Break",
+   "label": "Connection"
+  },
+  {
+   "default": "0",
+   "description": "Connect to this server through a Press-managed Cloudflare Tunnel.",
+   "fieldname": "behind_cloudflare",
+   "fieldtype": "Check",
+   "in_list_filter": 1,
+   "label": "Behind Cloudflare"
+  },
+  {
+   "depends_on": "eval:doc.behind_cloudflare",
+   "fieldname": "cloudflare_zone",
+   "fieldtype": "Link",
+   "in_list_filter": 1,
+   "label": "Cloudflare Zone",
+   "mandatory_depends_on": "eval:doc.behind_cloudflare",
+   "options": "Root Domain"
+  },
+  {
+   "default": "Inactive",
+   "fieldname": "cloudflare_tunnel_status",
+   "fieldtype": "Select",
+   "in_list_filter": 1,
+   "label": "Tunnel Status",
+   "options": "Inactive\nPending\nHealthy\nDegraded\nError",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_cloudflare_tunnel",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cloudflare_tunnel_id",
+   "fieldtype": "Data",
+   "label": "Tunnel ID",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "cloudflare_ssh_hostname",
+   "fieldtype": "Data",
+   "label": "SSH Hostname",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_cloudflare_sync",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cloudflare_access_application_id",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Access Application ID",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "cloudflare_last_synced",
+   "fieldtype": "Datetime",
+   "label": "Last Synced",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cloudflare_error",
+   "fieldtype": "Code",
+   "label": "Last Error",
+   "read_only": 1
   }
  ],
  "links": [],

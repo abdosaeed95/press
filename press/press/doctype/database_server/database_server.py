@@ -44,9 +44,17 @@ class DatabaseServer(BaseServer):
 		agent_password: DF.Password | None
 		auto_add_storage_max: DF.Int
 		auto_add_storage_min: DF.Int
+		behind_cloudflare: DF.Check
 		binlog_retention_days: DF.Int
 		binlogs_removed: DF.Check
 		cluster: DF.Link | None
+		cloudflare_access_application_id: DF.Data | None
+		cloudflare_error: DF.Code | None
+		cloudflare_last_synced: DF.Datetime | None
+		cloudflare_ssh_hostname: DF.Data | None
+		cloudflare_tunnel_id: DF.Data | None
+		cloudflare_tunnel_status: DF.Literal["Inactive", "Pending", "Healthy", "Degraded", "Error"]
+		cloudflare_zone: DF.Link | None
 		domain: DF.Link | None
 		enable_binlog_indexing: DF.Check
 		enable_physical_backup: DF.Check

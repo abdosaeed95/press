@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timedelta
-from typing import Iterable
 
 import boto3
 import frappe
+from frappe import _
 from frappe.core.utils import find
 from frappe.model.document import Document
 
@@ -25,11 +25,25 @@ class RootDomain(Document):
 
 		aws_access_key_id: DF.Data | None
 		aws_secret_access_key: DF.Password | None
+		cloudflare_cname_target: DF.Data | None
+		cloudflare_fallback_origin: DF.Data | None
+		cloudflare_saas_enabled: DF.Check
+		cloudflare_zone_id: DF.Data | None
 		default_cluster: DF.Link
 		default_proxy_server: DF.Link | None
-		dns_provider: DF.Literal["AWS Route 53", "Generic"]
+		dns_provider: DF.Literal["AWS Route 53", "Cloudflare", "Generic"]
 		team: DF.Link | None
 	# end: auto-generated types
+
+	def validate(self):
+		if self.cloudflare_dns_provider and not self.cloudflare_zone_id:
+			frappe.throw(_("Cloudflare Zone ID is required."))
+		if self.cloudflare_saas_enabled and not self.cloudflare_dns_provider:
+			frappe.throw(_("Cloudflare for SaaS requires the Cloudflare DNS provider."))
+		if self.cloudflare_saas_enabled and (
+			not self.cloudflare_fallback_origin or not self.cloudflare_cname_target
+		):
+			frappe.throw(_("SaaS Fallback Origin and SaaS CNAME Target are required."))
 
 	def after_insert(self):
 		if self.dns_provider != "Generic" and not frappe.db.exists(
@@ -65,6 +79,39 @@ class RootDomain(Document):
 		return self._generic_dns_provider
 
 	@property
+	def cloudflare_dns_provider(self):
+		return self.dns_provider == "Cloudflare"
+
+	@property
+	def route53_dns_provider(self):
+		return self.dns_provider == "AWS Route 53"
+
+	@property
+	def cloudflare_client(self):
+		from press.press.doctype.cloudflare_settings.cloudflare_settings import (
+			get_cloudflare_client,
+		)
+
+		return get_cloudflare_client(required=True)
+
+	@frappe.whitelist()
+	def setup_cloudflare_saas(self):
+		frappe.only_for("System Manager")
+		if not self.cloudflare_dns_provider or not self.cloudflare_saas_enabled:
+			frappe.throw(_("Enable Cloudflare for SaaS on a Cloudflare Root Domain first."))
+
+		self.cloudflare_client.upsert_dns_record(
+			self.cloudflare_zone_id,
+			self.cloudflare_cname_target,
+			"CNAME",
+			self.cloudflare_fallback_origin,
+		)
+		return self.cloudflare_client.update_fallback_origin(
+			self.cloudflare_zone_id,
+			self.cloudflare_fallback_origin,
+		)
+
+	@property
 	def boto3_client(self):
 		if not hasattr(self, "_boto3_client"):
 			self._boto3_client = boto3.client(
@@ -79,7 +126,22 @@ class RootDomain(Document):
 		zones = self.boto3_client.list_hosted_zones_by_name()["HostedZones"]
 		return find(reversed(zones), lambda x: self.name.endswith(x["Name"][:-1]))["Id"]
 
-	def get_dns_record_pages(self) -> Iterable:
+	def get_dns_record_pages(self):
+		if self.cloudflare_dns_provider:
+			records = self.cloudflare_client.list_dns_records(self.cloudflare_zone_id)
+			return [
+				{
+					"ResourceRecordSets": [
+						{
+							"Id": record["id"],
+							"Name": record["name"],
+							"Type": record["type"],
+							"ResourceRecords": [{"Value": record["content"]}],
+						}
+						for record in records
+					]
+				}
+			]
 		try:
 			paginator = self.boto3_client.get_paginator("list_resource_record_sets")
 			return paginator.paginate(
@@ -89,7 +151,11 @@ class RootDomain(Document):
 		except Exception:
 			log_error("Route 53 Pagination Error", domain=self.name)
 
-	def delete_dns_records(self, records: list[str]):
+	def delete_dns_records(self, records: list[dict]):
+		if self.cloudflare_dns_provider:
+			for record in records:
+				self.cloudflare_client.delete_dns_record(self.cloudflare_zone_id, record["Id"])
+			return
 		try:
 			changes = []
 			for record in records:
@@ -132,9 +198,15 @@ class RootDomain(Document):
 		)
 
 	def remove_unused_cname_records(self):
-		proxies = frappe.get_all("Proxy Server", {"status": "Active"}, pluck="name")
+		proxies, proxy_targets, protected_records = get_proxy_dns_state()
 
 		default_proxies = self.get_default_cluster_proxies()
+		if self.cloudflare_dns_provider:
+			default_proxies = {
+				f"{proxy.cloudflare_tunnel_id}.cfargotunnel.com"
+				for proxy in proxies
+				if proxy.name in default_proxies and proxy.cloudflare_tunnel_id
+			}
 
 		for page in self.get_dns_record_pages():
 			to_delete = []
@@ -143,24 +215,35 @@ class RootDomain(Document):
 			active_domains = self.get_active_domains()
 
 			for record in page["ResourceRecordSets"]:
-				# Only look at CNAME records that point to a proxy server
-				value = record["ResourceRecords"][0]["Value"]
-				if record["Type"] == "CNAME" and value in proxies:
-					domain = record["Name"].strip(".")
-					# Delete inactive records
-					if domain not in active_domains:  # noqa: SIM114
-						record["Name"] = domain
-						to_delete.append(record)
-					# Delete records that point to a proxy in the default_cluster
-					# These are covered by * records
-					elif value in default_proxies:
-						record["Name"] = domain
-						to_delete.append(record)
+				if should_delete_cname(
+					record,
+					proxy_targets,
+					protected_records,
+					active_domains,
+					default_proxies,
+				):
+					record["Name"] = record["Name"].strip(".")
+					to_delete.append(record)
 			if to_delete:
 				self.delete_dns_records(to_delete)
 
 	def update_dns_records_for_sites(self, sites: list[str], proxy_server: str):
 		if self.generic_dns_provider:
+			return
+
+		if self.cloudflare_dns_provider:
+			tunnel_id = frappe.db.get_value("Proxy Server", proxy_server, "cloudflare_tunnel_id")
+			if not tunnel_id:
+				frappe.throw(
+					_("Cloudflare tunnel is not configured for proxy server {0}.").format(proxy_server)
+				)
+			for site in sites:
+				self.cloudflare_client.upsert_dns_record(
+					self.cloudflare_zone_id,
+					site,
+					"CNAME",
+					f"{tunnel_id}.cfargotunnel.com",
+				)
 			return
 
 		# update records in batches of 500
@@ -193,3 +276,38 @@ def cleanup_cname_records():
 			continue
 
 		domain.remove_unused_cname_records()
+
+
+def get_proxy_dns_state():
+	proxies = frappe.get_all(
+		"Proxy Server",
+		{"status": "Active"},
+		["name", "cloudflare_tunnel_id", "cloudflare_ssh_hostname"],
+	)
+	proxy_targets = {proxy.name for proxy in proxies}
+	proxy_targets.update(
+		f"{proxy.cloudflare_tunnel_id}.cfargotunnel.com" for proxy in proxies if proxy.cloudflare_tunnel_id
+	)
+	protected_records = {proxy.name for proxy in proxies}
+	protected_records.update(
+		proxy.cloudflare_ssh_hostname for proxy in proxies if proxy.cloudflare_ssh_hostname
+	)
+	return proxies, proxy_targets, protected_records
+
+
+def should_delete_cname(
+	record,
+	proxy_targets,
+	protected_records,
+	active_domains,
+	default_proxies,
+):
+	if record["Type"] != "CNAME":
+		return False
+	value = record["ResourceRecords"][0]["Value"].rstrip(".")
+	domain = record["Name"].strip(".")
+	if value not in proxy_targets:
+		return False
+	if domain.startswith("*.") or domain in protected_records:
+		return False
+	return domain not in active_domains or value in default_proxies

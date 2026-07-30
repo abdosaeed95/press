@@ -1,0 +1,65 @@
+---
+- name: Select Cloudflared Package Architecture
+  set_fact:
+    cloudflared_architecture: "{{ 'arm64' if ansible_architecture in ['aarch64', 'arm64'] else 'amd64' }}"
+
+- name: Download Latest Cloudflared Package
+  get_url:
+    url: "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-{{ cloudflared_architecture }}.deb"
+    dest: /tmp/cloudflared.deb
+    mode: "0644"
+
+- name: Install Cloudflared Package
+  apt:
+    deb: /tmp/cloudflared.deb
+    state: present
+
+- name: Create Cloudflared Configuration Directory
+  file:
+    path: /etc/cloudflared
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Store Cloudflare Tunnel Token
+  copy:
+    content: "{{ cloudflare_tunnel_token }}"
+    dest: /etc/cloudflared/token
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+
+- name: Install Cloudflared Service
+  copy:
+    content: |
+      [Unit]
+      Description=Cloudflare Tunnel
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=notify
+      ExecStart=/usr/bin/cloudflared --no-autoupdate tunnel run --token-file /etc/cloudflared/token
+      Restart=always
+      RestartSec=5s
+
+      [Install]
+      WantedBy=multi-user.target
+    dest: /etc/systemd/system/cloudflared.service
+    owner: root
+    group: root
+    mode: "0644"
+  register: cloudflared_service
+
+- name: Enable Cloudflared Service
+  systemd:
+    name: cloudflared
+    daemon_reload: "{{ cloudflared_service.changed }}"
+    enabled: yes
+    state: restarted
+
+- name: Verify Cloudflared Service
+  command: systemctl is-active cloudflared
+  changed_when: false

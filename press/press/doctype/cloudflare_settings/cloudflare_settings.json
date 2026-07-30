@@ -1,0 +1,205 @@
+{
+ "actions": [],
+ "allow_events_in_timeline": 1,
+ "creation": "2026-07-30 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "connection_section",
+  "enabled",
+  "column_break_api_token",
+  "api_token",
+  "column_break_account_id",
+  "account_id",
+  "account_section",
+  "account_name",
+  "column_break_default_zone",
+  "default_zone",
+  "column_break_tunnel_name_prefix",
+  "tunnel_name_prefix",
+  "features_section",
+  "manage_dns",
+  "registrar_enabled",
+  "column_break_manage_tunnels",
+  "manage_tunnels",
+  "column_break_manage_access",
+  "manage_saas",
+  "manage_access",
+  "last_verified",
+  "access_service_token_id",
+  "access_service_token_client_id",
+  "access_service_token_secret"
+ ],
+ "fields": [
+  {
+   "fieldname": "connection_section",
+   "fieldtype": "Section Break",
+   "label": "Connection"
+  },
+  {
+   "default": "1",
+   "description": "Enable Cloudflare-managed DNS, tunnels, and configured platform services.",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "in_list_filter": 1,
+   "label": "Enabled"
+  },
+  {
+   "fieldname": "column_break_api_token",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Scoped Cloudflare API token. Global API keys are not supported.",
+   "fieldname": "api_token",
+   "fieldtype": "Password",
+   "label": "API Token",
+   "no_copy": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_account_id",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Cloudflare account used for tunnels, Access, Registrar, and SaaS.",
+   "fieldname": "account_id",
+   "fieldtype": "Data",
+   "label": "Account ID",
+   "no_copy": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "account_section",
+   "fieldtype": "Section Break",
+   "label": "Account Defaults"
+  },
+  {
+   "fieldname": "account_name",
+   "fieldtype": "Data",
+   "label": "Account Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_default_zone",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "default_zone",
+   "fieldtype": "Link",
+   "in_list_filter": 1,
+   "label": "Default Zone",
+   "options": "Root Domain"
+  },
+  {
+   "fieldname": "column_break_tunnel_name_prefix",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "press",
+   "description": "Prefix used for Cloudflare Tunnel and Access resource names.",
+   "fieldname": "tunnel_name_prefix",
+   "fieldtype": "Data",
+   "label": "Tunnel Name Prefix",
+   "reqd": 1
+  },
+  {
+   "fieldname": "features_section",
+   "fieldtype": "Section Break",
+   "label": "Managed Features"
+  },
+  {
+   "default": "1",
+   "fieldname": "manage_dns",
+   "fieldtype": "Check",
+   "in_list_filter": 1,
+   "label": "Manage DNS"
+  },
+  {
+   "default": "0",
+   "description": "Allow domain search and authoritative availability checks. Registration still requires explicit confirmation.",
+   "fieldname": "registrar_enabled",
+   "fieldtype": "Check",
+   "in_list_filter": 1,
+   "label": "Enable Registrar"
+  },
+  {
+   "fieldname": "column_break_manage_tunnels",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "manage_tunnels",
+   "fieldtype": "Check",
+   "in_list_filter": 1,
+   "label": "Manage Tunnels"
+  },
+  {
+   "fieldname": "column_break_manage_access",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "manage_saas",
+   "fieldtype": "Check",
+   "in_list_filter": 1,
+   "label": "Manage Cloudflare for SaaS"
+  },
+  {
+   "default": "0",
+   "fieldname": "manage_access",
+   "fieldtype": "Check",
+   "in_list_filter": 1,
+   "label": "Manage Access"
+  },
+  {
+   "fieldname": "last_verified",
+   "fieldtype": "Datetime",
+   "label": "Last Verified",
+   "read_only": 1
+  },
+  {
+   "fieldname": "access_service_token_id",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Access Service Token ID",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "access_service_token_client_id",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Access Service Token Client ID",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "access_service_token_secret",
+   "fieldtype": "Password",
+   "hidden": 1,
+   "label": "Access Service Token Secret",
+   "no_copy": 1,
+   "read_only": 1
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-07-30 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Press",
+ "name": "Cloudflare Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

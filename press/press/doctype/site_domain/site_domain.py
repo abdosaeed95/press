@@ -32,6 +32,12 @@ class SiteDomain(Document):
 		dns_response: DF.Code | None
 		dns_type: DF.Literal["A", "NS", "CNAME"]
 		domain: DF.Data
+		cloudflare_custom_hostname_id: DF.Data | None
+		cloudflare_error: DF.Code | None
+		cloudflare_hostname_status: DF.Data | None
+		cloudflare_last_synced: DF.Datetime | None
+		cloudflare_ssl_status: DF.Data | None
+		cloudflare_verification: DF.Code | None
 		redirect_to_primary: DF.Check
 		retry_count: DF.Int
 		site: DF.Link
@@ -59,6 +65,8 @@ class SiteDomain(Document):
 		if self.default:
 			return
 
+		self.setup_cloudflare_saas()
+
 		if self.has_root_tls_certificate:
 			server = frappe.db.get_value("Site", self.site, "server")
 			proxy_server = frappe.db.get_value("Server", server, "proxy_server")
@@ -68,6 +76,27 @@ class SiteDomain(Document):
 			return
 
 		self.create_tls_certificate()
+
+	def setup_cloudflare_saas(self):
+		from press.integrations.cloudflare_saas import provision_custom_hostname
+		from press.press.doctype.cloudflare_settings.cloudflare_settings import (
+			get_cloudflare_settings,
+		)
+
+		if self.has_root_tls_certificate:
+			return
+
+		settings = get_cloudflare_settings()
+		if settings and settings.manage_saas and settings.default_zone:
+			root_domain = frappe.get_doc("Root Domain", settings.default_zone)
+			if root_domain.cloudflare_saas_enabled:
+				provision_custom_hostname(self)
+
+	@frappe.whitelist()
+	def reconcile_cloudflare(self):
+		from press.integrations.cloudflare_saas import reconcile_custom_hostname
+
+		reconcile_custom_hostname(self)
 
 	def validate(self):
 		if self.has_value_changed("redirect_to_primary"):
@@ -171,6 +200,10 @@ class SiteDomain(Document):
 			self.create_remove_host_agent_request()
 		if self.status == "Active":
 			self.remove_domain_from_site_config()
+		if self.cloudflare_custom_hostname_id:
+			from press.integrations.cloudflare_saas import delete_custom_hostname
+
+			delete_custom_hostname(self)
 
 	def after_delete(self):
 		self.delete_tls_certificate()

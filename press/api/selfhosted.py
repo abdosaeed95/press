@@ -39,12 +39,13 @@ def create_self_hosted_server(server_details, team, proxy_server):
 				"plan": server_details.plan["name"],
 				"database_plan": server_details.plan["name"],
 				"new_server": True,
+				"behind_cloudflare": server_details.behind_cloudflare,
+				"cloudflare_zone": server_details.cloudflare_zone,
 			},
 		).insert()
 	except frappe.DuplicateEntryError as e:
 		# Exception return  tupple like ('Self Hosted Server', 'SHS-00018.cloud.pressonprem.com')
-		server_name = e.args[1]
-		return server_name
+		return e.args[1]
 
 	return self_hosted_server.name
 
@@ -63,7 +64,7 @@ def validate_team(team):
 
 
 def get_proxy_server_for_cluster(cluster=None):
-	cluster = get_hybrid_cluster() if not cluster else cluster
+	cluster = cluster if cluster else get_hybrid_cluster()
 
 	return frappe.get_all("Proxy Server", {"cluster": cluster}, pluck="name")[0]
 
@@ -137,8 +138,26 @@ def setup(server):
 
 @frappe.whitelist()
 def get_plans():
-	server_plan = plans("Self Hosted Server")
-	return server_plan
+	return plans("Self Hosted Server")
+
+
+@frappe.whitelist()
+def get_cloudflare_options():
+	from press.press.doctype.cloudflare_settings.cloudflare_settings import (
+		get_cloudflare_settings,
+	)
+
+	settings = get_cloudflare_settings()
+	return {
+		"enabled": bool(settings and settings.manage_dns and settings.manage_tunnels),
+		"zones": frappe.get_all(
+			"Root Domain",
+			{"dns_provider": "Cloudflare"},
+			pluck="name",
+		)
+		if settings and settings.manage_dns and settings.manage_tunnels
+		else [],
+	}
 
 
 @frappe.whitelist()
@@ -167,7 +186,5 @@ def create_and_verify_selfhosted(server):
 		setup(self_hosted_server_name)
 		return frappe.get_value("Self Hosted Server", self_hosted_server_name, "server")
 
-	else:
-		frappe.throw(
-			"Server verification failed. Please check the server details and try again."
-		)
+	frappe.throw("Server verification failed. Please check the server details and try again.")
+	return None
