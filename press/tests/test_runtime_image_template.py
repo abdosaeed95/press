@@ -42,11 +42,16 @@ class TestRuntimeImageTemplate(unittest.TestCase):
 
 	def test_runtime_keeps_prebuilt_assets_and_only_realtime_node_modules(self):
 		template = DOCKERFILE.read_text(encoding="utf-8")
+		runtime_cleanup = template.split("FROM builder AS runtime-files", 1)[1]
 
 		self.assertIn("/home/frappe/runtime/sites-assets", template)
+		self.assertIn("-name node_modules", runtime_cleanup)
 		self.assertIn('"socket.io", "@redis/client", "superagent", "cookie"', template)
-		self.assertIn("-name node_modules -o -name .next -o -name .turbo -o -name .git", template)
 		self.assertIn("NODE_PATH=/home/frappe/runtime/socketio/node_modules", template)
+		self.assertIn(
+			"target=/home/frappe/frappe-bench/apps/{{ app.app }}/dashboard/node_modules",
+			template.split("{% if doc.apply_new_build %}", 1)[1],
+		)
 
 	def test_runtime_preserves_declared_system_packages(self):
 		template = DOCKERFILE.read_text(encoding="utf-8")

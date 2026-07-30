@@ -356,6 +356,7 @@ FROM builder AS runtime-files
 USER root
 
 COPY slim-excluded-apps.txt /tmp/slim-excluded-apps.txt
+COPY prepare-runtime-assets.py /tmp/prepare-runtime-assets.py
 
 RUN install -m 0755 /home/frappe/.nvm/versions/node/v${NODE_VERSION}/bin/node /usr/local/bin/node \
   && mv /home/frappe/frappe-bench/sites/assets /home/frappe/runtime/sites-assets \
@@ -367,18 +368,19 @@ RUN install -m 0755 /home/frappe/.nvm/versions/node/v${NODE_VERSION}/bin/node /u
     rm -rf "/home/frappe/frappe-bench/apps/$app" "/home/frappe/runtime/sites-assets/$app"; \
     sed -i "\\|^${app}$|d" /home/frappe/frappe-bench/sites/apps.txt; \
   done < /tmp/slim-excluded-apps.txt \
-  && rm /tmp/slim-excluded-apps.txt \
+  && /home/frappe/frappe-bench/env/bin/python /tmp/prepare-runtime-assets.py \
+    /home/frappe/runtime/sites-assets /tmp/slim-excluded-apps.txt \
+  && rm /tmp/slim-excluded-apps.txt /tmp/prepare-runtime-assets.py \
   && find /home/frappe/frappe-bench/apps -type d \( -name node_modules -o -name .next -o -name .turbo -o -name .git \) -prune -exec rm -rf {} + \
   && find /home/frappe/frappe-bench/apps /home/frappe/runtime/sites-assets -type f -name '*.map' -delete \
   && rm -rf /home/frappe/.nvm /home/frappe/.cache /home/frappe/context /root/.cache /tmp/* \
-  && rm -rf /var/lib/apt/lists/* /var/cache/apt/* /usr/share/doc/* /usr/share/man/* /usr/share/info/* /tmp/* \
-  && fc-cache -f \
-  && ldconfig
+  && rm -rf /var/lib/apt/lists/* /var/cache/apt/* /usr/share/doc/* /usr/share/man/* /usr/share/info/* /tmp/*
 
 FROM runtime-files AS runtime-layers
 
 RUN mkdir -p \
     /runtime-layers/apps/home/frappe/frappe-bench \
+    /runtime-layers/asset-manifests/home/frappe/runtime/sites-assets \
     /runtime-layers/assets/home/frappe \
     /runtime-layers/bench/home/frappe \
     /runtime-layers/python/home/frappe/frappe-bench \
@@ -386,6 +388,8 @@ RUN mkdir -p \
     /runtime-layers/tooling/home/frappe \
   && mv /home/frappe/frappe-bench/apps /runtime-layers/apps/home/frappe/frappe-bench/apps \
   && mv /home/frappe/frappe-bench/env /runtime-layers/python/home/frappe/frappe-bench/env \
+  && mv /home/frappe/runtime/sites-assets/assets*.json \
+    /runtime-layers/asset-manifests/home/frappe/runtime/sites-assets \
   && mv /home/frappe/runtime /runtime-layers/assets/home/frappe/runtime \
   && mv /home/frappe/frappe-bench /runtime-layers/bench/home/frappe/frappe-bench \
   && mv /home/frappe/.local /runtime-layers/tooling/home/frappe/.local \
@@ -418,8 +422,11 @@ COPY --link --from=runtime-layers /runtime-layers/apps/home/frappe/frappe-bench/
 {% endif %}
 {% endfor %}
 
-# Runtime assets and Socket.IO dependencies.
+# Stable runtime assets.
 COPY --link --from=runtime-layers /runtime-layers/assets/ /
+
+# Small asset manifests change when an app produces new bundle hashes.
+COPY --link --from=runtime-layers /runtime-layers/asset-manifests/ /
 
 ENV LANG=C.UTF-8 \
   HOME=/home/frappe \
