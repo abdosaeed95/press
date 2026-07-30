@@ -232,6 +232,9 @@
     "step_name": "Reload NGINX"
    },
    {
+    "step_name": "Install Apps"
+   },
+   {
     "step_name": "Run App Specific Scripts"
    },
    {

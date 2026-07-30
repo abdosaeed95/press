@@ -381,9 +381,10 @@ class Agent:
 			"skip_search_index": skip_search_index,
 			"install_all_apps": install_all_apps,
 		}
+		deploy_path = "migrate/install-apps" if install_all_apps else deploy_type.lower()
 		return self.create_agent_job(
 			f"Update Site {deploy_type}",
-			f"benches/{site.bench}/sites/{site.name}/update/{deploy_type.lower()}",
+			f"benches/{site.bench}/sites/{site.name}/update/{deploy_path}",
 			data,
 			bench=site.bench,
 			site=site.name,
