@@ -34,6 +34,16 @@
 					</div>
 					<Button label="Today" @click="goToToday" />
 					<Button
+						v-if="canShareSchedule"
+						label="Share schedule"
+						variant="subtle"
+						@click="openShareDialog"
+					>
+						<template #prefix>
+							<i-lucide-share-2 class="h-4 w-4" />
+						</template>
+					</Button>
+					<Button
 						:variant="showPending ? 'solid' : 'subtle'"
 						:label="`Pending updates (${pendingSites.length})`"
 						@click="showPending = !showPending"
@@ -144,8 +154,8 @@
 										day.is_today
 											? 'bg-blue-600 text-white'
 											: day.is_current_month
-											? 'text-gray-700'
-											: 'text-gray-400'
+												? 'text-gray-700'
+												: 'text-gray-400'
 									"
 								>
 									{{ day.date.date() }}
@@ -184,7 +194,7 @@
 									]"
 									:draggable="update.status === 'Scheduled'"
 									:aria-label="`${update.site}, ${update.status}, ${eventTime(
-										update
+										update,
 									)}`"
 									role="button"
 									tabindex="0"
@@ -385,7 +395,7 @@ export default {
 			const search = this.pendingSearch.trim().toLowerCase();
 			if (!search) return this.pendingSites;
 			return this.pendingSites.filter((site) =>
-				(site.host_name || site.name).toLowerCase().includes(search)
+				(site.host_name || site.name).toLowerCase().includes(search),
 			);
 		},
 		calendarDays() {
@@ -403,7 +413,7 @@ export default {
 		maxDailyUpdates() {
 			return Math.max(
 				1,
-				...Object.values(this.updatesByDay).map((updates) => updates.length)
+				...Object.values(this.updatesByDay).map((updates) => updates.length),
 			);
 		},
 		weekdays() {
@@ -411,6 +421,13 @@ export default {
 		},
 		legendStatuses() {
 			return ['Scheduled', 'Running', 'Success', 'Failure'];
+		},
+		canShareSchedule() {
+			return (
+				this.$session.isSystemUser ||
+				this.$team.doc.user === this.$session.user ||
+				this.$session.isTeamAdmin
+			);
 		},
 	},
 	mounted() {
@@ -427,10 +444,10 @@ export default {
 			const { start, end } = getCalendarRange(this.month);
 			await this.$resources.schedule.fetch({
 				start: cairoTimeToServer(start.format('YYYY-MM-DDTHH:mm')).format(
-					'YYYY-MM-DD HH:mm:ss'
+					'YYYY-MM-DD HH:mm:ss',
 				),
 				end: cairoTimeToServer(end.format('YYYY-MM-DDTHH:mm')).format(
-					'YYYY-MM-DD HH:mm:ss'
+					'YYYY-MM-DD HH:mm:ss',
 				),
 			});
 		},
@@ -441,6 +458,13 @@ export default {
 		goToToday() {
 			this.month = dayjsCairo().startOf('month');
 			this.loadSchedule();
+		},
+		openShareDialog() {
+			const PublicScheduleLinkDialog = defineAsyncComponent(
+				() =>
+					import('../components/updateSchedule/PublicScheduleLinkDialog.vue'),
+			);
+			renderDialog(h(PublicScheduleLinkDialog));
 		},
 		handleListUpdate(event) {
 			if (['Site', 'Site Update'].includes(event.doctype)) {
@@ -481,7 +505,7 @@ export default {
 		dayLoadWidth(day) {
 			return `${Math.max(
 				12,
-				((this.updatesByDay[day]?.length || 0) / this.maxDailyUpdates) * 100
+				((this.updatesByDay[day]?.length || 0) / this.maxDailyUpdates) * 100,
 			)}%`;
 		},
 		openUpdate(update) {
@@ -498,8 +522,8 @@ export default {
 					.startOf('day')
 					.hour(3)
 					.format('YYYY-MM-DDTHH:mm');
-			const SiteUpdateDialog = defineAsyncComponent(() =>
-				import('../components/SiteUpdateDialog.vue')
+			const SiteUpdateDialog = defineAsyncComponent(
+				() => import('../components/SiteUpdateDialog.vue'),
 			);
 			renderDialog(
 				h(SiteUpdateDialog, {
@@ -510,10 +534,10 @@ export default {
 						7,
 						dayjsCairo(scheduledTime)
 							.startOf('day')
-							.diff(dayjsCairo().startOf('day'), 'day') + 1
+							.diff(dayjsCairo().startOf('day'), 'day') + 1,
 					),
 					onScheduled: this.loadSchedule,
-				})
+				}),
 			);
 		},
 		startPendingDrag(site) {
@@ -541,7 +565,7 @@ export default {
 				if (!scheduledTime) return;
 				this.openScheduleDialog(
 					draggedItem.site,
-					scheduledTime.format('YYYY-MM-DDTHH:mm')
+					scheduledTime.format('YYYY-MM-DDTHH:mm'),
 				);
 				return;
 			}
@@ -577,7 +601,7 @@ export default {
 					skip_failing_patches: Boolean(update.skipped_failing_patches),
 					skip_backups: Boolean(update.skipped_backups),
 					scheduled_time: cairoTimeToServer(
-						scheduledTime.format('YYYY-MM-DDTHH:mm')
+						scheduledTime.format('YYYY-MM-DDTHH:mm'),
 					).format('YYYY-MM-DDTHH:mm'),
 				},
 			});
@@ -587,7 +611,7 @@ export default {
 				success: () => {
 					this.loadSchedule();
 					return `${update.site} rescheduled to ${scheduledTime.format(
-						'ddd, MMM D [at] h:mm A'
+						'ddd, MMM D [at] h:mm A',
 					)}`;
 				},
 				error: (error) => getToastErrorMessage(error),

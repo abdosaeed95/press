@@ -302,6 +302,13 @@ let router = createRouter({
 			component: () => import('./pages/UpdateSchedule.vue'),
 		},
 		{
+			name: 'Public Update Schedule',
+			path: '/public/update-schedule/:token',
+			component: () => import('./pages/PublicUpdateSchedule.vue'),
+			props: true,
+			meta: { allowGuest: true, hideSidebar: true },
+		},
+		{
 			name: 'CreateSiteForMarketplaceApp',
 			path: '/create-site/:app',
 			component: () => import('./pages/CreateSiteForMarketplaceApp.vue'),
@@ -350,8 +357,13 @@ router.beforeEach(async (to, from, next) => {
 		document.cookie.includes('user_id') &&
 		!document.cookie.includes('user_id=Guest');
 	let goingToLoginPage = to.matched.some((record) => record.meta.isLoginPage);
+	let goingToPublicPage = to.matched.some((record) => record.meta.allowGuest);
 
 	if (isLoggedIn) {
+		if (goingToPublicPage) {
+			next();
+			return;
+		}
 		await waitUntilTeamLoaded();
 		let $team = getTeam();
 		let onboardingComplete = $team.doc.onboarding.complete;
@@ -407,7 +419,7 @@ router.beforeEach(async (to, from, next) => {
 			next();
 		}
 	} else {
-		if (goingToLoginPage) {
+		if (goingToLoginPage || goingToPublicPage) {
 			next();
 		} else {
 			if (to.name == 'Site Login') {

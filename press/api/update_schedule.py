@@ -22,7 +22,7 @@ def get(start: str, end: str):
 	}
 
 
-def get_updates(start, end):
+def get_updates(start, end, team=None):
 	site_update = frappe.qb.DocType("Site Update")
 	event_time = Coalesce(
 		site_update.scheduled_time,
@@ -45,7 +45,7 @@ def get_updates(start, end):
 			site_update.skipped_failing_patches,
 			event_time.as_("event_time"),
 		)
-		.where(site_update.team == get_current_team())
+		.where(site_update.team == (team or get_current_team()))
 		.where(event_time >= start)
 		.where(event_time < end)
 		.orderby(event_time)
