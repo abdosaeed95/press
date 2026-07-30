@@ -54,7 +54,7 @@ describe('Site update distribution', () => {
 
 	it('skips Friday and Saturday when distributing updates', () => {
 		vi.useFakeTimers();
-		vi.setSystemTime(new Date('2026-07-30T12:00:00+03:00'));
+		vi.setSystemTime(new Date('2026-08-06T12:00:00+03:00'));
 		const state = context({
 			distributionDays: 7,
 			sites: Array.from({ length: 14 }, (_, index) => ({
@@ -67,8 +67,47 @@ describe('Site update distribution', () => {
 		const times = Object.values(state.siteSchedules).map((schedule) =>
 			dayjsCairo(schedule.scheduledTime)
 		);
-		expect(times[0].format('YYYY-MM-DD')).toBe('2026-08-02');
+		expect(times[0].format('YYYY-MM-DD')).toBe('2026-08-09');
 		expect(times.every((time) => ![5, 6].includes(time.day()))).toBe(true);
+	});
+
+	it('skips the final day through the 3rd across month boundaries', () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-01-27T12:00:00+02:00'));
+		const state = context({
+			distributionDays: 10,
+			sites: Array.from({ length: 16 }, (_, index) => ({
+				name: `${index}.example.com`,
+			})),
+		});
+
+		methods.distributeSiteUpdateTimes.call(state);
+
+		const times = Object.values(state.siteSchedules).map((schedule) =>
+			dayjsCairo(schedule.scheduledTime)
+		);
+		expect(
+			times.some((time) => time.format('YYYY-MM-DD') === '2026-02-04')
+		).toBe(true);
+		expect(
+			times.every(
+				(time) => time.date() > 3 && time.date() !== time.daysInMonth()
+			)
+		).toBe(true);
+	});
+
+	it('starts after the blackout when tomorrow is the final day of a month', () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-08-30T12:00:00+03:00'));
+		const state = context({ distributionDays: 1 });
+
+		methods.distributeSiteUpdateTimes.call(state);
+
+		expect(
+			Object.values(state.siteSchedules)[0].scheduledTime.startsWith(
+				'2026-09-06'
+			)
+		).toBe(true);
 	});
 
 	it('moves distributed times after a late minimum time', () => {
