@@ -219,7 +219,7 @@ export default {
 					onClick: () => {
 						window.open(
 							`${window.location.protocol}//${window.location.host}/app/${this.server.type}/${this.server.name}`,
-							'_blank'
+							'_blank',
 						);
 					},
 				},
@@ -230,7 +230,7 @@ export default {
 						this.server.status === 'Active' &&
 						this.$account.hasPermission(
 							this.server.name,
-							'press.api.server.reboot'
+							'press.api.server.reboot',
 						),
 					loading: this.$resources.reboot.loading,
 					onClick: () => {

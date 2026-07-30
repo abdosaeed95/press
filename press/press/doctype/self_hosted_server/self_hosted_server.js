@@ -3,10 +3,7 @@
 
 frappe.ui.form.on('Self Hosted Server', {
 	refresh: function (frm) {
-		if (
-			frm.doc.behind_cloudflare &&
-			frappe.user.has_role('System Manager')
-		) {
+		if (frm.doc.behind_cloudflare && frappe.user.has_role('System Manager')) {
 			frm.add_custom_button(
 				__('Show Cloudflare Bootstrap'),
 				async () => {
@@ -22,7 +19,7 @@ frappe.ui.form.on('Self Hosted Server', {
 					frappe.msgprint({
 						title: __('Cloudflare Bootstrap Commands'),
 						message: `${__(
-							'These one-time commands contain secret tunnel tokens. Run each command only on its intended server.'
+							'These one-time commands contain secret tunnel tokens. Run each command only on its intended server.',
 						)}${content}`,
 						wide: true,
 					});

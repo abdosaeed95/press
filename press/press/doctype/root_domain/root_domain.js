@@ -14,9 +14,9 @@ frappe.ui.form.on('Root Domain', {
 					frm
 						.call('setup_cloudflare_saas')
 						.then(() =>
-							frappe.show_alert(__('Cloudflare for SaaS configured.'))
+							frappe.show_alert(__('Cloudflare for SaaS configured.')),
 						),
-				__('Cloudflare')
+				__('Cloudflare'),
 			);
 		}
 	},
@@ -29,17 +29,17 @@ frappe.ui.form.on('Root Domain', {
 		frm.set_df_property(
 			'aws_access_key_id',
 			'reqd',
-			frm.doc.dns_provider === 'AWS Route 53'
+			frm.doc.dns_provider === 'AWS Route 53',
 		);
 		frm.set_df_property(
 			'aws_secret_access_key',
 			'reqd',
-			frm.doc.dns_provider === 'AWS Route 53'
+			frm.doc.dns_provider === 'AWS Route 53',
 		);
 		frm.set_df_property(
 			'cloudflare_zone_id',
 			'reqd',
-			frm.doc.dns_provider === 'Cloudflare'
+			frm.doc.dns_provider === 'Cloudflare',
 		);
 	},
 });

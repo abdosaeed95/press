@@ -22,24 +22,24 @@ frappe.ui.form.on('Cloudflare Settings', {
 					__('Connected to {0}. {1} zone(s) are accessible.', [
 						message.account.name,
 						message.zones,
-					])
+					]),
 				);
 				frm.reload_doc();
 			},
-			__('Cloudflare')
+			__('Cloudflare'),
 		);
 
 		frm.add_custom_button(
 			__('Import Zone'),
 			() => show_zone_dialog(frm),
-			__('Cloudflare')
+			__('Cloudflare'),
 		);
 
 		if (frm.doc.registrar_enabled) {
 			frm.add_custom_button(
 				__('Search Available Domains'),
 				() => show_domain_search(frm),
-				__('Cloudflare')
+				__('Cloudflare'),
 			);
 		}
 
@@ -52,9 +52,9 @@ frappe.ui.form.on('Cloudflare Settings', {
 						() =>
 							frm
 								.call('rotate_access_service_token')
-								.then(() => frappe.show_alert(__('Access token rotated.')))
+								.then(() => frappe.show_alert(__('Access token rotated.'))),
 					),
-				__('Cloudflare')
+				__('Cloudflare'),
 			);
 		}
 	},
@@ -76,9 +76,7 @@ async function show_account_dialog(frm) {
 				fieldname: 'account',
 				fieldtype: 'Select',
 				label: __('Account'),
-				options: accounts.map(
-					(account) => `${account.name} (${account.id})`,
-				),
+				options: accounts.map((account) => `${account.name} (${account.id})`),
 				reqd: 1,
 			},
 		],
@@ -141,7 +139,7 @@ function show_domain_search(frm) {
 				fieldtype: 'Data',
 				label: __('Extensions'),
 				description: __(
-					'Optional comma-separated extensions, such as com, app, dev.'
+					'Optional comma-separated extensions, such as com, app, dev.',
 				),
 			},
 			{
@@ -165,22 +163,22 @@ function show_domain_search(frm) {
 						}</td><td>${frappe.utils.escape_html(
 							domain.pricing
 								? `${domain.pricing.registration_cost} ${domain.pricing.currency}`
-								: domain.reason || ''
+								: domain.reason || '',
 						)}</td><td>${
 							domain.registrable
 								? `<button class="btn btn-xs btn-primary register-domain" data-domain="${frappe.utils.escape_html(
-										domain.name
-								  )}">${__('Register')}</button>`
+										domain.name,
+									)}">${__('Register')}</button>`
 								: ''
-						}</td></tr>`
+						}</td></tr>`,
 				)
 				.join('');
 			dialog.fields_dict.results.$wrapper.html(
 				`<table class="table table-bordered"><thead><tr><th>${__(
-					'Domain'
+					'Domain',
 				)}</th><th>${__('Status')}</th><th>${__(
-					'Registration Price'
-				)}</th><th></th></tr></thead><tbody>${rows}</tbody></table>`
+					'Registration Price',
+				)}</th><th></th></tr></thead><tbody>${rows}</tbody></table>`,
 			);
 			dialog.fields_dict.results.$wrapper
 				.find('.register-domain')
@@ -209,9 +207,9 @@ function show_domain_search(frm) {
 								confirm_registration: 1,
 							});
 							frappe.msgprint(
-								__('Domain registration started for {0}.', [domain])
+								__('Domain registration started for {0}.', [domain]),
 							);
-						}
+						},
 					);
 				});
 		},

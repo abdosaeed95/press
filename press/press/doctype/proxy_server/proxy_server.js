@@ -104,7 +104,7 @@ frappe.ui.form.on('Proxy Server', {
 										} else {
 											frm.refresh();
 										}
-									})
+									}),
 							);
 						} else {
 							frm.call(method).then((r) => {
@@ -116,7 +116,7 @@ frappe.ui.form.on('Proxy Server', {
 							});
 						}
 					},
-					__('Actions')
+					__('Actions'),
 				);
 			}
 		});
@@ -128,10 +128,7 @@ frappe.ui.form.on('Proxy Server', {
 });
 
 function add_cloudflare_actions(frm) {
-	if (
-		!frm.doc.behind_cloudflare ||
-		!frappe.user.has_role('System Manager')
-	)
+	if (!frm.doc.behind_cloudflare || !frappe.user.has_role('System Manager'))
 		return;
 
 	if (
@@ -141,7 +138,7 @@ function add_cloudflare_actions(frm) {
 		frm.add_custom_button(
 			__('Setup Cloudflare'),
 			() => frm.call('setup_cloudflare').then(() => frm.reload_doc()),
-			__('Cloudflare')
+			__('Cloudflare'),
 		);
 	}
 	frm.add_custom_button(
@@ -151,26 +148,26 @@ function add_cloudflare_actions(frm) {
 			frappe.msgprint({
 				title: __('Cloudflare Bootstrap Command'),
 				message: `${__(
-					'This one-time command contains a secret tunnel token. Run it only on the intended server.'
+					'This one-time command contains a secret tunnel token. Run it only on the intended server.',
 				)}<pre>${frappe.utils.escape_html(message)}</pre>`,
 				wide: true,
 			});
 		},
-		__('Cloudflare')
+		__('Cloudflare'),
 	);
 	if (frm.doc.cloudflare_tunnel_id) {
 		frm.add_custom_button(
 			__('Refresh Tunnel Status'),
 			() => frm.call('refresh_cloudflare').then(() => frm.reload_doc()),
-			__('Cloudflare')
+			__('Cloudflare'),
 		);
 		frm.add_custom_button(
 			__('Revoke Tunnel'),
 			() =>
 				frappe.confirm(__('Permanently revoke this Cloudflare Tunnel?'), () =>
-					frm.call('revoke_cloudflare').then(() => frm.reload_doc())
+					frm.call('revoke_cloudflare').then(() => frm.reload_doc()),
 				),
-			__('Cloudflare')
+			__('Cloudflare'),
 		);
 	}
 }

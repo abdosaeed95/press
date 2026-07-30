@@ -176,7 +176,7 @@ export default {
 		});
 		this.ssh_key = await this.$call('press.api.selfhosted.sshkey');
 		const cloudflare = await this.$call(
-			'press.api.selfhosted.get_cloudflare_options'
+			'press.api.selfhosted.get_cloudflare_options',
 		);
 		this.cloudflareZones = cloudflare.enabled ? cloudflare.zones : [];
 	},
