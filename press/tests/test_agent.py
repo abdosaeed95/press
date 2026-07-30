@@ -1,6 +1,9 @@
 # Copyright (c) 2024, Frappe and contributors
 # For license information, please see license.txt
 
+from types import SimpleNamespace
+from unittest.mock import patch
+
 import frappe
 import requests
 import responses
@@ -13,9 +16,7 @@ from press.press.doctype.agent_request_failure.agent_request_failure import (
 from press.press.doctype.server.test_server import create_test_server
 
 
-def create_test_agent_request_failure(
-	server, traceback="Traceback", error="Error", failure_count=1
-):
+def create_test_agent_request_failure(server, traceback="Traceback", error="Error", failure_count=1):
 	fields = {
 		"server_type": server.doctype,
 		"server": server.name,
@@ -24,9 +25,7 @@ def create_test_agent_request_failure(
 		"failure_count": failure_count,
 	}
 
-	return frappe.new_doc("Agent Request Failure", **fields).insert(
-		ignore_permissions=True
-	)
+	return frappe.new_doc("Agent Request Failure", **fields).insert(ignore_permissions=True)
 
 
 class TestAgent(FrappeTestCase):
@@ -50,6 +49,23 @@ class TestAgent(FrappeTestCase):
 
 		agent = Agent(server.name, server.doctype)
 		agent.request("GET", "ping")
+
+	def test_install_all_apps_uses_dedicated_migrate_endpoint(self):
+		site = SimpleNamespace(
+			bench="bench-source",
+			name="example.com",
+			status_before_update="Active",
+		)
+		agent = Agent("server.example.com")
+
+		with patch.object(agent, "create_agent_job") as create_agent_job:
+			agent.update_site(site, "bench-target", "Migrate", install_all_apps=True)
+
+		self.assertEqual(
+			create_agent_job.call_args.args[1],
+			"benches/bench-source/sites/example.com/update/migrate/install-apps",
+		)
+		self.assertTrue(create_agent_job.call_args.args[2]["install_all_apps"])
 
 	@responses.activate
 	def test_request_failure_creates_failure_record(self):
