@@ -383,7 +383,12 @@ class DeployCandidateBuild(Document):
 			f.writelines(f"{app}\n" for app in self._get_slim_excluded_apps())
 
 	def _copy_config_files(self):
-		for target in ["common_site_config.json", "supervisord.conf", ".vimrc"]:
+		for target in [
+			"common_site_config.json",
+			"supervisord.conf",
+			".vimrc",
+			"prepare-runtime-assets.py",
+		]:
 			shutil.copy(os.path.join(frappe.get_app_path("press", "docker"), target), self.build_directory)
 
 		for target in ["config", "redis"]:
