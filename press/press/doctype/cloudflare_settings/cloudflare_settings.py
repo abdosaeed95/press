@@ -68,9 +68,13 @@ class CloudflareSettings(Document):
 			frappe.throw(_("The configured API token cannot access account {0}.").format(self.account_id))
 		self.db_set("account_name", account["name"])
 		self.db_set("last_verified", now())
+		try:
+			token_status = token["status"]
+		except KeyError:
+			token_status = None
 		return {
 			"account": account,
-			"token_status": token["status"] if "status" in token else None,
+			"token_status": token_status,
 			"zones": len(client.list_zones()),
 		}
 

@@ -113,7 +113,10 @@ def refresh_server(server):
 			"down": "Error",
 			"inactive": "Inactive",
 		}
-		status = statuses[tunnel["status"]] if tunnel["status"] in statuses else "Pending"
+		try:
+			status = statuses[tunnel["status"]]
+		except KeyError:
+			status = "Pending"
 		set_state(
 			server,
 			cloudflare_tunnel_status=status,

@@ -48,7 +48,10 @@ class Cloudflare:
 		data: dict[str, Any] | None = None,
 	) -> Any:
 		payload = self._request(method, path, params=params, data=data)
-		return payload["result"] if "result" in payload else None
+		try:
+			return payload["result"]
+		except KeyError:
+			return None
 
 	def paginated(self, path: str, params: dict[str, Any] | None = None) -> list[dict]:
 		page = 1
@@ -56,10 +59,19 @@ class Cloudflare:
 		params = {**(params or {}), "per_page": 100}
 		while True:
 			payload = self._request("GET", path, params={**params, "page": page})
-			rows = payload["result"] if "result" in payload else []
+			try:
+				rows = payload["result"]
+			except KeyError:
+				rows = []
 			result.extend(rows)
-			result_info = payload["result_info"] if "result_info" in payload else {}
-			total_pages = result_info["total_pages"] if "total_pages" in result_info else None
+			try:
+				result_info = payload["result_info"]
+			except KeyError:
+				result_info = {}
+			try:
+				total_pages = result_info["total_pages"]
+			except KeyError:
+				total_pages = None
 			if not rows or (total_pages and page >= total_pages) or len(rows) < params["per_page"]:
 				return result
 			page += 1
@@ -89,7 +101,10 @@ class Cloudflare:
 		if response.ok and ("success" not in payload or payload["success"]):
 			return payload
 
-		errors = payload["errors"] if "errors" in payload else []
+		try:
+			errors = payload["errors"]
+		except KeyError:
+			errors = []
 		message = "; ".join(error["message"] if "message" in error else str(error) for error in errors)
 		frappe.throw(
 			_("Cloudflare request failed with status {0}: {1}").format(
@@ -126,7 +141,10 @@ class Cloudflare:
 		if extensions:
 			params["extensions"] = extensions
 		result = self.request("GET", f"accounts/{self._account_id()}/registrar/domain-search", params=params)
-		return result["domains"] if "domains" in result else []
+		try:
+			return result["domains"]
+		except KeyError:
+			return []
 
 	def check_domains(self, domains: list[str]) -> list[dict]:
 		result = self.request(
@@ -134,7 +152,10 @@ class Cloudflare:
 			f"accounts/{self._account_id()}/registrar/domain-check",
 			data={"domains": domains[:20]},
 		)
-		return result["domains"] if "domains" in result else []
+		try:
+			return result["domains"]
+		except KeyError:
+			return []
 
 	def register_domain(self, domain: str) -> dict:
 		return self.request(

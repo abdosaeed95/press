@@ -84,14 +84,22 @@ def get_saas_settings():
 
 def update_custom_hostname(site_domain, custom_hostname):
 	ssl = custom_hostname["ssl"]
+	try:
+		ownership_verification = custom_hostname["ownership_verification"]
+	except KeyError:
+		ownership_verification = None
+	try:
+		ownership_verification_http = custom_hostname["ownership_verification_http"]
+	except KeyError:
+		ownership_verification_http = None
+	try:
+		ssl_validation_records = ssl["validation_records"]
+	except KeyError:
+		ssl_validation_records = []
 	verification = {
-		"ownership_verification": custom_hostname["ownership_verification"]
-		if "ownership_verification" in custom_hostname
-		else None,
-		"ownership_verification_http": custom_hostname["ownership_verification_http"]
-		if "ownership_verification_http" in custom_hostname
-		else None,
-		"ssl_validation_records": ssl["validation_records"] if "validation_records" in ssl else [],
+		"ownership_verification": ownership_verification,
+		"ownership_verification_http": ownership_verification_http,
+		"ssl_validation_records": ssl_validation_records,
 	}
 	set_state(
 		site_domain,
