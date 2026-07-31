@@ -61,9 +61,13 @@ class DockerBuildOutputParser:
 		return self._steps_by_step_slug
 
 	def parse_and_update(self, output: "BuildOutput"):
-		for raw_line in output:
-			self._parse_line_handle_exc(raw_line)
-		self._end_parsing()
+		try:
+			for raw_line in output:
+				self._parse_line_handle_exc(raw_line)
+				if (now_datetime() - self.last_updated).total_seconds() > 1:
+					self._end_parsing()
+		finally:
+			self._end_parsing()
 
 	def _parse_line_handle_exc(self, raw_line: str):
 		self._parse_line(raw_line)
@@ -130,7 +134,7 @@ class DockerBuildOutputParser:
 			self.error_lines.append(escaped_line)
 
 	def _end_parsing(self):
-		self.dc.last_updated = now_datetime()
+		self.last_updated = self.dc.last_updated = now_datetime()
 		self.flush_output(True)
 
 	def _set_docker_image_id(self, line: str):
@@ -261,6 +265,7 @@ class UploadStepUpdater:
 		if self.upload_step.status == "Running":
 			return
 
+		self.start_time = self.last_updated = now_datetime()
 		self.upload_step.status = "Running"
 		self.flush_output()
 
@@ -270,10 +275,14 @@ class UploadStepUpdater:
 
 		for line in output:
 			self._update_output(line)
+			if (now_datetime() - self.last_updated).total_seconds() > 1:
+				self._flush_progress()
+		self._flush_progress()
 
-		last_update = self.dc.last_updated
-		duration = (now_datetime() - last_update).total_seconds()
+	def _flush_progress(self):
+		duration = (now_datetime() - self.start_time).total_seconds()
 		self.upload_step.duration = rounded(duration, 1)
+		self.last_updated = now_datetime()
 		self.flush_output()
 
 	def end(self, status: Literal["Success", "Failure"] | None):

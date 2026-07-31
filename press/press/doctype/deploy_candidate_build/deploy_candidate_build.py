@@ -9,6 +9,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import tarfile
 import tempfile
 import typing
@@ -16,6 +17,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from functools import cached_property
 
+import docker
 import frappe
 import semantic_version
 from frappe.core.utils import find
@@ -23,6 +25,7 @@ from frappe.model.document import Document
 from frappe.query_builder.custom import GROUP_CONCAT
 from frappe.utils import now_datetime as now
 from frappe.utils import rounded
+from frappe.utils.synchronization import filelock
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 from press.agent import Agent
@@ -60,6 +63,11 @@ MAX_DURATION = timedelta(hours=23, minutes=59, seconds=59)
 DISTUTILS_SUPPORTED_VERSION = semantic_version.SimpleSpec("<3.12")
 GET_PIP_VERSION_MODIFIED_URL = semantic_version.SimpleSpec(">=3.2,<=3.8")
 ARM_SUPPORTED_WKHTMLTOPDF = ["0.12.5", "0.12.6"]
+LOCAL_BUILDX_BUILDER = "press-image-builder"
+
+
+def build_images_locally() -> bool:
+	return bool(frappe.db.get_single_value("Press Settings", "build_images_locally"))
 
 
 class Status(Enum):
@@ -526,15 +534,9 @@ class DeployCandidateBuild(Document):
 		# Clone app slugs
 		slugs: list[tuple[str, str]] = [("clone", app.app) for app in self.candidate.apps]
 
-		slugs.extend(
-			[
-				# Pre-build validation slug
-				("validate", "pre-build"),
-				# Build slugs
-				("package", "context"),
-				("upload", "context"),
-			]
-		)
+		slugs.append(("validate", "pre-build"))
+		if not build_images_locally():
+			slugs.extend([("package", "context"), ("upload", "context")])
 
 		for stage_slug, step_slug in slugs:
 			stage, step = get_build_stage_and_step(
@@ -960,12 +962,277 @@ class DeployCandidateBuild(Document):
 
 	def _package_and_upload_context(self):
 		context_filepath = self._package_build_context()
-		context_filename = self._upload_build_context(
-			context_filepath,
-			self.build_server,
+		try:
+			return self._upload_build_context(
+				context_filepath,
+				self.build_server,
+			)
+		finally:
+			os.remove(context_filepath)
+
+	def _local_build_environment(self, docker_config_directory: str | None = None) -> dict:
+		environment = os.environ.copy()
+		environment.update(
+			{
+				"DOCKER_BUILDKIT": "1",
+				"BUILDKIT_PROGRESS": "plain",
+				"PROGRESS_NO_TRUNC": "1",
+			}
 		)
-		os.remove(context_filepath)
-		return context_filename
+		environment["BUILDX_CONFIG"] = environment.get(
+			"BUILDX_CONFIG",
+			os.path.join(
+				environment.get("DOCKER_CONFIG", os.path.expanduser("~/.docker")),
+				"buildx",
+			),
+		)
+		if docker_config_directory:
+			environment["DOCKER_CONFIG"] = docker_config_directory
+		return environment
+
+	def _login_local_registry(self, environment: dict, settings: frappe._dict):
+		registry_url = settings.docker_registry_url
+		if registry_url == "registry-1.docker.io":
+			registry_url = "docker.io"
+		subprocess.run(
+			[
+				"docker",
+				"login",
+				registry_url,
+				"--username",
+				settings.docker_registry_username,
+				"--password-stdin",
+			],
+			input=settings.docker_registry_password,
+			text=True,
+			check=True,
+			capture_output=True,
+			env=environment,
+		)
+
+	def _ensure_local_buildx_builder(self, environment: dict):
+		with filelock(LOCAL_BUILDX_BUILDER, timeout=300, is_global=True):
+			result = subprocess.run(
+				["docker", "buildx", "inspect", LOCAL_BUILDX_BUILDER],
+				text=True,
+				capture_output=True,
+				env=environment,
+			)
+			driver = next(
+				(
+					line.partition(":")[2].strip()
+					for line in result.stdout.splitlines()
+					if line.startswith("Driver:")
+				),
+				"",
+			)
+			if not result.returncode and driver != "docker-container":
+				subprocess.run(
+					["docker", "buildx", "rm", LOCAL_BUILDX_BUILDER],
+					check=True,
+					capture_output=True,
+					text=True,
+					env=environment,
+				)
+				result = subprocess.CompletedProcess(result.args, 1)
+
+			if result.returncode:
+				subprocess.run(
+					[
+						"docker",
+						"buildx",
+						"create",
+						"--name",
+						LOCAL_BUILDX_BUILDER,
+						"--driver",
+						"docker-container",
+					],
+					check=True,
+					capture_output=True,
+					text=True,
+					env=environment,
+				)
+
+			subprocess.run(
+				["docker", "buildx", "inspect", LOCAL_BUILDX_BUILDER, "--bootstrap"],
+				check=True,
+				capture_output=True,
+				text=True,
+				env=environment,
+			)
+
+	def _local_image_name(self, runtime: bool = False) -> str:
+		tag = f"{self.docker_image_tag}-slim" if runtime else self.docker_image_tag
+		return f"{self.docker_image_repository}:{tag}"
+
+	def _get_local_build_command(
+		self,
+		apply_new_build: bool,
+		metadata_file: str | None = None,
+		runtime: bool = False,
+	) -> list[str]:
+		platform = "linux/arm64" if self.platform == "arm64" else "linux/amd64"
+		command = ["docker", "buildx", "build"]
+		if apply_new_build:
+			command.extend(["--builder", LOCAL_BUILDX_BUILDER])
+		command.extend(["--platform", platform, "-t", self._local_image_name(runtime)])
+
+		if metadata_file:
+			command.extend(["--metadata-file", metadata_file])
+		if runtime:
+			command.extend(["--target", "runtime"])
+		if self.no_cache:
+			command.append("--no-cache")
+
+		if not apply_new_build or self.no_push:
+			command.append("--load")
+		else:
+			if runtime:
+				cache_ref = f"{self.docker_image_repository}:runtime-buildcache"
+				command.extend(["--cache-from", f"type=registry,ref={cache_ref}"])
+				command.extend(
+					[
+						"--cache-to",
+						f"type=registry,ref={cache_ref},mode=min,compression=zstd,"
+						"compression-level=22,force-compression=false,oci-mediatypes=true,"
+						"image-manifest=true,ignore-error=true",
+					]
+				)
+			output = ",".join(
+				[
+					"type=image",
+					f"name={self._local_image_name(runtime)}",
+					"push=true",
+					"compression=zstd",
+					"compression-level=22",
+					f"force-compression={str(not runtime).lower()}",
+					"oci-mediatypes=true",
+					"name-canonical=true",
+				]
+			)
+			command.extend(["--provenance=false", "--output", output])
+
+		command.append(self.build_directory)
+		return command
+
+	def _run_local_command(self, command: list[str], environment: dict):
+		process = subprocess.Popen(
+			command,
+			stdout=subprocess.PIPE,
+			stderr=subprocess.STDOUT,
+			env=environment,
+			text=True,
+		)
+		yield from process.stdout
+		process.stdout.close()
+		if return_code := process.wait():
+			raise subprocess.CalledProcessError(return_code, command)
+
+	def _build_local_image(self, environment: dict, apply_new_build: bool, runtime: bool = False):
+		metadata_file = None
+		if apply_new_build:
+			file_descriptor, metadata_file = tempfile.mkstemp(suffix=".metadata.json")
+			os.close(file_descriptor)
+
+		try:
+			command = self._get_local_build_command(apply_new_build, metadata_file, runtime)
+			self.build_output_parser.parse_and_update(self._run_local_command(command, environment))
+			if not metadata_file:
+				return None
+
+			with open(metadata_file) as file:
+				digest = json.load(file).get("containerimage.digest")
+			if not digest:
+				raise RuntimeError("BuildKit did not return an image digest")
+
+			if runtime:
+				self.runtime_image_digest = digest
+			self.build_output_parser.parse_and_update([f"#0 writing image {digest} done\n"])
+			if not self.no_push:
+				subprocess.run(
+					[
+						"docker",
+						"buildx",
+						"imagetools",
+						"inspect",
+						f"{self._local_image_name(runtime)}@{digest}",
+					],
+					check=True,
+					capture_output=True,
+					text=True,
+					timeout=5 * 60,
+					env=environment,
+				)
+			return digest
+		finally:
+			if metadata_file:
+				os.remove(metadata_file)
+
+	def _push_local_image(self, settings: frappe._dict):
+		self.upload_step_updater.start()
+		client = docker.from_env(timeout=5 * 60)
+		try:
+			output = client.images.push(
+				self.docker_image_repository,
+				self.docker_image_tag,
+				stream=True,
+				decode=True,
+				auth_config={
+					"username": settings.docker_registry_username,
+					"password": settings.docker_registry_password,
+					"serveraddress": settings.docker_registry_url,
+				},
+			)
+			self.upload_step_updater.process(output)
+			if self.upload_step_updater.upload_step.status == "Failure":
+				raise RuntimeError("Failed to push Docker image")
+			self.upload_step_updater.end("Success")
+		finally:
+			client.close()
+
+	def _record_local_push(self, digests: list[tuple[str, str]]):
+		self.upload_step_updater.start()
+		self.upload_step_updater.process(
+			[{"id": image, "status": "Pushed", "progress": digest} for image, digest in digests]
+		)
+		self.upload_step_updater.end("Success")
+
+	def _run_local_build(self):
+		settings = self._fetch_registry_settings()
+		apply_new_build = bool(self.candidate.apply_new_build)
+		docker_config = tempfile.TemporaryDirectory(prefix="press-docker-config-")
+		self.set_status(Status.RUNNING)
+		try:
+			environment = self._local_build_environment(
+				docker_config.name if apply_new_build and not self.no_push else None
+			)
+			if apply_new_build:
+				if not self.no_push:
+					self._login_local_registry(environment, settings)
+				self._ensure_local_buildx_builder(environment)
+
+			digests = []
+			image_digest = self._build_local_image(environment, apply_new_build)
+			if image_digest:
+				digests.append((self._local_image_name(), image_digest))
+
+			if apply_new_build and self.candidate.build_runtime_image:
+				runtime_digest = self._build_local_image(environment, apply_new_build, runtime=True)
+				digests.append((self._local_image_name(runtime=True), runtime_digest))
+
+			if not self.no_push:
+				if apply_new_build:
+					self._record_local_push(digests)
+				else:
+					self._push_local_image(settings)
+		finally:
+			docker_config.cleanup()
+
+		self._set_build_duration()
+		self.set_status(Status.SUCCESS)
+		self.correct_upload_step_status()
+		self.update_deploy_candidate_with_build()
+		self.create_new_platform_build_if_required_and_deploy(self.deploy_after_build)
 
 	def _run_agent_jobs(self):
 		context_filename = self._package_and_upload_context()
@@ -1034,7 +1301,10 @@ class DeployCandidateBuild(Document):
 
 	def _start_build(self):
 		self._update_docker_image_metadata()
-		self._run_agent_jobs()
+		if self.build_server:
+			self._run_agent_jobs()
+		else:
+			self._run_local_build()
 
 	def _build(self):
 		self._set_pending_duration()
@@ -1092,6 +1362,22 @@ class DeployCandidateBuild(Document):
 			self.platform = self.get_platform() or "x86_64"
 
 	def set_build_server(self):
+		if build_images_locally():
+			self.build_server = None
+			if not self.platform:
+				release_group = frappe.get_doc("Release Group", self.group)
+				self.platform = (
+					next(
+						(
+							frappe.get_value("Server", server.server, "platform")
+							for server in release_group.servers
+						),
+						"x86_64",
+					)
+					or "x86_64"
+				)
+			return
+
 		if not self.build_server:
 			self.build_server = self._select_build_server()
 
@@ -1147,7 +1433,7 @@ class DeployCandidateBuild(Document):
 			self.name,
 			"_build",
 			queue=queue,
-			timeout=2400,
+			timeout=4 * 3600 if not self.build_server else 2400,
 			enqueue_after_commit=True,
 		)
 
