@@ -85,6 +85,7 @@
   "suspend_builds",
   "clone_directory",
   "build_directory",
+  "build_images_locally",
   "build_server",
   "minimum_rebuild_memory",
   "column_break_66",
@@ -1207,6 +1208,14 @@
    "fieldname": "agent_sentry_dsn",
    "fieldtype": "Data",
    "label": "Agent Sentry DSN"
+  },
+  {
+   "default": "0",
+   "description": "Run image builds on the Press host. Build Server is used when disabled.",
+   "fieldname": "build_images_locally",
+   "fieldtype": "Check",
+   "in_standard_filter": 1,
+   "label": "Build Images Locally"
   },
   {
    "fieldname": "build_server",

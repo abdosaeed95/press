@@ -42,6 +42,7 @@ class PressSettings(Document):
 		bench_configuration: DF.Code
 		branch: DF.Data | None
 		build_directory: DF.Data | None
+		build_images_locally: DF.Check
 		build_server: DF.Link | None
 		central_migration_server: DF.Link | None
 		certbot_directory: DF.Data
