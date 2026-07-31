@@ -54,6 +54,7 @@ class SiteUpdate(Document):
 		difference_deploy_type: DF.Literal["", "Pull", "Migrate"]
 		group: DF.Link | None
 		install_all_apps: DF.Check
+		skip_migrate: DF.Check
 		pending_bench_update: DF.Link | None
 		physical_backup_restoration: DF.Link | None
 		recover_job: DF.Link | None
@@ -350,6 +351,7 @@ class SiteUpdate(Document):
 			before_migrate_scripts=self.get_before_migrate_scripts(),
 			skip_search_index=self.is_destination_above_v12,
 			install_all_apps=self.install_all_apps,
+			skip_migrate=self.skip_migrate,
 		)
 		self.set_update_job_value(job)
 

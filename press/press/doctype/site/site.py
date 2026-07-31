@@ -1286,6 +1286,7 @@ class Site(Document, TagHelpers):
 		skip_failing_patches=False,
 		skip_backups=False,
 		install_all_apps=False,
+		skip_migrate=False,
 	):
 		log_site_activity(self.name, "Update")
 
@@ -1297,6 +1298,7 @@ class Site(Document, TagHelpers):
 				"skipped_failing_patches": skip_failing_patches,
 				"skipped_backups": skip_backups,
 				"install_all_apps": install_all_apps,
+				"skip_migrate": skip_migrate,
 				"ignore_past_failures": True,
 			}
 		).insert()
