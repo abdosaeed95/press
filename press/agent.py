@@ -370,6 +370,7 @@ class Agent:
 		before_migrate_scripts=None,
 		skip_search_index=True,
 		install_all_apps=False,
+		skip_migrate=False,
 	):
 		activate = site.status_before_update in ("Active", "Broken")
 		data = {
@@ -380,6 +381,7 @@ class Agent:
 			"before_migrate_scripts": before_migrate_scripts,
 			"skip_search_index": skip_search_index,
 			"install_all_apps": install_all_apps,
+			"skip_migrate": skip_migrate,
 		}
 		deploy_path = "migrate/install-apps" if install_all_apps else deploy_type.lower()
 		return self.create_agent_job(

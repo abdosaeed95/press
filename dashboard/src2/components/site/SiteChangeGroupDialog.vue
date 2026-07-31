@@ -12,6 +12,7 @@
 						$resources.changeGroup.submit({
 							skip_failing_patches: skipFailingPatches,
 							install_all_apps: installAllApps,
+							skip_migrate: skipMigrate,
 							group: targetGroup.value,
 							name: site,
 						}),
@@ -58,6 +59,11 @@
 					label="Install all apps from the destination Bench Group"
 					type="checkbox"
 					v-model="installAllApps"
+				/>
+				<FormControl
+					label="Skip migrate command"
+					type="checkbox"
+					v-model="skipMigrate"
 				/>
 			</div>
 			<p v-else-if="!errorMessage" class="text-md text-base text-gray-800">
@@ -116,6 +122,7 @@ export default {
 			newGroupTitle: '',
 			skipFailingPatches: false,
 			installAllApps: false,
+			skipMigrate: false,
 			showCloneBenchDialog: false,
 			selectedServer: null,
 		};

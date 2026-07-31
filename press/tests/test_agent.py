@@ -67,6 +67,19 @@ class TestAgent(FrappeTestCase):
 		)
 		self.assertTrue(create_agent_job.call_args.args[2]["install_all_apps"])
 
+	def test_update_site_passes_skip_migrate(self):
+		site = SimpleNamespace(
+			bench="bench-source",
+			name="example.com",
+			status_before_update="Active",
+		)
+		agent = Agent("server.example.com")
+
+		with patch.object(agent, "create_agent_job") as create_agent_job:
+			agent.update_site(site, "bench-target", "Migrate", skip_migrate=True)
+
+		self.assertTrue(create_agent_job.call_args.args[2]["skip_migrate"])
+
 	@responses.activate
 	def test_request_failure_creates_failure_record(self):
 		server = create_test_server()
