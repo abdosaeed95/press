@@ -86,6 +86,22 @@
 						</div>
 					</div>
 					<div class="flex flex-wrap items-center gap-3 text-xs text-gray-600">
+						<template v-if="selectedUpdates.length">
+							<span class="font-medium text-gray-800">
+								{{ selectedUpdates.length }} selected
+							</span>
+							<Button label="Clear" variant="ghost" @click="clearSelection" />
+							<Button
+								:label="`Cancel updates (${selectedUpdates.length})`"
+								theme="red"
+								variant="solid"
+								@click="confirmCancelSelected"
+							>
+								<template #prefix>
+									<i-lucide-x class="h-4 w-4" />
+								</template>
+							</Button>
+						</template>
 						<span
 							v-for="status in legendStatuses"
 							:key="status"
@@ -188,6 +204,9 @@
 									class="rounded border px-2 py-1.5 text-xs shadow-sm transition hover:shadow"
 									:class="[
 										statusClass(update.status),
+										isSelected(update.name)
+											? 'ring-2 ring-blue-600 ring-offset-1'
+											: '',
 										update.status === 'Scheduled'
 											? 'cursor-grab active:cursor-grabbing'
 											: 'cursor-pointer',
@@ -196,15 +215,29 @@
 									:aria-label="`${update.site}, ${update.status}, ${eventTime(
 										update,
 									)}`"
-									role="button"
-									tabindex="0"
-									@click="openUpdate(update)"
-									@keydown.enter="openUpdate(update)"
+									role="group"
+									@click="handleUpdateClick($event, update)"
+									@contextmenu="openUpdateMenu($event, update)"
 									@dragstart.stop="startUpdateDrag(update)"
 									@dragend="clearDrag"
 								>
-									<div class="truncate font-medium" :title="update.site">
-										{{ update.site }}
+									<div class="flex items-start gap-1.5">
+										<input
+											v-if="update.status === 'Scheduled'"
+											type="checkbox"
+											class="mt-0.5 h-3.5 w-3.5 shrink-0 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+											:checked="isSelected(update.name)"
+											:aria-label="`Select ${update.site}`"
+											@click.stop="toggleUpdateSelection(update)"
+										/>
+										<button
+											type="button"
+											class="truncate text-left font-medium focus:underline focus:outline-none"
+											:title="update.site"
+											@click.stop="openUpdate(update)"
+										>
+											{{ update.site }}
+										</button>
 									</div>
 									<div class="mt-1 flex items-center gap-1.5 opacity-80">
 										<span
@@ -337,6 +370,24 @@
 				</div>
 			</aside>
 		</div>
+
+		<div
+			v-if="updateMenu"
+			class="min-w-48 fixed z-50 rounded-md border bg-white p-1 shadow-lg"
+			:style="{ left: `${updateMenu.x}px`, top: `${updateMenu.y}px` }"
+			role="menu"
+			@click.stop
+		>
+			<button
+				type="button"
+				class="flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm text-red-700 hover:bg-red-50 focus:bg-red-50 focus:outline-none"
+				role="menuitem"
+				@click="confirmCancelSelected"
+			>
+				<i-lucide-x class="h-4 w-4" />
+				Cancel selected updates ({{ selectedUpdates.length }})
+			</button>
+		</div>
 	</div>
 </template>
 
@@ -344,7 +395,7 @@
 import { defineAsyncComponent, h } from 'vue';
 import { toast } from 'vue-sonner';
 import Header from '../components/Header.vue';
-import { renderDialog } from '../utils/components';
+import { confirmDialog, renderDialog } from '../utils/components';
 import { cairoTimeToServer, dayjsCairo, dayjsLocal } from '../utils/dayjs';
 import { getToastErrorMessage } from '../utils/toast';
 import {
@@ -368,6 +419,8 @@ export default {
 			pendingSearch: '',
 			draggedItem: null,
 			dropTarget: '',
+			selectedUpdates: [],
+			updateMenu: null,
 		};
 	},
 	resources: {
@@ -434,10 +487,14 @@ export default {
 		this.loadSchedule();
 		this.$socket.emit('doctype_subscribe', 'Site Update');
 		this.$socket.on('list_update', this.handleListUpdate);
+		document.addEventListener('click', this.closeUpdateMenu);
+		document.addEventListener('keydown', this.handleKeydown);
 	},
 	beforeUnmount() {
 		this.$socket.emit('doctype_unsubscribe', 'Site Update');
 		this.$socket.off('list_update', this.handleListUpdate);
+		document.removeEventListener('click', this.closeUpdateMenu);
+		document.removeEventListener('keydown', this.handleKeydown);
 	},
 	methods: {
 		async loadSchedule() {
@@ -450,6 +507,11 @@ export default {
 					'YYYY-MM-DD HH:mm:ss',
 				),
 			});
+			this.selectedUpdates = this.selectedUpdates.filter((name) =>
+				this.scheduleData.updates.some(
+					(update) => update.name === name && update.status === 'Scheduled'
+				)
+			);
 		},
 		changeMonth(offset) {
 			this.month = this.month.add(offset, 'month').startOf('month');
@@ -513,6 +575,85 @@ export default {
 				name: 'Site Update',
 				params: { name: update.site, id: update.name },
 			});
+		},
+		handleUpdateClick(event, update) {
+			if (update.status === 'Scheduled' && (event.ctrlKey || event.metaKey)) {
+				this.toggleUpdateSelection(update);
+				return;
+			}
+			this.openUpdate(update);
+		},
+		isSelected(name) {
+			return this.selectedUpdates.includes(name);
+		},
+		toggleUpdateSelection(update) {
+			if (update.status !== 'Scheduled') return;
+			if (this.isSelected(update.name)) {
+				this.selectedUpdates = this.selectedUpdates.filter(
+					(name) => name !== update.name
+				);
+				return;
+			}
+			this.selectedUpdates = [...this.selectedUpdates, update.name];
+		},
+		clearSelection() {
+			this.selectedUpdates = [];
+			this.closeUpdateMenu();
+		},
+		openUpdateMenu(event, update) {
+			if (update.status !== 'Scheduled') return;
+			event.preventDefault();
+			if (!this.isSelected(update.name)) this.selectedUpdates = [update.name];
+			this.updateMenu = {
+				x: Math.max(8, Math.min(event.clientX, window.innerWidth - 220)),
+				y: Math.max(8, Math.min(event.clientY, window.innerHeight - 60)),
+			};
+		},
+		closeUpdateMenu() {
+			this.updateMenu = null;
+		},
+		handleKeydown(event) {
+			if (event.key === 'Escape') this.closeUpdateMenu();
+		},
+		confirmCancelSelected() {
+			this.closeUpdateMenu();
+			const updates = (this.scheduleData.updates || []).filter((update) =>
+				this.selectedUpdates.includes(update.name)
+			);
+			if (!updates.length) return;
+
+			confirmDialog({
+				title: 'Cancel Scheduled Updates',
+				message: `Cancel the scheduled update for ${updates.length} site${
+					updates.length === 1 ? '' : 's'
+				}?`,
+				onSuccess: ({ hide }) => {
+					const promise = this.cancelSelectedUpdates(updates);
+					toast.promise(promise, {
+						loading: 'Cancelling scheduled updates...',
+						success: () => {
+							hide();
+							this.clearSelection();
+							this.loadSchedule();
+							return `${updates.length} scheduled update${
+								updates.length === 1 ? '' : 's'
+							} cancelled`;
+						},
+						error: (error) => getToastErrorMessage(error),
+					});
+					return promise;
+				},
+			});
+		},
+		async cancelSelectedUpdates(updates) {
+			for (const update of updates) {
+				await this.$resources.runDocMethod.submit({
+					dt: 'Site',
+					dn: update.site,
+					method: 'cancel_scheduled_update',
+					args: { site_update: update.name },
+				});
+			}
 		},
 		openScheduleDialog(site, initialScheduledTime = '') {
 			const scheduledTime =
