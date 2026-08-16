@@ -1301,6 +1301,7 @@ class Site(Document, TagHelpers):
 		skip_backups=False,
 		install_all_apps=False,
 		skip_migrate=False,
+		scheduled_time=None,
 	):
 		log_site_activity(self.name, "Update")
 
@@ -1313,6 +1314,8 @@ class Site(Document, TagHelpers):
 				"skipped_backups": skip_backups,
 				"install_all_apps": install_all_apps,
 				"skip_migrate": skip_migrate,
+				"status": "Scheduled" if scheduled_time else "Pending",
+				"scheduled_time": scheduled_time,
 				"ignore_past_failures": True,
 			}
 		).insert()

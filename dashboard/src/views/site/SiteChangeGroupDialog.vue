@@ -4,13 +4,16 @@
 			title: 'Move Site to another Bench Group',
 			actions: [
 				{
-					label: 'Change Bench Group',
+					label: `Change Bench Group ${
+						targetDateTime ? `at ${targetDateTimeInCairo}` : 'Now'
+					}`,
 					loading: $resources.changeGroup.loading,
 					disabled: !$resources.changeGroupOptions?.data?.length,
 					variant: 'solid',
 					onClick: () =>
 						$resources.changeGroup.submit({
 							skip_failing_patches: skipFailingPatches,
+							scheduled_datetime: datetimeInServerTimezone,
 							group: targetGroup,
 							name: site?.name
 						})
@@ -47,6 +50,7 @@
 					"
 					v-model="targetGroup"
 				/>
+				<DateTimeControl v-model="targetDateTime" label="Schedule Time" />
 				<FormControl
 					label="Skip failing patches if any"
 					type="checkbox"
@@ -87,20 +91,31 @@
 
 <script>
 import { notify } from '@/utils/toast';
+import DateTimeControl from '../../../src2/components/DateTimeControl.vue';
+import { cairoTimeToServer, dayjsCairo } from '../../../src2/utils/dayjs';
 
 export default {
 	name: 'SiteChangeGroupDialog',
 	props: ['site', 'modelValue'],
 	emits: ['update:modelValue'],
+	components: { DateTimeControl },
 	data() {
 		return {
 			targetGroup: null,
 			newGroupTitle: '',
 			skipFailingPatches: false,
+			targetDateTime: null,
 			showCloneBenchDialog: false
 		};
 	},
 	computed: {
+		datetimeInServerTimezone() {
+			if (!this.targetDateTime) return null;
+			return cairoTimeToServer(this.targetDateTime).format('YYYY-MM-DDTHH:mm');
+		},
+		targetDateTimeInCairo() {
+			return dayjsCairo(this.targetDateTime).format('lll');
+		},
 		show: {
 			get() {
 				return this.modelValue;

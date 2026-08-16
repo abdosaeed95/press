@@ -2145,7 +2145,7 @@ def change_group_options(name):
 	from press.press.doctype.press_role.press_role import check_role_permissions
 
 	team = get_current_team()
-	group, server, plan = frappe.db.get_value("Site", name, ["group", "server", "plan"])
+	group, plan = frappe.db.get_value("Site", name, ["group", "plan"])
 
 	if plan and not frappe.db.get_value("Site Plan", plan, "private_benches"):
 		frappe.throw(
@@ -2165,7 +2165,6 @@ def change_group_options(name):
 		.where(ReleaseGroup.name != group)
 		.where(ReleaseGroup.version == version)
 		.where(ReleaseGroup.team == team)
-		.where(Bench.server == server)
 		.groupby(Bench.group)
 	)
 
@@ -2224,14 +2223,53 @@ def change_group(
 	skip_failing_patches=False,
 	install_all_apps=False,
 	skip_migrate=False,
+	scheduled_datetime=None,
 ):
-	team = frappe.db.get_value("Release Group", group, "team")
-	if team != get_current_team():
+	from frappe import _
+
+	destination_group = frappe.db.get_value("Release Group", group, ["team", "version"], as_dict=True)
+	if not destination_group or destination_group.team != get_current_team():
 		frappe.throw(f"Bench {group} does not belong to your team")
 
 	site = frappe.get_doc("Site", name)
+	if destination_group.version != frappe.db.get_value("Release Group", site.group, "version"):
+		frappe.throw(_("The destination Bench Group must use the same Frappe version."))
+
+	destination_bench = frappe.db.get_value(
+		"Bench",
+		{"group": group, "server": site.server, "status": "Active"},
+		"name",
+		order_by="creation desc",
+	)
+	if not destination_bench:
+		destination_bench = frappe.db.get_value(
+			"Bench", {"group": group, "status": "Active"}, "name", order_by="creation desc"
+		)
+		if not destination_bench:
+			frappe.throw(_("Could not find a suitable destination Bench."))
+		if install_all_apps or skip_migrate:
+			frappe.throw(
+				_(
+					"Install all apps and Skip migrate are only available when the destination Bench Group exists on the current server."
+				)
+			)
+
+		site_migration = frappe.get_doc(
+			{
+				"doctype": "Site Migration",
+				"site": name,
+				"destination_bench": destination_bench,
+				"scheduled_time": scheduled_datetime,
+				"skip_failing_patches": skip_failing_patches,
+			}
+		).insert()
+		if not scheduled_datetime:
+			site_migration.start()
+		return
+
 	site.move_to_group(
 		group,
+		scheduled_time=scheduled_datetime,
 		skip_failing_patches=skip_failing_patches,
 		install_all_apps=install_all_apps,
 		skip_migrate=skip_migrate,

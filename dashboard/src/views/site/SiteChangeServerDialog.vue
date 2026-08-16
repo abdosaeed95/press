@@ -12,7 +12,9 @@
 					onClick: () => $resources.addServerToReleaseGroup.submit(),
 				},
 				{
-					label: 'Change Server',
+					label: `Change Server ${
+						targetDateTime ? `at ${targetDateTimeInCairo}` : 'Now'
+					}`,
 					loading: $resources.changeServer.loading,
 					variant: 'solid',
 					disabled:
@@ -70,7 +72,7 @@
 <script>
 import { notify } from '@/utils/toast';
 import DateTimeControl from '../../../src2/components/DateTimeControl.vue';
-import { cairoTimeToServer } from '../../../src2/utils/dayjs';
+import { cairoTimeToServer, dayjsCairo } from '../../../src2/utils/dayjs';
 
 export default {
 	name: 'SiteChangeServerDialog',
@@ -119,6 +121,9 @@ export default {
 		datetimeInServerTimezone() {
 			if (!this.targetDateTime) return null;
 			return cairoTimeToServer(this.targetDateTime).format('YYYY-MM-DDTHH:mm');
+		},
+		targetDateTimeInCairo() {
+			return dayjsCairo(this.targetDateTime).format('lll');
 		},
 	},
 	resources: {

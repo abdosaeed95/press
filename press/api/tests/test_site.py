@@ -752,6 +752,68 @@ erpnext 0.8.3	    HEAD
 		self.assertEqual(site.group, group2.name)
 		self.assertEqual(site.bench, bench2.name)
 
+	def test_change_group_can_be_scheduled(self):
+		from press.api.site import change_group
+
+		app = create_test_app()
+		server = create_test_server()
+		group1 = create_test_release_group([app])
+		group2 = create_test_release_group([app])
+		bench1 = create_test_bench(group=group1, server=server.name)
+		create_test_bench(group=group2, server=server.name)
+		site = create_test_site(
+			bench=bench1.name, team=self.team.name, plan=create_test_plan("Site", private_benches=True).name
+		)
+		scheduled_time = frappe.utils.add_to_date(None, hours=1, as_string=True)
+
+		change_group(site.name, group2.name, scheduled_datetime=scheduled_time)
+
+		site_update = frappe.get_last_doc("Site Update")
+		self.assertEqual(site_update.status, "Scheduled")
+		self.assertEqual(site_update.scheduled_time, frappe.utils.get_datetime(scheduled_time))
+		self.assertEqual(site_update.destination_group, group2.name)
+		self.assertFalse(site_update.update_job)
+		site.reload()
+		self.assertEqual(site.group, group1.name)
+		self.assertEqual(site.bench, bench1.name)
+
+	def test_change_group_can_be_scheduled_on_another_server(self):
+		from press.api.site import change_group, change_group_options
+		from press.press.doctype.site_migration.site_migration import SiteMigration
+
+		app = create_test_app()
+		server1 = create_test_server()
+		server2 = create_test_server(team=server1.team)
+		group1 = create_test_release_group([app])
+		group2 = create_test_release_group([app])
+		bench1 = create_test_bench(group=group1, server=server1.name)
+		bench2 = create_test_bench(group=group2, server=server2.name)
+		site = create_test_site(
+			bench=bench1.name, team=self.team.name, plan=create_test_plan("Site", private_benches=True).name
+		)
+		scheduled_time = frappe.utils.add_to_date(None, hours=1, as_string=True)
+
+		self.assertEqual(change_group_options(site.name), [{"name": group2.name, "title": group2.title}])
+		change_group(site.name, group2.name, scheduled_datetime=scheduled_time)
+
+		site_migration = frappe.get_last_doc("Site Migration")
+		self.assertEqual(site_migration.status, "Scheduled")
+		self.assertEqual(site_migration.scheduled_time, frappe.utils.get_datetime(scheduled_time))
+		self.assertEqual(site_migration.destination_bench, bench2.name)
+		self.assertEqual(site_migration.destination_server, server2.name)
+		self.assertFalse(site_migration.steps[0].step_job)
+
+		with (
+			patch.object(SiteMigration, "update_next_step_status"),
+			patch.object(SiteMigration, "run_next_step"),
+		):
+			site_migration.update_site_record_fields()
+
+		site.reload()
+		self.assertEqual(site.group, group2.name)
+		self.assertEqual(site.bench, bench2.name)
+		self.assertEqual(site.server, server2.name)
+
 	@patch(
 		"press.press.doctype.agent_job.agent_job.process_site_migration_job_update",
 		new=Mock(),
