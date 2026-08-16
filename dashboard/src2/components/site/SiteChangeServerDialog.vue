@@ -12,7 +12,9 @@
 					onClick: () => $resources.addServerToReleaseGroup.submit(),
 				},
 				{
-					label: 'Change Server',
+					label: `Change Server ${
+						targetDateTime ? `at ${targetDateTimeInCairo}` : 'Now'
+					}`,
 					loading: $resources.changeServer.loading,
 					variant: 'solid',
 					disabled:
@@ -64,7 +66,7 @@
 import { getCachedDocumentResource } from 'frappe-ui';
 import DateTimeControl from '../DateTimeControl.vue';
 import { toast } from 'vue-sonner';
-import { cairoTimeToServer } from '../../utils/dayjs';
+import { cairoTimeToServer, dayjsCairo } from '../../utils/dayjs';
 
 export default {
 	props: ['site'],
@@ -119,6 +121,9 @@ export default {
 			if (!this.targetDateTime) return null;
 			return cairoTimeToServer(this.targetDateTime).format('YYYY-MM-DDTHH:mm');
 		},
+		targetDateTimeInCairo() {
+			return dayjsCairo(this.targetDateTime).format('lll');
+		},
 	},
 	resources: {
 		changeServerOptions() {
@@ -163,7 +168,7 @@ export default {
 				},
 				onSuccess(data) {
 					toast.success(
-						`Server ${this.targetServer.value} added to the bench. Please wait for the deploy to be completed.`
+						`Server ${this.targetServer.value} added to the bench. Please wait for the deploy to be completed.`,
 					);
 
 					this.$router.push({
