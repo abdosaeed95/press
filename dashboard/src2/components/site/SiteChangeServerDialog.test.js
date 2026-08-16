@@ -9,13 +9,13 @@ describe('Site change server dialog', () => {
 	it('shows whether the server change is immediate or scheduled', () => {
 		const source = readFileSync(
 			new URL('./SiteChangeServerDialog.vue', import.meta.url),
-			'utf8'
+			'utf8',
 		);
 
 		expect(source).toContain('DateTimeControl');
 		expect(source).toContain('scheduled_datetime: datetimeInServerTimezone');
 		expect(source).toContain(
-			"targetDateTime ? `at ${targetDateTimeInCairo}` : 'Now'"
+			"targetDateTime ? `at ${targetDateTimeInCairo}` : 'Now'",
 		);
 		expect(SiteChangeServerDialog.data().targetDateTime).toBeNull();
 	});

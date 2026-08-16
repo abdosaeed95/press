@@ -168,7 +168,7 @@ export default {
 				},
 				onSuccess(data) {
 					toast.success(
-						`Server ${this.targetServer.value} added to the bench. Please wait for the deploy to be completed.`
+						`Server ${this.targetServer.value} added to the bench. Please wait for the deploy to be completed.`,
 					);
 
 					this.$router.push({
