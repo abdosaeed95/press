@@ -8,10 +8,10 @@
  "field_order": [
   "connection_section",
   "console_url",
-  "column_break_username",
-  "username",
-  "column_break_password",
-  "password"
+  "column_break_access_key",
+  "access_key",
+  "column_break_secret",
+  "secret"
  ],
  "fields": [
   {
@@ -28,25 +28,25 @@
    "reqd": 1
   },
   {
-   "fieldname": "column_break_username",
+   "fieldname": "column_break_access_key",
    "fieldtype": "Column Break"
   },
   {
-   "description": "Console user with read access to Instance records.",
-   "fieldname": "username",
+   "description": "API key for a Console user with read access to Instance records.",
+   "fieldname": "access_key",
    "fieldtype": "Data",
-   "label": "Username",
+   "label": "Access Key",
    "reqd": 1
   },
   {
-   "fieldname": "column_break_password",
+   "fieldname": "column_break_secret",
    "fieldtype": "Column Break"
   },
   {
-   "description": "Password used only by the Press server to query Console.",
-   "fieldname": "password",
+   "description": "API secret used only by the Press server to query Console.",
+   "fieldname": "secret",
    "fieldtype": "Password",
-   "label": "Password",
+   "label": "Secret",
    "reqd": 1
   }
  ],
