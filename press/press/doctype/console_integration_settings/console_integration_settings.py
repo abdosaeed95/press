@@ -19,17 +19,17 @@ class ConsoleIntegrationSettings(Document):
 	# This code is auto-generated. Do not modify anything in this block.
 
 	if TYPE_CHECKING:
+		access_key: DF.Data
 		console_url: DF.Data
-		password: DF.Password
-		username: DF.Data
+		secret: DF.Password
 	# end: auto-generated types
 
 	def get_sites_without_slaves(self, sites: list[str]) -> list[str]:
-		password = self.get_password("password", raise_exception=False)
-		if not (self.console_url and self.username and password):
+		secret = self.get_password("secret", raise_exception=False)
+		if not (self.console_url and self.access_key and secret):
 			frappe.throw(_("Configure Console Integration Settings before selecting sites for update."))
 
-		with FrappeClient(self.console_url.rstrip("/"), self.username, password) as client:
+		with FrappeClient(self.console_url.rstrip("/"), api_key=self.access_key, api_secret=secret) as client:
 			masters = client.get_list(
 				"Instance",
 				fields=["name", "subscription"],

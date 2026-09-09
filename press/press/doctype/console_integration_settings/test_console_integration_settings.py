@@ -19,9 +19,9 @@ class TestConsoleIntegrationSettings(TestCase):
 		]
 		settings = MagicMock(
 			console_url="https://console.example.com",
-			username="user@example.com",
+			access_key="access-key",
 		)
-		settings.get_password.return_value = "password"
+		settings.get_password.return_value = "secret"
 
 		self.assertEqual(
 			ConsoleIntegrationSettings.get_sites_without_slaves(
@@ -38,3 +38,9 @@ class TestConsoleIntegrationSettings(TestCase):
 				"status": ["not in", ["Archived", "Archiving"]],
 			},
 		)
+		frappe_client.assert_called_once_with(
+			"https://console.example.com",
+			api_key="access-key",
+			api_secret="secret",
+		)
+		settings.get_password.assert_called_once_with("secret", raise_exception=False)
