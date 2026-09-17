@@ -964,6 +964,7 @@ def branch_list(name: str, app: str) -> list[dict]:
 		branch_rows = get_branches_for_marketplace_app(app, marketplace_app[0], app_source)
 	else:
 		branch_rows = branches(repo_owner, repo_name, installation_id)
+	branch_rows = [frappe._dict(branch) for branch in branch_rows]
 
 	branch_names = [branch.name for branch in branch_rows]
 	AppSource = frappe.qb.DocType("App Source")
