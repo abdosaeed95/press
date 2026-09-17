@@ -13,6 +13,7 @@ from frappe.tests.utils import FrappeTestCase, timeout
 from press.api.bench import (
 	all,
 	bench_config,
+	branch_list,
 	dependencies,
 	deploy,
 	deploy_and_update,
@@ -79,6 +80,25 @@ class TestAPIBench(FrappeTestCase):
 		get_res = get(group.name)
 		self.assertEqual(get_res["status"], "Awaiting Deploy")
 		self.assertEqual(get_res["public"], False)
+
+	@patch("press.api.bench.branches", return_value=[{"name": "version-15"}])
+	def test_branch_list_enriches_github_branch_dicts(self, _branches):
+		frappe.set_user(self.team.user)
+		group = new(
+			{
+				"title": "Test Bench",
+				"apps": [{"name": self.app.name, "source": self.app_source.name}],
+				"version": self.version,
+				"cluster": "Default",
+				"saas_app": None,
+				"server": None,
+			}
+		)
+
+		result = branch_list(group, self.app.name)
+
+		self.assertEqual(result[0]["name"], "version-15")
+		self.assertEqual(result[0]["source"], self.app_source.name)
 
 	@skip("Local builds deprecated. Builds need to be set for GHA.")
 	@patch(
