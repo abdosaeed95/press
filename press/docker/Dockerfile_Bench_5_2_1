@@ -59,6 +59,7 @@ RUN --mount=type=cache,target=/var/cache/apt apt-get update \
   # pycups dependencies
   gcc \
   libcups2-dev \
+  cups-client \
   # s3-attachment dependencies
   libmagic1 \
   && rm -rf /var/lib/apt/lists/* \
@@ -173,6 +174,8 @@ COPY --chown=frappe:frappe config /home/frappe/frappe-bench/config
 COPY --chown=frappe:frappe apps.txt /home/frappe/frappe-bench/sites/apps.txt
 
 ENV FRAPPE_HARD_LINK_ASSETS True
+
+RUN command -v lpoptions && command -v lpinfo && command -v lpadmin
 
 EXPOSE 8000 8088 9000 2200
 CMD ["supervisord"]

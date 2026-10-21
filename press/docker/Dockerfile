@@ -54,6 +54,7 @@ RUN --mount=type=cache,target=/var/cache/apt apt-get update \
   # pycups dependencies
   gcc \
   libcups2-dev \
+  cups-client \
   # s3-attachment dependencies
   libmagic1 \
   && rm -rf /var/lib/apt/lists/* \
@@ -347,6 +348,8 @@ ENV FRAPPE_DOCKER_BUILD=
 ENV FRAPPE_HARD_LINK_ASSETS True
 ENV HISTTIMEFORMAT "%Y-%m-%d %T "
 
+RUN command -v lpoptions && command -v lpinfo && command -v lpadmin
+
 EXPOSE 8000 9000 2200 8088
 CMD ["supervisord"]
 
@@ -443,6 +446,8 @@ ENV {{v.key}} {{ v.value }}
 
 USER frappe
 WORKDIR /home/frappe/frappe-bench
+
+RUN command -v lpoptions && command -v lpinfo && command -v lpadmin
 
 EXPOSE 8000 9000
 CMD ["/home/frappe/frappe-bench/env/bin/gunicorn", "--chdir", "/home/frappe/frappe-bench/sites", "--bind", "0.0.0.0:8000", "--workers", "6", "--timeout", "120", "--graceful-timeout", "30", "--worker-tmp-dir", "/dev/shm", "frappe.app:application", "--preload", "--max-requests", "5000", "--max-requests-jitter", "1000"]
