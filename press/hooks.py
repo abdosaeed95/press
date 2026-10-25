@@ -367,6 +367,7 @@ on_session_creation = "press.overrides.on_session_creation"
 on_login = "press.overrides.on_login"
 
 before_request = "press.overrides.before_request"
+after_request = ["press.mcp_transport.after_request"]
 before_job = "press.overrides.before_job"
 # after_job = "press.overrides.after_job"
 
