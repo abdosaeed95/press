@@ -2,6 +2,8 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
+import frappe
+
 from press import auth, site_access
 
 
@@ -18,6 +20,7 @@ class TestSiteAccess(unittest.TestCase):
 			_=lambda text: text,
 		)
 		self.addCleanup(patch.stopall)
+		patch.object(frappe.local, "flags", SimpleNamespace(in_test=False), create=True).start()
 		patch.object(auth, "frappe", self.frappe).start()
 		patch.object(site_access, "frappe", self.frappe).start()
 
