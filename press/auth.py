@@ -75,6 +75,16 @@ def hook():  # noqa: C901
 	else:
 		path = frappe.request.path
 
+	# Service credentials may call only the guarded MCP endpoint, including cmd-based dispatch.
+	if frappe.session.user != "Administrator" and "Fodista Cloud MCP" in frappe.get_roles():
+		if (
+			path != "/api/method/fodista_cloud_mcp"
+			or frappe.request.path != path
+			or frappe.request.method != "POST"
+		):
+			frappe.throw(frappe._("Not permitted"), frappe.PermissionError)
+		return
+
 	user_type = frappe.get_cached_value("User", frappe.session.user, "user_type")
 
 	# Allow unchecked access to System Users

@@ -43,6 +43,7 @@ from press.exceptions import (
 from press.marketplace.doctype.marketplace_app_plan.marketplace_app_plan import (
 	MarketplaceAppPlan,
 )
+from press.site_access import require_site_administrator
 from press.utils.telemetry import capture
 from press.utils.webhook import create_webhook_event
 
@@ -689,6 +690,7 @@ class Site(Document, TagHelpers):
 	@frappe.whitelist()
 	def retry_archive(self):
 		"""Retry archive with subdomain+domain name of site"""
+		require_site_administrator()
 		site_name = self.subdomain + "." + self.domain
 		if frappe.db.exists("Site", {"name": site_name, "bench": self.bench}):
 			frappe.throw(f"Another site already exists in {self.bench} with name: {site_name}")
@@ -1009,6 +1011,7 @@ class Site(Document, TagHelpers):
 	@dashboard_whitelist()
 	@site_action(["Active", "Broken"])
 	def reinstall(self):
+		require_site_administrator()
 		agent = Agent(self.server)
 		job = agent.reinstall_site(self)
 		log_site_activity(self.name, "Reinstall", job=job.name)
@@ -1531,6 +1534,7 @@ class Site(Document, TagHelpers):
 	@dashboard_whitelist()
 	@site_action(["Active", "Broken", "Suspended"])
 	def archive(self, site_name=None, reason=None, force=False):
+		require_site_administrator()
 		agent = Agent(self.server)
 		self.status = "Pending"
 		self.save()
@@ -1563,6 +1567,7 @@ class Site(Document, TagHelpers):
 
 	@frappe.whitelist()
 	def cleanup_after_archive(self):
+		require_site_administrator()
 		site_cleanup_after_archive(self.name)
 
 	def delete_physical_backups(self):
@@ -3142,6 +3147,7 @@ class Site(Document, TagHelpers):
 	@frappe.whitelist()
 	def forcefully_remove_site(self, bench):
 		"""Bypass all agent/press callbacks and just remove this site from the target bench/server"""
+		require_site_administrator()
 		from press.utils import get_mariadb_root_password
 
 		frappe.only_for("System Manager")

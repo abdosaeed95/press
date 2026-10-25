@@ -141,6 +141,9 @@ def has_permission(doc, ptype, user):
 	if not user:
 		user = frappe.session.user
 
+	if doc.doctype == "Site" and ptype == "delete" and user != "Administrator":
+		return False
+
 	user_type = frappe.db.get_value("User", user, "user_type", cache=True)
 	if user_type == "System User":
 		return True
