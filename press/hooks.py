@@ -270,8 +270,9 @@ scheduler_events = {
 			"press.press.doctype.razorpay_payment_record.razorpay_payment_record.fetch_pending_payment_orders",
 		],
 		"30 * * * *": ["press.press.doctype.agent_job.agent_job.suspend_sites"],
+		"*/15 4-6 * * *": ["press.press.doctype.site_update.site_update.schedule_updates"],
+		"*/30 4-6 * * *": ["press.press.doctype.site_update.scheduled_auto_updates.trigger"],
 		"*/15 * * * *": [
-			"press.press.doctype.site_update.site_update.schedule_updates",
 			"press.press.doctype.site.backups.schedule_logical_backups",
 			"press.press.doctype.site.backups.schedule_physical_backups",
 			"press.press.doctype.site_update.site_update.run_scheduled_updates",
@@ -301,7 +302,6 @@ scheduler_events = {
 			"press.press.doctype.virtual_disk_snapshot.virtual_disk_snapshot.sync_rolling_snapshots",
 		],
 		"*/30 * * * *": [
-			"press.press.doctype.site_update.scheduled_auto_updates.trigger",
 			"press.press.doctype.team.suspend_sites.execute",
 			"press.press.doctype.database_server.database_server.sync_binlogs_info",
 		],
@@ -331,7 +331,7 @@ scheduler_events = {
 	},
 }
 
-deploy_hours = [1, 2, 3, 4, 5, 21, 22, 23]  # Purposefully avoiding 0
+deploy_hours = [4, 5, 6]  # Automatic site updates: 04:00 <= Africa/Cairo time < 07:00.
 
 fixtures = [
 	"Agent Job Type",
