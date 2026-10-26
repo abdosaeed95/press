@@ -1,19 +1,29 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2021, Frappe and contributors
 # For license information, please see license.txt
 
+from __future__ import annotations
+
 from calendar import monthrange
+from typing import TYPE_CHECKING
 
 import frappe
 from frappe.utils import get_datetime, get_time, now_datetime
 
-from press.press.doctype.site.site import Site
-from press.press.doctype.site_update.site_update import benches_with_available_update
+from press.press.doctype.site_update.site_update import (
+	benches_with_available_update,
+	is_site_in_deploy_hours,
+)
 from press.utils import log_error
+
+if TYPE_CHECKING:
+	from press.press.doctype.site.site import Site
 
 
 def trigger():
-	"""Will be triggered every 30 minutes"""
+	"""Check configured automatic updates every 30 minutes within the Cairo window."""
+	if not is_site_in_deploy_hours():
+		return
+
 	# Get all ["Active", "Inactive"] sites
 	# with auto updates scheduled
 	sites_with_scheduled_updates = frappe.get_all(
@@ -42,6 +52,8 @@ def trigger():
 	trigger_for_sites = list(filter(should_update_trigger, sites_with_scheduled_updates))
 
 	for site in trigger_for_sites:
+		if not is_site_in_deploy_hours():
+			break
 		auto_update_log = frappe.get_doc(
 			{
 				"doctype": "Scheduled Auto Update Log",
@@ -78,9 +90,9 @@ def should_update_trigger(doc):
 	# Return based on the set frequency
 	if doc.update_trigger_frequency == "Daily":
 		return should_update_trigger_for_daily(doc)
-	elif doc.update_trigger_frequency == "Weekly":
+	if doc.update_trigger_frequency == "Weekly":
 		return should_update_trigger_for_weekly(doc)
-	elif doc.update_trigger_frequency == "Monthly":
+	if doc.update_trigger_frequency == "Monthly":
 		return should_update_trigger_for_monthly(doc)
 
 	return False
@@ -97,7 +109,7 @@ def should_update_trigger_for_daily(doc, current_datetime=None):
 		and get_time(doc.update_trigger_time) <= get_time(auto_update_last_triggered_on)
 	):
 		return False
-	elif get_time(doc.update_trigger_time) <= get_time(current_datetime):
+	if get_time(doc.update_trigger_time) <= get_time(current_datetime):
 		return True
 
 	return False

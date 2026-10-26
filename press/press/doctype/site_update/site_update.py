@@ -5,12 +5,10 @@ from __future__ import annotations
 
 import json
 import random
-from datetime import datetime
 from typing import TYPE_CHECKING, ClassVar, Literal
 
 import frappe
 import frappe.utils
-import pytz
 from frappe import _
 from frappe.core.utils import find
 from frappe.model.document import Document
@@ -684,6 +682,9 @@ def sites_with_available_update(server=None):
 
 
 def schedule_updates():
+	if not is_site_in_deploy_hours():
+		return
+
 	servers = frappe.get_all("Server", {"status": "Active"}, pluck="name")
 	for server in servers:
 		frappe.enqueue(
@@ -695,7 +696,10 @@ def schedule_updates():
 		)
 
 
-def schedule_updates_server(server):
+def schedule_updates_server(server):  # noqa: C901
+	if not is_site_in_deploy_hours():
+		return
+
 	# Prevent flooding the queue
 	queue_size = frappe.db.get_single_value("Press Settings", "auto_update_queue_size")
 	pending_update_count = frappe.db.count(
@@ -719,6 +723,8 @@ def schedule_updates_server(server):
 	benches = {}
 	update_triggered_count = 0
 	for site in sites:
+		if not is_site_in_deploy_hours():
+			break
 		if site.bench in benches:
 			continue
 		if update_triggered_count > queue_size:
@@ -786,18 +792,10 @@ def should_try_update(site):
 	)
 
 
-def is_site_in_deploy_hours(site):
-	if site.status in ("Inactive", "Suspended"):
-		return True
-	server_time = datetime.now()
-	timezone = site.timezone or CAIRO_TIMEZONE
-	site_timezone = pytz.timezone(timezone)
-	site_time = server_time.astimezone(site_timezone)
-	deploy_hours = frappe.get_hooks("deploy_hours")
-
-	if site_time.hour in deploy_hours:
-		return True
-	return False
+def is_site_in_deploy_hours(site=None):
+	"""Use one Cairo window for automatic updates, including inactive sites."""
+	site_time = frappe.utils.get_datetime_in_timezone(CAIRO_TIMEZONE)
+	return site_time.hour in frappe.get_hooks("deploy_hours")
 
 
 def process_physical_backup_restoration_status_update(name: str):
