@@ -793,9 +793,9 @@ def should_try_update(site):
 
 
 def is_site_in_deploy_hours(site=None):
-	"""Use one Cairo window for automatic updates, including inactive sites."""
+	"""Allow automatic updates Sunday-Thursday within the Cairo morning window."""
 	site_time = frappe.utils.get_datetime_in_timezone(CAIRO_TIMEZONE)
-	return site_time.hour in frappe.get_hooks("deploy_hours")
+	return site_time.weekday() in (0, 1, 2, 3, 6) and site_time.hour in frappe.get_hooks("deploy_hours")
 
 
 def process_physical_backup_restoration_status_update(name: str):
