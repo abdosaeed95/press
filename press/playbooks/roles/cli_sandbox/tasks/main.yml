@@ -1,0 +1,17 @@
+---
+- name: Check Agent CLI sandbox support
+  stat:
+    path: /home/frappe/agent/repo/agent/cli_sandbox.py
+  register: agent_cli_sandbox
+
+- name: Install AppArmor policy loader
+  apt:
+    name: apparmor
+    state: present
+  when: agent_cli_sandbox.stat.exists
+
+- name: Install and load AI CLI sandbox policy
+  command: /home/frappe/agent/env/bin/agent setup cli-sandbox
+  args:
+    chdir: /home/frappe/agent
+  when: agent_cli_sandbox.stat.exists

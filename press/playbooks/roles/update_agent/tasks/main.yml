@@ -35,6 +35,10 @@
   args:
     chdir: /home/frappe/agent
 
+- name: Setup CLI sandbox policies
+  include_role:
+    name: cli_sandbox
+
 - name: Update Agent database
   become: yes
   become_user: frappe
