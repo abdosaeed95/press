@@ -7,7 +7,7 @@ cd ~ || exit
 sudo apt update && sudo apt install redis-server libcups2-dev
 
 pip install frappe-bench
-bench init --skip-assets --python "$(which python)" ~/frappe-bench
+bench init --frappe-branch v15.87.0 --skip-assets --python "$(which python)" ~/frappe-bench
 
 mysql --host 127.0.0.1 --port 3306 -u root -proot -e "SET GLOBAL character_set_server = 'utf8mb4'"
 mysql --host 127.0.0.1 --port 3306 -u root -proot -e "SET GLOBAL collation_server = 'utf8mb4_unicode_ci'"
@@ -30,6 +30,8 @@ sed -i 's/redis_socketio:/# redis_socketio:/g' Procfile
 bench get-app press "${GITHUB_WORKSPACE}"
 
 bench setup requirements --dev
+# Dropbox still imports pkg_resources from setuptools.
+bench pip install 'setuptools<81' -r apps/press/requirements.txt -r apps/press/dev-requirements.txt
 
 bench start &> bench_start_logs.txt &
 CI=Yes bench build --app frappe &

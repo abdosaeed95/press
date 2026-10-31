@@ -438,8 +438,8 @@ class BaseServer(Document, TagHelpers):
 
 	@frappe.whitelist()
 	def update_agent(self):
-		agent = Agent(self.name, self.doctype)
-		return agent.update()
+		# Host sandbox policies must be installed before Agent patches run.
+		return self.update_agent_ansible()
 
 	@frappe.whitelist()
 	def prepare_server(self):
@@ -552,7 +552,7 @@ class BaseServer(Document, TagHelpers):
 
 	@frappe.whitelist()
 	def update_agent_ansible(self):
-		frappe.enqueue_doc(self.doctype, self.name, "_update_agent_ansible")
+		frappe.enqueue_doc(self.doctype, self.name, "_update_agent_ansible", queue="long", timeout=7200)
 
 	def _update_agent_ansible(self):
 		try:

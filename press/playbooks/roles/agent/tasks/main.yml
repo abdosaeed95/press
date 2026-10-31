@@ -48,6 +48,10 @@
         fh.write("\n")
     PY
 
+- name: Setup CLI sandbox policies
+  include_role:
+    name: cli_sandbox
+
 - name: Setup Agent SQLite Database
   become: yes
   become_user: frappe
