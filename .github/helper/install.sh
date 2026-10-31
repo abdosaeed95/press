@@ -30,8 +30,8 @@ sed -i 's/redis_socketio:/# redis_socketio:/g' Procfile
 bench get-app press "${GITHUB_WORKSPACE}"
 
 bench setup requirements --dev
-# Keep development tools compatible with the libraries pinned by Press.
-bench pip install -r apps/press/requirements.txt -r apps/press/dev-requirements.txt
+# Dropbox still imports pkg_resources from setuptools.
+bench pip install 'setuptools<81' -r apps/press/requirements.txt -r apps/press/dev-requirements.txt
 
 bench start &> bench_start_logs.txt &
 CI=Yes bench build --app frappe &
