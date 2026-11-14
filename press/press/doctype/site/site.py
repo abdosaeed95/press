@@ -269,6 +269,7 @@ class Site(Document, TagHelpers):
 		"server",
 		"host_name",
 		"skip_auto_updates",
+		"minimum_testing_days",
 		"disable_updates",
 		"additional_system_user_created",
 		"label",
@@ -501,6 +502,10 @@ class Site(Document, TagHelpers):
 		# Agent(self.server).update_site_config(self)
 
 	def validate_auto_update_fields(self):
+		days = self.get("minimum_testing_days")
+		if days not in (None, "") and (cstr(days) != cstr(cint(days)) or cint(days) > 2_147_483_647):
+			frappe.throw(_("Minimum testing age must be a whole number of days."))
+
 		# Validate day of month
 		if not (1 <= self.update_on_day_of_month <= 31):
 			frappe.throw("Day of the month must be between 1 and 31 (included)!")
@@ -1244,12 +1249,51 @@ class Site(Document, TagHelpers):
 		physical_backup: bool = False,
 		scheduled_time: str | None = None,
 	):
+		return self._schedule_update(
+			skip_failing_patches=skip_failing_patches,
+			skip_backups=skip_backups,
+			physical_backup=physical_backup,
+			scheduled_time=scheduled_time,
+		)
+
+	def schedule_automatic_update(self, *, at_specified_time=False):
+		from press.press.doctype.site_update.site_update import get_automatic_update_destination
+
+		if (
+			self.skip_auto_updates
+			or self.disable_updates
+			or bool(self.only_update_at_specified_time) != at_specified_time
+			or self.status
+			not in (("Active", "Inactive") if at_specified_time else ("Active", "Inactive", "Suspended"))
+			or self.site_migration_scheduled()
+		):
+			return None
+
+		if not self.get("minimum_testing_days") and at_specified_time:
+			return self.schedule_update()
+
+		if destination := get_automatic_update_destination(self):
+			return self._schedule_update(destination=destination)
+
+		return None
+
+	def _schedule_update(
+		self,
+		*,
+		skip_failing_patches: bool = False,
+		skip_backups: bool = False,
+		physical_backup: bool = False,
+		scheduled_time: str | None = None,
+		destination=None,
+	) -> str:
 		log_site_activity(self.name, "Update")
 
 		doc = frappe.get_doc(
 			{
 				"doctype": "Site Update",
 				"site": self.name,
+				"destination_bench": destination.name if destination else None,
+				"destination_candidate": destination.candidate if destination else None,
 				"backup_type": "Physical" if physical_backup else "Logical",
 				"skipped_failing_patches": skip_failing_patches,
 				"skipped_backups": skip_backups,

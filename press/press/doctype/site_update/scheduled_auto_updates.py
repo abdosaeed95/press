@@ -67,20 +67,24 @@ def trigger():
 		set_schedule_details(auto_update_log, site)
 
 		try:
-			site_doc: Site = frappe.get_doc("Site", site.name)
-			site_doc.schedule_update()
-			site_doc.auto_update_last_triggered_on = now_datetime()
-			site_doc.save()
+			site_doc: Site = frappe.get_doc("Site", site.name, for_update=True)
+			if not should_update_trigger(site_doc) or not site_doc.schedule_automatic_update(
+				at_specified_time=True
+			):
+				frappe.db.rollback()
+				continue
+			frappe.db.set_value("Site", site.name, "auto_update_last_triggered_on", now_datetime())
 		except Exception:
 			traceback = "<pre><code>" + frappe.get_traceback() + "</pre></code>"
+			frappe.db.rollback()
 
 			# Update log doc
 			auto_update_log.status = "Failed"
 			auto_update_log.error = traceback
 
 			log_error("Scheduled Auto Update Failed", site=site, traceback=traceback)
-		finally:
-			auto_update_log.insert(ignore_permissions=True)
+		auto_update_log.insert(ignore_permissions=True)
+		frappe.db.commit()
 
 
 def should_update_trigger(doc):

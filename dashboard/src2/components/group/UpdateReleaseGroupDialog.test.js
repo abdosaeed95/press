@@ -159,7 +159,7 @@ describe('Update Bench Group scheduling', () => {
 		expect(state.slaveLookupComplete).toBe(true);
 	});
 
-	it('moves a no-slave site to the next working window after deployment', () => {
+	it('moves a no-slave site past the weekend and month-start blackout', () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date('2026-07-29T16:00:00+03:00'));
 		const site = { name: 'no-slave.example.com', no_slave: true };
@@ -174,7 +174,7 @@ describe('Update Bench Group scheduling', () => {
 
 		expect(state.siteSchedules[site.name]).toEqual({
 			updateTime: 'scheduled',
-			scheduledTime: '2026-08-02T04:30',
+			scheduledTime: '2026-08-04T04:30',
 		});
 	});
 

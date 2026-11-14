@@ -68,6 +68,7 @@
   "notify_email",
   "auto_updates_section",
   "skip_auto_updates",
+  "minimum_testing_days",
   "disable_updates",
   "only_update_at_specified_time",
   "auto_update_last_triggered_on",
@@ -409,6 +410,14 @@
    "fieldname": "auto_updates_section",
    "fieldtype": "Section Break",
    "label": "Auto Updates"
+  },
+  {
+   "default": "0",
+   "description": "Before an automatic update, each changed app release must have run on another site on your team for this many full days. Use 0 to turn off the requirement.",
+   "fieldname": "minimum_testing_days",
+   "fieldtype": "Int",
+   "label": "Minimum Testing Age (Days)",
+   "non_negative": 1
   },
   {
    "fieldname": "auto_update_last_triggered_on",
