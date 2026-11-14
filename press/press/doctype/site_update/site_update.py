@@ -729,7 +729,7 @@ def schedule_updates_server(server):  # noqa: C901
 			continue
 		if update_triggered_count > queue_size:
 			break
-		if not should_try_update(site) or frappe.db.exists(
+		if frappe.db.exists(
 			"Site Update",
 			{
 				"site": site.name,
@@ -739,10 +739,10 @@ def schedule_updates_server(server):  # noqa: C901
 			continue
 
 		try:
-			site = frappe.get_doc("Site", site.name)
-			if site.site_migration_scheduled():
+			site = frappe.get_doc("Site", site.name, for_update=True)
+			if not site.schedule_automatic_update():
+				frappe.db.rollback()
 				continue
-			site.schedule_update()
 			update_triggered_count += 1
 			frappe.db.commit()
 			benches[site.bench] = True
@@ -751,14 +751,13 @@ def schedule_updates_server(server):  # noqa: C901
 			frappe.db.rollback()
 
 
-def should_try_update(site):
+def get_automatic_update_destination(site):
 	source = frappe.db.get_value("Bench", site.bench, "candidate")
 	candidates = frappe.get_all(
-		"Deploy Candidate Difference", filters={"source": source}, pluck="destination"
+		"Deploy Candidate Difference", filters={"group": site.group, "source": source}, pluck="destination"
 	)
 
-	source_apps = [app.app for app in frappe.get_cached_doc("Site", site.name).apps]
-	dest_apps = []
+	minimum_days = cint(site.get("minimum_testing_days"))
 	destinations = frappe.get_all(
 		"Bench",
 		["name", "candidate"],
@@ -766,30 +765,154 @@ def should_try_update(site):
 			"candidate": ("in", candidates),
 			"status": "Active",
 			"server": site.server,
+			"group": site.group,
+			"name": ("!=", site.bench),
 		},
-		limit=1,
+		limit=0 if minimum_days else 1,
 		ignore_ifnull=True,
-		order_by="creation DESC",
+		order_by="creation desc, name desc",
 	)
-	# Most recent active bench is the destination bench
-	if not destinations:
+
+	installed_apps = {app.app for app in site.apps}
+	source_versions = {}
+	if minimum_days:
+		source_bench = frappe.get_doc("Bench", site.bench, for_update=True)
+		source_versions = {app.app: (app.release, app.hash) for app in source_bench.apps}
+
+	for destination in destinations:
+		bench = frappe.get_doc("Bench", destination.name, for_update=bool(minimum_days))
+		if bench.status != "Active" or bench.candidate != destination.candidate:
+			continue
+		destination_apps = {app.app: app for app in bench.apps if app.app in installed_apps}
+		if installed_apps - destination_apps.keys():
+			continue
+		if frappe.db.exists(
+			"Site Update",
+			{
+				"site": site.name,
+				"source_candidate": source,
+				"destination_candidate": destination.candidate,
+				"cause_of_failure_is_resolved": False,
+			},
+		):
+			continue
+		if minimum_days:
+			changed = [
+				app
+				for app in destination_apps.values()
+				if source_versions.get(app.app) != (app.release, app.hash)
+			]
+			if not releases_meet_testing_age(site, changed, minimum_days):
+				continue
+		return destination
+
+	return None
+
+
+def releases_meet_testing_age(site, apps, minimum_days):
+	if not apps:
+		return True
+
+	release_ids = {app.release for app in apps}
+	versions = {(app.release, app.hash) for app in apps}
+	BenchApp = frappe.qb.DocType("Bench App")
+	Bench = frappe.qb.DocType("Bench")
+	Site = frappe.qb.DocType("Site")
+	SiteApp = frappe.qb.DocType("Site App")
+	AppRelease = frappe.qb.DocType("App Release")
+	testers = (
+		frappe.qb.from_(BenchApp)
+		.join(Bench)
+		.on(BenchApp.parent == Bench.name)
+		.join(Site)
+		.on(Site.bench == Bench.name)
+		.join(SiteApp)
+		.on((SiteApp.parent == Site.name) & (SiteApp.app == BenchApp.app))
+		.join(AppRelease)
+		.on((AppRelease.name == BenchApp.release) & (AppRelease.hash == BenchApp.hash))
+		.where(BenchApp.release.isin(release_ids))
+		.where((Bench.status == "Active") & (Site.status == "Active"))
+		.where((Site.team == site.team) & (Site.name != site.name) & (Site.is_standby == 0))
+		.select(
+			BenchApp.release,
+			BenchApp.hash,
+			Bench.name.as_("bench"),
+			Site.name.as_("site"),
+			Site.creation.as_("site_creation"),
+			SiteApp.creation.as_("app_installation"),
+			AppRelease.creation.as_("release_creation"),
+			Bench.creation.as_("bench_creation"),
+		)
+		.run(as_dict=True)
+	)
+	if not testers:
 		return False
 
-	destination_bench = frappe.get_cached_doc("Bench", destinations[0].name)
-	dest_apps = [app.app for app in destination_bench.apps]
+	test_sites = {row.site for row in testers}
+	test_benches = {row.bench for row in testers}
+	SiteUpdate = frappe.qb.DocType("Site Update")
+	SiteMigration = frappe.qb.DocType("Site Migration")
+	AgentJob = frappe.qb.DocType("Agent Job")
+	last_change = {}
+	for table, field, timestamp, filters in (
+		(
+			SiteUpdate,
+			SiteUpdate.site,
+			SiteUpdate.update_end,
+			SiteUpdate.status.isin(("Success", "Recovered")) & SiteUpdate.site.isin(test_sites),
+		),
+		(
+			SiteMigration,
+			SiteMigration.site,
+			SiteMigration.modified,
+			(SiteMigration.status == "Success") & SiteMigration.site.isin(test_sites),
+		),
+		(
+			AgentJob,
+			AgentJob.site,
+			AgentJob.modified,
+			AgentJob.site.isin(test_sites)
+			& (AgentJob.status == "Success")
+			& AgentJob.job_type.isin(
+				("Move Site to Bench", "New Site", "New Site from Backup", "Restore Site", "Reinstall Site")
+			),
+		),
+		(
+			AgentJob,
+			AgentJob.bench,
+			AgentJob.modified,
+			AgentJob.bench.isin(test_benches)
+			& (AgentJob.status == "Success")
+			& AgentJob.job_type.isin(("New Bench", "Update Bench In Place", "Recover Update In Place")),
+		),
+	):
+		for name, changed_on in (
+			frappe.qb.from_(table)
+			.where(filters)
+			.where(timestamp.isnotnull())
+			.groupby(field)
+			.select(field, frappe.query_builder.functions.Max(timestamp))
+			.run()
+		):
+			key = (field.name, name)
+			last_change[key] = max(changed_on, last_change.get(key, changed_on))
 
-	if set(source_apps) - set(dest_apps):
-		return False
-
-	return not frappe.db.exists(
-		"Site Update",
-		{
-			"site": site.name,
-			"source_candidate": source,
-			"destination_candidate": destination_bench.candidate,
-			"cause_of_failure_is_resolved": False,
-		},
-	)
+	now = frappe.utils.now_datetime()
+	for row in testers:
+		# A site can move to an existing bench, and a bench can be updated in place.
+		testing_since = max(
+			row.site_creation,
+			row.app_installation,
+			row.release_creation,
+			row.bench_creation,
+			last_change.get(("site", row.site), row.site_creation),
+			last_change.get(("bench", row.bench), row.bench_creation),
+		)
+		if (now - testing_since).days >= minimum_days:
+			versions.discard((row.release, row.hash))
+			if not versions:
+				return True
+	return False
 
 
 def is_site_in_deploy_hours(site=None):

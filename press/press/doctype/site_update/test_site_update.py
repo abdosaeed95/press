@@ -12,6 +12,7 @@ from press.press.doctype.agent_job.agent_job import AgentJob, poll_pending_jobs
 from press.press.doctype.agent_job.test_agent_job import fake_agent_job
 from press.press.doctype.app.test_app import create_test_app
 from press.press.doctype.app_release.test_app_release import create_test_app_release
+from press.press.doctype.app_release_difference.app_release_difference import AppReleaseDifference
 from press.press.doctype.app_source.test_app_source import create_test_app_source
 from press.press.doctype.deploy_candidate_difference.test_deploy_candidate_difference import (
 	create_test_deploy_candidate_differences,
@@ -35,6 +36,53 @@ def create_test_site_update(site: str, destination_group: str, status: str):
 class TestSiteUpdate(FrappeTestCase):
 	def tearDown(self):
 		frappe.db.rollback()
+
+	@patch.object(AgentJob, "enqueue_http_request")
+	@patch.object(
+		AppReleaseDifference, "set_deploy_type", new=lambda diff: diff.update({"deploy_type": "Pull"})
+	)
+	@patch("frappe.utils.now_datetime")
+	def test_auto_update_chooses_a_bench_tested_by_another_site(self, now_datetime, enqueue_http_request):
+		now = frappe.utils.get_datetime("2026-11-12 06:00:00")
+		three_days_ago = frappe.utils.add_days(now, -3)
+		now_datetime.return_value = now
+		version = "Version 15"
+		group = create_test_release_group(
+			[create_test_app(), create_test_app("another_app", "Another App")], frappe_version=version
+		)
+		source = frappe.get_doc("App Source", group.apps[0].source)
+		second_source = frappe.get_doc("App Source", group.apps[1].source)
+		current = create_test_bench(group=group, creation=frappe.utils.add_days(now, -5))
+		tested_release = create_test_app_release(app_source=source)
+		second_tested_release = create_test_app_release(app_source=second_source)
+		tested = create_test_bench(group=group, server=current.server, creation=three_days_ago)
+		create_test_deploy_candidate_differences(tested.candidate)
+		create_test_app_release(app_source=source)
+		latest = create_test_bench(group=group, server=current.server, creation=now)
+		create_test_deploy_candidate_differences(latest.candidate)
+		tested_release.db_set("creation", three_days_ago)
+		second_tested_release.db_set("creation", three_days_ago)
+		site = create_test_site(bench=current.name, minimum_testing_days=3)
+		tester = create_test_site(bench=tested.name, team=site.team, creation=three_days_ago)
+		for app in tester.apps:
+			app.db_set("creation", three_days_ago)
+
+		site.minimum_testing_days = 4
+		self.assertIsNone(site.schedule_automatic_update())
+		site.minimum_testing_days = 3
+		tester.db_set("team", "different-team")
+		self.assertIsNone(site.schedule_automatic_update())
+		tester.db_set("team", site.team)
+
+		tester.apps[1].db_set("creation", frappe.utils.add_to_date(three_days_ago, seconds=1))
+		self.assertIsNone(site.schedule_automatic_update())
+		tester.apps[1].db_set("creation", three_days_ago)
+
+		site.only_update_at_specified_time = 1
+		self.assertIsNone(site.schedule_automatic_update())
+		update = site.schedule_automatic_update(at_specified_time=True)
+		self.assertEqual(frappe.db.get_value("Site Update", update, "destination_bench"), tested.name)
+		self.assertEqual(frappe.db.get_value("Site", site.name, "status"), "Pending")
 
 	def test_retarget_preserves_schedule_and_uses_new_bench(self):
 		version = "Version 15"
